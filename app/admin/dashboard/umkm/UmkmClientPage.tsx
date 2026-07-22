@@ -6,6 +6,14 @@ import { saveUmkmAction, deleteUmkmAction, uploadImageAction } from "@/app/admin
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import ImageCropperModal from "@/components/ImageCropperModal";
 
 interface Props {
@@ -278,17 +286,18 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                   <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                     Kategori Usaha *
                   </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full h-10 px-3 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl text-sm font-sans outline-none focus:border-[color:var(--forest)]"
-                  >
-                    {CATEGORIES.map((catName) => (
-                      <option key={catName} value={catName}>
-                        {catName}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={category} onValueChange={(val) => setCategory(val)}>
+                    <SelectTrigger className="w-full h-10 px-3 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl text-sm font-sans outline-none focus:border-[color:var(--forest)] text-[color:var(--ink)] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:border-[color:var(--forest)]">
+                      <SelectValue placeholder="Pilih Kategori" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[color:var(--card)] border border-[color:var(--line)] text-[color:var(--ink)]">
+                      {CATEGORIES.map((catName) => (
+                        <SelectItem key={catName} value={catName} className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">
+                          {catName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {category === "Lainnya" && (
                   <div className="mt-1">
@@ -353,7 +362,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Alamat Lengkap Usaha *
                 </label>
-                <textarea
+                <Textarea
                   placeholder="Contoh: Dusun Ngrancah RT 01/RW 02, Desa Sukoharjo"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -366,7 +375,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Deskripsi Singkat Usaha *
                 </label>
-                <textarea
+                <Textarea
                   placeholder="Ceritakan sejarah singkat, keunggulan produk, atau bahan baku usaha..."
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}

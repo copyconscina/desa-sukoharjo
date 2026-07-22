@@ -1,15 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "placeholder-anon-key";
 
 export const isPlaceholderSupabase =
   !process.env.NEXT_PUBLIC_SUPABASE_URL ||
   supabaseUrl === "https://placeholder-project.supabase.co";
 
-if (isPlaceholderSupabase) {
-  // Silent fallback mode message in development
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 

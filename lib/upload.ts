@@ -1,4 +1,4 @@
-import { supabaseServer } from "./supabase-server";
+import { supabaseServer } from "@/utils/supabase/admin";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 

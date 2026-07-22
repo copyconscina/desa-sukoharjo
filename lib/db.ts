@@ -1,5 +1,5 @@
-import { supabase, isPlaceholderSupabase } from "./supabase";
-import { supabaseServer } from "./supabase-server";
+import { supabase, isPlaceholderSupabase } from "@/utils/supabase/static";
+import { supabaseServer } from "@/utils/supabase/admin";
 import { Umkm, Berita, GaleriItem, Potensi } from "./data";
 import dbJson from "./db.json";
 
@@ -119,7 +119,7 @@ export async function getBeritaList(): Promise<Berita[]> {
     })) as Berita[];
   }
 
-  return data.map((b) => ({
+  return data.map((b: any) => ({
     id: b.id,
     tag: b.tag ? b.tag.charAt(0).toUpperCase() + b.tag.slice(1) : "",
     cls: b.cls || "",
@@ -252,8 +252,7 @@ export async function getGaleriList(): Promise<GaleriItem[]> {
       desc: "",
     })) as GaleriItem[];
   }
-
-  return data.map((g) => ({
+  return data.map((g: any) => ({
     id: g.id,
     label: g.label,
     cat: g.cat,

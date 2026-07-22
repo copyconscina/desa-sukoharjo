@@ -5,6 +5,7 @@ import { Potensi } from "@/lib/data";
 import { updatePotensiAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   initialPotentials: Potensi[];
@@ -160,7 +161,7 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
                   <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                     Deskripsi Potensi
                   </label>
-                  <textarea
+                  <Textarea
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
                     rows={8}

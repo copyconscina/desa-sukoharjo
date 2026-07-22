@@ -6,6 +6,14 @@ import { addGaleriAction, deleteGaleriAction, uploadImageAction } from "@/app/ad
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import ImageCropperModal from "@/components/ImageCropperModal";
 
 interface Props {
@@ -149,7 +157,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Deskripsi Kegiatan Singkat
                 </label>
-                <textarea
+                <Textarea
                   placeholder="Masukkan keterangan atau cerita singkat mengenai foto/kegiatan ini..."
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
@@ -162,15 +170,16 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Kategori *
                 </label>
-                <select
-                  value={cat}
-                  onChange={(e) => setCat(e.target.value)}
-                  className="w-full h-10 px-3 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl text-sm font-sans outline-none focus:border-[color:var(--forest)]"
-                >
-                  <option value="Kegiatan">Kegiatan</option>
-                  <option value="UMKM">UMKM</option>
-                  <option value="Potensi">Potensi</option>
-                </select>
+                <Select value={cat} onValueChange={(val) => setCat(val)}>
+                  <SelectTrigger className="w-full h-10 px-3 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl text-sm font-sans outline-none focus:border-[color:var(--forest)] text-[color:var(--ink)] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:border-[color:var(--forest)]">
+                    <SelectValue placeholder="Pilih Kategori" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[color:var(--card)] border border-[color:var(--line)] text-[color:var(--ink)]">
+                    <SelectItem value="Kegiatan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kegiatan</SelectItem>
+                    <SelectItem value="UMKM" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">UMKM</SelectItem>
+                    <SelectItem value="Potensi" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Potensi</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
