@@ -23,12 +23,18 @@ import {
 } from "@/lib/auth";
 import { uploadSingleFile, uploadMultipleFiles } from "@/lib/upload";
 
+import { headers } from "next/headers";
+
 // Auth Actions
 export async function loginAction(formData: FormData) {
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
 
-  const rateCheck = checkRateLimit(username || "global");
+  const headerList = await headers();
+  const clientIp = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip") || "global_ip";
+  const rateLimitKey = `${clientIp}_${username || 'user'}`;
+
+  const rateCheck = checkRateLimit(rateLimitKey);
   if (!rateCheck.allowed) {
     return {
       success: false,
@@ -39,7 +45,7 @@ export async function loginAction(formData: FormData) {
   }
 
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    resetRateLimit(username || "global");
+    resetRateLimit(rateLimitKey);
     await setAuthSession();
     return { success: true };
   }

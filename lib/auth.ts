@@ -2,19 +2,28 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 
 export const ADMIN_USER = process.env.ADMIN_USER || "admin";
-export const ADMIN_PASS = process.env.ADMIN_PASS || "desaSukoharjo2026";
-const AUTH_SECRET = process.env.AUTH_SECRET || "desasukoharjo_secret_key_change_in_prod_2026";
+export const ADMIN_PASS = process.env.ADMIN_PASS || "";
+const AUTH_SECRET = process.env.AUTH_SECRET || "";
+
 export const SESSION_COOKIE = "admin_session";
+
+// Fail-safe check: throw in production if credentials or secret are missing
+if (process.env.NODE_ENV === "production") {
+  if (!ADMIN_PASS || !AUTH_SECRET) {
+    throw new Error("CRITICAL SECURITY ERROR: ADMIN_PASS and AUTH_SECRET must be defined in production environment variables.");
+  }
+}
 
 // Rate limiter for login attempts (in-memory)
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
-export function checkRateLimit(key: string = "global"): { allowed: boolean; remainingSeconds?: number } {
+export function checkRateLimit(key: string = "global_ip"): { allowed: boolean; remainingSeconds?: number } {
   const now = Date.now();
-  const attempt = loginAttempts.get(key);
+  const attemptKey = `rate_${key}`;
+  const attempt = loginAttempts.get(attemptKey);
 
   if (!attempt || now > attempt.resetAt) {
-    loginAttempts.set(key, { count: 1, resetAt: now + 15 * 60 * 1000 }); // 15 mins window
+    loginAttempts.set(attemptKey, { count: 1, resetAt: now + 15 * 60 * 1000 }); // 15 mins window
     return { allowed: true };
   }
 
@@ -24,12 +33,12 @@ export function checkRateLimit(key: string = "global"): { allowed: boolean; rema
   }
 
   attempt.count += 1;
-  loginAttempts.set(key, attempt);
+  loginAttempts.set(attemptKey, attempt);
   return { allowed: true };
 }
 
-export function resetRateLimit(key: string = "global"): void {
-  loginAttempts.delete(key);
+export function resetRateLimit(key: string = "global_ip"): void {
+  loginAttempts.delete(`rate_${key}`);
 }
 
 export function generateSessionToken(): string {

@@ -79,7 +79,7 @@ export default function Navbar() {
           >
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left px-3.5 py-2 rounded-full text-sm font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
+                "nav-dropdown-trigger flex items-center gap-1 w-full text-left font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
                 (pathname.startsWith("/profil") || pathname.startsWith("/potensi") || pathname.startsWith("/lembaga")) && "bg-[color:var(--forest)] text-white hover:bg-[color:var(--forest)] hover:text-white"
               )}
               onClick={() => toggleDropdown("profil")}
@@ -124,7 +124,7 @@ export default function Navbar() {
           >
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left px-3.5 py-2 rounded-full text-sm font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
+                "nav-dropdown-trigger flex items-center gap-1 w-full text-left font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
                 (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/layanan-surat") || pathname.startsWith("/pengaduan")) && "bg-[color:var(--forest)] text-white hover:bg-[color:var(--forest)] hover:text-white"
               )}
               onClick={() => toggleDropdown("layanan")}
@@ -176,7 +176,7 @@ export default function Navbar() {
           >
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left px-3.5 py-2 rounded-full text-sm font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
+                "nav-dropdown-trigger flex items-center gap-1 w-full text-left font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
                 (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik") || pathname.startsWith("/ppid") || pathname.startsWith("/bansos")) && "bg-[color:var(--forest)] text-white hover:bg-[color:var(--forest)] hover:text-white"
               )}
               onClick={() => toggleDropdown("transparansi")}
