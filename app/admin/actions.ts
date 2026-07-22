@@ -18,6 +18,8 @@ import {
   checkAuth,
   setAuthSession,
   clearAuthSession,
+  checkRateLimit,
+  resetRateLimit,
 } from "@/lib/auth";
 import { uploadSingleFile, uploadMultipleFiles } from "@/lib/upload";
 
@@ -26,7 +28,18 @@ export async function loginAction(formData: FormData) {
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
 
+  const rateCheck = checkRateLimit(username || "global");
+  if (!rateCheck.allowed) {
+    return {
+      success: false,
+      error: `Terlalu banyak percobaan login yang gagal. Silakan coba lagi dalam ${Math.ceil(
+        (rateCheck.remainingSeconds || 900) / 60
+      )} menit.`,
+    };
+  }
+
   if (username === ADMIN_USER && password === ADMIN_PASS) {
+    resetRateLimit(username || "global");
     await setAuthSession();
     return { success: true };
   }
@@ -63,11 +76,11 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
   return { success: true };
 }
 
-export async function deleteBeritaAction(title: string) {
+export async function deleteBeritaAction(id: number) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  await deleteBerita(title);
+  await deleteBerita(id);
 
   revalidatePath("/");
   revalidatePath("/berita");
@@ -94,11 +107,11 @@ export async function addGaleriAction(label: string, cat: string, grad: string, 
   return { success: true };
 }
 
-export async function deleteGaleriAction(label: string) {
+export async function deleteGaleriAction(id: number) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  await deleteGaleri(label);
+  await deleteGaleri(id);
 
   revalidatePath("/");
   revalidatePath("/galeri");

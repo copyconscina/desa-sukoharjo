@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getUmkmList, getUmkmById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 interface Props {
   params: Promise<{ id: string }>
@@ -98,19 +99,20 @@ export default async function UmkmDetailPage({ params }: Props) {
         <div className="wrap two-col">
           <div>
             <div
-              style={{
-                height: "240px",
-                backgroundImage: u.image ? `url(${u.image})` : undefined,
-                background: u.image ? undefined : u.grad,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                borderRadius: "var(--radius)",
-                marginBottom: "24px",
-                position: "relative",
-              }}
+              className="relative w-full h-[240px] rounded-[var(--radius)] overflow-hidden mb-6"
+              style={!u.image ? { background: u.grad } : undefined}
             >
+              {u.image && (
+                <Image
+                  src={u.image}
+                  alt={u.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  className="object-cover"
+                />
+              )}
               <Badge
-                className="border-none"
+                className="border-none z-10"
                 style={{
                   position: "absolute",
                   top: "16px",

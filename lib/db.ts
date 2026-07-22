@@ -1,22 +1,29 @@
-import { supabase } from "./supabase";
+import { supabase, isPlaceholderSupabase } from "./supabase";
 import { supabaseServer } from "./supabase-server";
 import { Umkm, Berita, GaleriItem, Potensi } from "./data";
+import dbJson from "./db.json";
 
 // UMKM DB Operations
 export async function getUmkmList(): Promise<Umkm[]> {
+  if (isPlaceholderSupabase) {
+    return dbJson.umkmData as Umkm[];
+  }
   const { data, error } = await supabase
     .from("umkm")
     .select("*")
     .order("id", { ascending: true });
     
   if (error) {
-    console.error("Error fetching UMKM list:", error);
-    return [];
+    console.warn("Using fallback UMKM list due to connection error:", error.message);
+    return dbJson.umkmData as Umkm[];
   }
   return data as Umkm[];
 }
 
 export async function getUmkmById(id: number): Promise<Umkm | undefined> {
+  if (isPlaceholderSupabase) {
+    return (dbJson.umkmData.find((u) => u.id === id) || dbJson.umkmData[0]) as Umkm;
+  }
   const { data, error } = await supabase
     .from("umkm")
     .select("*")
@@ -24,8 +31,8 @@ export async function getUmkmById(id: number): Promise<Umkm | undefined> {
     .single();
 
   if (error) {
-    console.error(`Error fetching UMKM with id ${id}:`, error);
-    return undefined;
+    console.warn(`Using fallback UMKM for id ${id}`);
+    return dbJson.umkmData.find((u) => u.id === id) as Umkm | undefined;
   }
   return data as Umkm;
 }
@@ -82,14 +89,34 @@ export async function deleteUmkm(id: number): Promise<boolean> {
 
 // Berita DB Operations
 export async function getBeritaList(): Promise<Berita[]> {
+  if (isPlaceholderSupabase) {
+    return dbJson.beritaData.map((b, idx) => ({
+      id: idx + 1,
+      tag: b.tag,
+      cls: b.cls || "",
+      title: b.title,
+      desc: b.desc || "",
+      date: b.date,
+      images: undefined,
+    })) as Berita[];
+  }
+
   const { data, error } = await supabase
     .from("berita")
     .select("*")
     .order("published_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching Berita list:", error);
-    return [];
+    console.warn("Using fallback Berita list due to connection error:", error.message);
+    return dbJson.beritaData.map((b, idx) => ({
+      id: idx + 1,
+      tag: b.tag,
+      cls: b.cls || "",
+      title: b.title,
+      desc: b.desc || "",
+      date: b.date,
+      images: undefined,
+    })) as Berita[];
   }
 
   return data.map((b) => ({
@@ -108,6 +135,19 @@ export async function getBeritaList(): Promise<Berita[]> {
 }
 
 export async function getBeritaById(id: number): Promise<Berita | undefined> {
+  if (isPlaceholderSupabase) {
+    const list = dbJson.beritaData.map((b, idx) => ({
+      id: idx + 1,
+      tag: b.tag,
+      cls: b.cls || "",
+      title: b.title,
+      desc: b.desc || "",
+      date: b.date,
+      images: undefined,
+    }));
+    return list.find((b) => b.id === id) || list[0];
+  }
+
   const { data, error } = await supabase
     .from("berita")
     .select("*")
@@ -115,7 +155,7 @@ export async function getBeritaById(id: number): Promise<Berita | undefined> {
     .single();
 
   if (error) {
-    console.error(`Error fetching Berita with id ${id}:`, error);
+    console.warn(`Using fallback Berita for id ${id}`);
     return undefined;
   }
 
@@ -130,7 +170,7 @@ export async function getBeritaById(id: number): Promise<Berita | undefined> {
       month: "short",
       year: "numeric",
     }),
-    images: data.images || null,
+    images: data.images || undefined,
   } as Berita;
 }
 
@@ -161,21 +201,8 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
       month: "short",
       year: "numeric",
     }),
-    images: data.images || null,
+    images: data.images || undefined,
   };
-}
-
-export async function deleteBerita(title: string): Promise<boolean> {
-  const { error } = await supabaseServer
-    .from("berita")
-    .delete()
-    .eq("title", title);
-
-  if (error) {
-    console.error(`Error deleting Berita "${title}":`, error);
-    return false;
-  }
-  return true;
 }
 
 export async function deleteBeritaById(id: number): Promise<boolean> {
@@ -191,18 +218,41 @@ export async function deleteBeritaById(id: number): Promise<boolean> {
   return true;
 }
 
+export async function deleteBerita(id: number): Promise<boolean> {
+  return deleteBeritaById(id);
+}
+
 
 // Galeri DB Operations
 export async function getGaleriList(): Promise<GaleriItem[]> {
+  if (isPlaceholderSupabase) {
+    return dbJson.galeriData.map((g, idx) => ({
+      id: idx + 1,
+      label: g.label,
+      cat: g.cat,
+      grad: g.grad || "",
+      image: undefined,
+      desc: "",
+    })) as GaleriItem[];
+  }
+
   const { data, error } = await supabase
     .from("galeri")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching Galeri list:", error);
-    return [];
+    console.warn("Using fallback Galeri list due to connection error:", error.message);
+    return dbJson.galeriData.map((g, idx) => ({
+      id: idx + 1,
+      label: g.label,
+      cat: g.cat,
+      grad: g.grad || "",
+      image: undefined,
+      desc: "",
+    })) as GaleriItem[];
   }
+
   return data.map((g) => ({
     id: g.id,
     label: g.label,
@@ -237,29 +287,37 @@ export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
   } as GaleriItem;
 }
 
-export async function deleteGaleri(label: string): Promise<boolean> {
+export async function deleteGaleriById(id: number): Promise<boolean> {
   const { error } = await supabaseServer
     .from("galeri")
     .delete()
-    .eq("label", label);
+    .eq("id", id);
 
   if (error) {
-    console.error(`Error deleting Galeri "${label}":`, error);
+    console.error(`Error deleting Galeri with id ${id}:`, error);
     return false;
   }
   return true;
 }
 
+export async function deleteGaleri(id: number): Promise<boolean> {
+  return deleteGaleriById(id);
+}
+
 // Potensi DB Operations
 export async function getPotensiList(): Promise<Potensi[]> {
+  if (isPlaceholderSupabase) {
+    return dbJson.potensiData as Potensi[];
+  }
+
   const { data, error } = await supabase
     .from("potensi")
     .select("*")
     .order("num", { ascending: true });
 
   if (error) {
-    console.error("Error fetching Potensi list:", error);
-    return [];
+    console.warn("Using fallback Potensi list due to connection error:", error.message);
+    return dbJson.potensiData as Potensi[];
   }
   return data as Potensi[];
 }
@@ -276,3 +334,4 @@ export async function updatePotensi(num: string, title: string, desc: string): P
   }
   return true;
 }
+

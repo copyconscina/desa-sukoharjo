@@ -54,8 +54,8 @@ export async function addBeritaApi(tag: string, title: string, desc: string, ima
   return data as { success: true; item: Berita };
 }
 
-export async function deleteBeritaApi(title: string) {
-  const url = buildApiUrl(`/api/berita?title=${encodeURIComponent(title)}`);
+export async function deleteBeritaApi(id: number) {
+  const url = buildApiUrl(`/api/berita?id=${id}`);
   const res = await fetch(url, {
     method: "DELETE",
     credentials: "include",

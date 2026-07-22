@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getGaleriList } from "@/lib/db";
 import GaleriList from "@/components/GaleriList";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Galeri Desa Sukoharjo",

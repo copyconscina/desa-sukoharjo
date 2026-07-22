@@ -55,23 +55,23 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const url = new URL(req.url);
-    let title = url.searchParams.get("title");
+    let idParam = url.searchParams.get("id");
 
-    if (!title) {
-      // Fallback: check request body
+    if (!idParam) {
       try {
         const body = await req.json();
-        title = body.title;
+        idParam = body.id;
       } catch (e) {
-        // Body was empty or invalid JSON
+        // Body empty or invalid JSON
       }
     }
 
-    if (!title) {
-      return NextResponse.json({ error: "Missing required field: title" }, { status: 400 });
+    const numId = idParam ? parseInt(idParam, 10) : NaN;
+    if (isNaN(numId)) {
+      return NextResponse.json({ error: "Missing or invalid required field: id" }, { status: 400 });
     }
 
-    const success = await deleteBerita(title);
+    const success = await deleteBerita(numId);
     if (!success) {
       return NextResponse.json({ error: "Failed to delete berita" }, { status: 500 });
     }

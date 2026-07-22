@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Umkm } from "@/lib/data";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,13 +42,12 @@ export default function UmkmList({ initialUmkmData }: Props) {
             placeholder="Cari nama UMKM, produk, atau pemilik…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-[42px] pr-4 py-3 rounded-full border border-[color:var(--line)] bg-[color:var(--card)] text-sm font-sans"
-            style={{ height: "46px" }}
+            className="w-full pl-[42px] pr-4 py-3 rounded-full border border-[color:var(--line)] bg-[color:var(--card)] text-sm font-sans h-[46px]"
           />
         </div>
       </div>
 
-      <div className="filter-chips" id="umkmFilters" style={{ marginBottom: "20px" }}>
+      <div className="filter-chips mb-5" id="umkmFilters">
         {categories.map((c) => (
           <Button
             key={c}
@@ -68,10 +68,19 @@ export default function UmkmList({ initialUmkmData }: Props) {
       <div className="grid cols-4" id="umkmGrid">
         {filteredUmkm.length > 0 ? (
           filteredUmkm.map((u) => (
-            <Link href={`/umkm/${u.id}`} key={u.id} className="umkm-card" style={{ textDecoration: "none" }}>
-              <Card className="umkm-card border border-[color:var(--line)] shadow-none flex flex-col h-full" style={{ borderRadius: "var(--radius)" }}>
-                <div className="cover" style={u.image ? { backgroundImage: `url(${u.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: u.grad }}>
-                  <Badge className="cat-badge border-none" style={{ background: "rgba(33, 47, 28, 0.75)", color: "#fff" }}>{u.category}</Badge>
+            <Link href={`/umkm/${u.id}`} key={u.id} className="umkm-card no-underline">
+              <Card className="umkm-card border border-[color:var(--line)] shadow-none flex flex-col h-full overflow-hidden rounded-[var(--radius)]">
+                <div className="cover relative w-full h-44 overflow-hidden" style={!u.image ? { background: u.grad } : undefined}>
+                  {u.image && (
+                    <Image
+                      src={u.image}
+                      alt={u.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      className="object-cover"
+                    />
+                  )}
+                  <Badge className="cat-badge border-none z-10 bg-[#212f1c]/75 text-white">{u.category}</Badge>
                 </div>
                 <div className="body">
                   <h3 className="font-heading">{u.name}</h3>
@@ -86,7 +95,7 @@ export default function UmkmList({ initialUmkmData }: Props) {
             </Link>
           ))
         ) : (
-          <div className="empty-state" style={{ gridColumn: "1/-1" }}>
+          <div className="empty-state col-span-full">
             Tidak ada UMKM yang cocok dengan pencarian atau filter ini.
           </div>
         )}

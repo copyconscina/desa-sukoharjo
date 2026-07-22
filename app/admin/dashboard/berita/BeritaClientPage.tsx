@@ -91,8 +91,13 @@ export default function BeritaClientPage({ initialNews }: Props) {
     }
   };
 
-  const handleDelete = async (targetTitle: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus berita "${targetTitle}"?`)) {
+  const handleDelete = async (item: Berita) => {
+    if (!item.id) {
+      setError("ID berita tidak ditemukan.");
+      return;
+    }
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus berita "${item.title}"?`)) {
       return;
     }
 
@@ -100,9 +105,9 @@ export default function BeritaClientPage({ initialNews }: Props) {
     setSuccess(null);
 
     try {
-      const res = await deleteBeritaApi(targetTitle);
+      const res = await deleteBeritaApi(item.id);
       if (res.success) {
-        setNews(news.filter((b) => b.title !== targetTitle));
+        setNews(news.filter((b) => b.id !== item.id));
         setSuccess("Berita berhasil dihapus!");
       }
     } catch (err) {
@@ -299,7 +304,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
                     </div>
 
                     <button
-                      onClick={() => handleDelete(item.title)}
+                      onClick={() => handleDelete(item)}
                       className="p-2 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer flex-shrink-0"
                       title="Hapus berita"
                     >

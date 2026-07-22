@@ -1,8 +1,13 @@
 import { supabaseServer } from "./supabase-server";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 export async function uploadSingleFile(file: File): Promise<string> {
   if (!file || file.size === 0) {
     throw new Error("Tidak ada file yang diunggah.");
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("Ukuran gambar tidak boleh melebihi 5MB.");
   }
   if (!file.type.startsWith("image/")) {
     throw new Error("File harus berupa gambar (JPG, PNG, WebP, dll).");

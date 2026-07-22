@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getBeritaList, getBeritaById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 interface Props {
   params: Promise<{ id: string }>
@@ -97,23 +98,38 @@ export default async function BeritaDetailPage({ params }: Props) {
             </div>
             
             {imageList.length === 1 && (
-              <div className="mb-8 rounded-xl overflow-hidden border border-[color:var(--line)] max-h-[420px] shadow-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageList[0]} alt={b.title} className="w-full h-full object-cover" />
+              <div className="mb-8 rounded-xl overflow-hidden border border-[color:var(--line)] h-[350px] md:h-[420px] relative shadow-sm">
+                <Image
+                  src={imageList[0]}
+                  alt={b.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  className="object-cover"
+                />
               </div>
             )}
 
             {imageList.length > 1 && (
               <div className="mb-8 flex flex-col gap-3">
-                <div className="rounded-xl overflow-hidden border border-[color:var(--line)] max-h-[380px] shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imageList[0]} alt={b.title} className="w-full h-full object-cover" />
+                <div className="rounded-xl overflow-hidden border border-[color:var(--line)] h-[300px] md:h-[380px] relative shadow-sm">
+                  <Image
+                    src={imageList[0]}
+                    alt={b.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 800px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {imageList.slice(1).map((imgUrl, i) => (
-                    <div key={i} className="rounded-lg overflow-hidden border border-[color:var(--line)] aspect-video shadow-sm">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imgUrl} alt={`${b.title} gallery ${i + 1}`} className="w-full h-full object-cover" />
+                    <div key={i} className="rounded-lg overflow-hidden border border-[color:var(--line)] aspect-video relative shadow-sm">
+                      <Image
+                        src={imgUrl}
+                        alt={`${b.title} gallery ${i + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 250px"
+                        className="object-cover"
+                      />
                     </div>
                   ))}
                 </div>

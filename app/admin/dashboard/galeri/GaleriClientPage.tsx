@@ -83,8 +83,13 @@ export default function GaleriClientPage({ initialGallery }: Props) {
     }
   };
 
-  const handleDelete = async (targetLabel: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus item galeri "${targetLabel}"?`)) {
+  const handleDelete = async (item: GaleriItem) => {
+    if (!item.id) {
+      setError("ID galeri tidak ditemukan.");
+      return;
+    }
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus item galeri "${item.label}"?`)) {
       return;
     }
 
@@ -92,9 +97,9 @@ export default function GaleriClientPage({ initialGallery }: Props) {
     setSuccess(null);
 
     try {
-      const res = await deleteGaleriAction(targetLabel);
+      const res = await deleteGaleriAction(item.id);
       if (res.success) {
-        setGallery(gallery.filter((item) => item.label !== targetLabel));
+        setGallery(gallery.filter((g) => g.id !== item.id));
         setSuccess("Item galeri berhasil dihapus!");
       }
     } catch (err) {
@@ -287,7 +292,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                         </span>
 
                         <button
-                          onClick={() => handleDelete(item.label)}
+                          onClick={() => handleDelete(item)}
                           className="p-1.5 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer"
                           title="Hapus galeri"
                         >

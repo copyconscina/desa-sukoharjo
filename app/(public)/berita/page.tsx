@@ -1,10 +1,11 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { getBeritaList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Berita Desa Sukoharjo",
@@ -43,8 +44,13 @@ export default async function BeritaPage() {
                   >
                     {firstImage && (
                       <div className="w-full h-44 overflow-hidden border-b border-[color:var(--line)] relative bg-black/5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={firstImage} alt={b.title} className="w-full h-full object-cover" />
+                        <Image
+                          src={firstImage}
+                          alt={b.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover"
+                        />
                       </div>
                     )}
                     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "10px", flex: 1, justifyContent: "space-between" }}>

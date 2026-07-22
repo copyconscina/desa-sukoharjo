@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { GaleriItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ export default function GaleriList({ initialGaleriData }: Props) {
   );
 
   const icZoom = (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="20" height="20">
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="20" height="20" className="z-10">
       <circle cx="11" cy="11" r="7" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -49,16 +50,25 @@ export default function GaleriList({ initialGaleriData }: Props) {
         ))}
       </div>
 
-      <div className="gal-grid" id="galGrid" style={{ marginTop: "24px" }}>
+      <div className="gal-grid mt-6" id="galGrid">
         {filteredGaleri.map((g, idx) => (
           <div 
             key={idx} 
-            className="gal-tile cursor-pointer hover:scale-[1.02] transition-transform duration-200" 
-            style={g.image ? { backgroundImage: `url(${g.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: g.grad }}
+            className="gal-tile relative overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform duration-200" 
+            style={!g.image ? { background: g.grad } : undefined}
             onClick={() => setSelectedItem(g)}
           >
+            {g.image && (
+              <Image
+                src={g.image}
+                alt={g.label}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover"
+              />
+            )}
             {icZoom}
-            <span>{g.label}</span>
+            <span className="z-10 relative">{g.label}</span>
           </div>
         ))}
       </div>
@@ -83,14 +93,17 @@ export default function GaleriList({ initialGaleriData }: Props) {
             </button>
 
             {/* Full Image Container */}
-            <div className="relative w-full max-h-[55vh] overflow-hidden bg-black/5 flex items-center justify-center">
+            <div className="relative w-full min-h-[300px] max-h-[55vh] overflow-hidden bg-black/5 flex items-center justify-center">
               {selectedItem.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img 
-                  src={selectedItem.image} 
-                  alt={selectedItem.label} 
-                  className="w-full max-h-[55vh] object-cover"
-                />
+                <div className="relative w-full h-[50vh]">
+                  <Image 
+                    src={selectedItem.image} 
+                    alt={selectedItem.label} 
+                    fill
+                    sizes="(max-width: 768px) 100vw, 800px"
+                    className="object-contain"
+                  />
+                </div>
               ) : (
                 <div 
                   className="w-full h-64 flex items-center justify-center text-white text-lg font-medium"
@@ -114,8 +127,7 @@ export default function GaleriList({ initialGaleriData }: Props) {
               </h2>
 
               <p 
-                className="text-[color:var(--ink-soft)] text-sm leading-relaxed" 
-                style={{ whiteSpace: "pre-wrap", fontSize: "14.5px" }}
+                className="text-[color:var(--ink-soft)] text-sm leading-relaxed whitespace-pre-wrap" 
               >
                 {selectedItem.desc || "Dokumentasi foto kegiatan pembangunan, UMKM unggulan, atau potensi pariwisata Desa Sukoharjo."}
               </p>
