@@ -13,26 +13,23 @@ import {
 } from "@/lib/db";
 import { Umkm, Berita, GaleriItem } from "@/lib/data";
 import {
-  ADMIN_USER,
-  ADMIN_PASS,
   checkAuth,
-  setAuthSession,
-  clearAuthSession,
+  loginWithSupabase,
+  logoutWithSupabase,
   checkRateLimit,
   resetRateLimit,
 } from "@/lib/auth";
 import { uploadSingleFile, uploadMultipleFiles } from "@/lib/upload";
-
 import { headers } from "next/headers";
 
 // Auth Actions
 export async function loginAction(formData: FormData) {
-  const username = formData.get("username") as string;
-  const password = formData.get("password") as string;
+  const email = ((formData.get("email") as string) || (formData.get("username") as string) || "").trim();
+  const password = (formData.get("password") as string) || "";
 
   const headerList = await headers();
   const clientIp = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip") || "global_ip";
-  const rateLimitKey = `${clientIp}_${username || 'user'}`;
+  const rateLimitKey = `${clientIp}_${email || 'user'}`;
 
   const rateCheck = checkRateLimit(rateLimitKey);
   if (!rateCheck.allowed) {
@@ -44,17 +41,18 @@ export async function loginAction(formData: FormData) {
     };
   }
 
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
-    resetRateLimit(rateLimitKey);
-    await setAuthSession();
-    return { success: true };
+  const { data, error } = await loginWithSupabase(email, password);
+
+  if (error || !data.user) {
+    return { success: false, error: error?.message || "Email atau password salah!" };
   }
 
-  return { success: false, error: "Username atau password salah!" };
+  resetRateLimit(rateLimitKey);
+  return { success: true };
 }
 
 export async function logoutAction() {
-  await clearAuthSession();
+  await logoutWithSupabase();
   redirect("/admin/login");
 }
 

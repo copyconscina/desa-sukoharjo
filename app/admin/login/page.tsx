@@ -64,17 +64,17 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
               <label
-                htmlFor="username"
+                htmlFor="email"
                 className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-2"
               >
-                Username
+                Email Admin
               </label>
               <Input
-                type="text"
-                id="username"
-                name="username"
+                type="email"
+                id="email"
+                name="email"
                 required
-                placeholder="Masukkan username"
+                placeholder="admin@desasukoharjo.id"
                 className="w-full px-4 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
                 style={{ height: "42px" }}
               />
