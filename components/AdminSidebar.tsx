@@ -127,7 +127,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-4 py-6 flex flex-col gap-1">
+      <nav className="flex-1 px-4 py-4 flex flex-col gap-1 overflow-y-auto">
         {links.map((link) => {
           const isActive = link.activeRule(pathname);
           return (
