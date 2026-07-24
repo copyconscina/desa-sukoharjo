@@ -1,14 +1,17 @@
 import { Metadata } from "next";
 import { popData } from "@/lib/data";
+import { getProfilData } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Profil Desa Sukoharjo",
   description: "Sejarah, visi-misi, struktur pemerintahan, data kependudukan, dan kontak kantor Desa Sukoharjo.",
 };
 
-export default function ProfilPage() {
+export default async function ProfilPage() {
+  const profil = await getProfilData();
   const popMax = Math.max(...popData.map((d) => d.val));
 
   return (
@@ -54,23 +57,16 @@ export default function ProfilPage() {
                   Setelah periode kepemimpinan Siswo Sutirto, estafet kepemimpinan Desa Sukoharjo diampu secara berturut-turut oleh Sastro Darwoso (1955–2002), Sunarto (2002–2012), dan Sartono (2012–2019), sebelum sempat diisi oleh Prihastanto, SE., MM. sebagai Penjabat Kepala Desa. Melalui pemilihan kepala desa (Pilkades) tahun 2019, Sunarto kembali dipercaya oleh masyarakat untuk mengemban mandat sebagai Kepala Desa Sukoharjo hingga masa jabatan saat ini.
                 </p>
               </div>
-              <div>
-              </div>
             </div>
           </div>
           <Card className="vm-card border-none shadow-none text-white">
             <h3 className="text-white">Visi</h3>
-            <p className="text-[#e7e6d6]">
-              "Nyawiji sesarengan mbangun Desa Sukoharjo menjadi maju, inovatif, dan bermartabat."
-            </p>
+            <p className="text-[#e7e6d6]">"{profil.visi}"</p>
             <h3 className="text-white" style={{ marginTop: "20px" }}>Misi</h3>
             <ul className="text-[#e7e6d6]">
-              <li>Memperkuat tata kelola pemerintah yang bersih, demokratis, dan transparan, meliputi manajemen keuangan dan manajemen pelayanan pada masyarakat.</li>
-              <li>Pemerataan pembangunan yang berkeadilan.</li>
-              <li>Meningkatkan sumber daya manusia yang unggul dan berkualitas.</li>
-              <li>Mendorong kemandirian ekonomi kerakyatan yang berbasis pada sektor pertanian, peternakan, dan industri rumah tangga.</li>
-              <li>Meningkatkan inovasi desa dengan pemberdayaan masyarakat.</li>
-              <li>Meningkatkan kualitas kehidupan beragama, serta melestarikan adat istiadat dan budaya pada masyarakat.</li>
+              {profil.misi.map((m, idx) => (
+                <li key={idx}>{m}</li>
+              ))}
             </ul>
           </Card>
         </div>

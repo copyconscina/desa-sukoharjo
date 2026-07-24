@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getApbdesRingkasan, getApbdesBidangList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,52 +10,9 @@ export const metadata: Metadata = {
   description: "Laporan Anggaran Pendapatan dan Belanja Desa (APBDes) Sukoharjo Tahun Anggaran 2026.",
 };
 
-const apbdesRingkasan = {
-  pendapatan: "Rp 1.485.000.000",
-  belanja: "Rp 1.450.000.000",
-  pembiayaan: "Rp 35.000.000",
-  tahun: 2026,
-};
-
-const bidangBelanja = [
-  {
-    name: "Bidang Pembangunan Desa",
-    anggaran: "Rp 680.000.000",
-    realisasi: "Rp 450.000.000",
-    pct: "66.2%",
-    desc: "Pengaspalan jalan tani dusun, perbaikan drainase sawah, dan penerangan jalan umum.",
-  },
-  {
-    name: "Bidang Penyelenggaraan Pemerintahan",
-    anggaran: "Rp 390.000.000",
-    realisasi: "Rp 310.000.000",
-    pct: "79.4%",
-    desc: "Siltap & tunjangan Kades/perangkat, operasional kantor desa, dan tata kelola sistem digital.",
-  },
-  {
-    name: "Bidang Pembinaan Kemasyarakatan",
-    anggaran: "Rp 180.000.000",
-    realisasi: "Rp 145.000.000",
-    pct: "80.5%",
-    desc: "Dukungan kegiatan Karang Taruna, PKK, posyandu balita/lansia, dan festival budaya lokal.",
-  },
-  {
-    name: "Bidang Pemberdayaan Masyarakat (UMKM)",
-    anggaran: "Rp 150.000.000",
-    realisasi: "Rp 110.000.000",
-    pct: "73.3%",
-    desc: "Penyertaan modal BUMDes, pelatihan kemasan UMKM, dan bantuan bibit ternak kambing etawa.",
-  },
-  {
-    name: "Bidang Penanggulangan Bencana & Darurat",
-    anggaran: "Rp 50.000.000",
-    realisasi: "Rp 15.000.000",
-    pct: "30.0%",
-    desc: "Dana siaga bencana alam tanah longsor dan bantuan darurat sosial warga.",
-  },
-];
-
-export default function APBDesPage() {
+export default async function APBDesPage() {
+  const apbdesRingkasan = await getApbdesRingkasan();
+  const bidangBelanja = await getApbdesBidangList();
   return (
     <div className="font-sans">
       <header className="page-header">

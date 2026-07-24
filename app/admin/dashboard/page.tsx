@@ -1,4 +1,12 @@
-import { getBeritaList, getGaleriList, getUmkmList, getPotensiList } from "@/lib/db";
+import {
+  getBeritaList,
+  getGaleriList,
+  getUmkmList,
+  getPotensiList,
+  getLembagaList,
+  getPermohonanSuratList,
+  getProdukHukumList,
+} from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 
@@ -9,66 +17,58 @@ export default async function DashboardPage() {
   const galleryList = await getGaleriList();
   const umkmList = await getUmkmList();
   const potentialsList = await getPotensiList();
-
-  const newsCount = newsList.length;
-  const galleryCount = galleryList.length;
-  const umkmCount = umkmList.length;
-  const potentialsCount = potentialsList.length;
+  const lembagaList = await getLembagaList();
+  const suratList = await getPermohonanSuratList();
+  const produkHukumList = await getProdukHukumList();
 
   const stats = [
     {
-      label: "Berita Terbaru",
-      value: newsCount,
-      desc: "Agenda, pengumuman & kegiatan desa",
-      href: "/admin/dashboard/berita",
+      label: "Profil & Lembaga",
+      value: lembagaList.length,
+      desc: "Lembaga desa & Visi-Misi",
+      href: "/admin/dashboard/profil",
       color: "border-l-4 border-l-[color:var(--forest)]",
-      ic: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="var(--forest)" width="28" height="28">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-          <polyline points="22,6 12,13 2,6" />
-        </svg>
-      ),
+      ic: "🏛️",
     },
     {
-      label: "Galeri Terbaru",
-      value: galleryCount,
-      desc: "Foto dokumentasi & momen desa",
-      href: "/admin/dashboard/galeri",
+      label: "Layanan Warga",
+      value: suratList.length,
+      desc: "Pengajuan surat & Pengaduan",
+      href: "/admin/dashboard/layanan",
+      color: "border-l-4 border-l-[color:var(--clay)]",
+      ic: "📝",
+    },
+    {
+      label: "Transparansi",
+      value: produkHukumList.length,
+      desc: "APBDes, Perdes, PPID & Bansos",
+      href: "/admin/dashboard/transparansi",
       color: "border-l-4 border-l-[color:var(--padi)]",
-      ic: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="var(--padi)" width="28" height="28">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-          <circle cx="8.5" cy="8.5" r="1.5" />
-          <polyline points="21 15 16 10 5 21" />
-        </svg>
-      ),
+      ic: "📜",
+    },
+    {
+      label: "Berita Terbaru",
+      value: newsList.length,
+      desc: "Agenda, pengumuman & kegiatan",
+      href: "/admin/dashboard/berita",
+      color: "border-l-4 border-l-[color:var(--forest-deep)]",
+      ic: "📰",
     },
     {
       label: "Database UMKM",
-      value: umkmCount,
+      value: umkmList.length,
       desc: "Profil usaha warga terdaftar",
       href: "/admin/dashboard/umkm",
       color: "border-l-4 border-l-[color:var(--clay)]",
-      ic: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="var(--clay)" width="28" height="28">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <path d="M16 10a4 4 0 01-8 0" />
-        </svg>
-      ),
+      ic: "🏪",
     },
     {
-      label: "Potensi Desa",
-      value: potentialsCount,
-      desc: "Sektor unggulan teridentifikasi",
-      href: "/admin/dashboard/potensi",
+      label: "Galeri & Potensi",
+      value: galleryList.length + potentialsList.length,
+      desc: "Foto dokumentasi & sektor desa",
+      href: "/admin/dashboard/galeri",
       color: "border-l-4 border-l-[color:var(--sawah)]",
-      ic: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="var(--sawah)" width="28" height="28">
-          <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
-          <line x1="12" y1="22" x2="12" y2="15.5" />
-        </svg>
-      ),
+      ic: "🖼️",
     },
   ];
 
@@ -81,12 +81,12 @@ export default async function DashboardPage() {
           Selamat Datang, Administrator
         </h1>
         <p className="text-sm text-[color:var(--ink-soft)] mt-1">
-          Gunakan panel ini untuk memperbarui informasi terbaru, mengunggah dokumentasi galeri, mengelola database pelaku usaha (UMKM) desa, serta memperbarui deskripsi potensi pembangunan desa.
+          Gunakan panel ini untuk mengelola Profil Desa & Lembaga, Layanan Surat & Pengaduan Warga, Transparansi Keuangan APBDes & Regulasi, Berita, Galeri, serta Database UMKM Desa Sukoharjo.
         </p>
       </div>
 
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat, idx) => (
           <Link href={stat.href} key={idx} className="no-underline group">
             <Card className={`bg-[color:var(--card)] p-6 border border-[color:var(--line)] shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between ${stat.color} h-full`}>
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
                   {stat.desc} →
                 </span>
               </div>
-              <div className="p-2 bg-[color:var(--parchment-2)] rounded-lg">
+              <div className="p-2 bg-[color:var(--parchment-2)] rounded-lg text-2xl">
                 {stat.ic}
               </div>
             </Card>

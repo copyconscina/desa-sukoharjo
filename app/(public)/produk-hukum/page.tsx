@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getProdukHukumList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,34 +11,9 @@ export const metadata: Metadata = {
   description: "Arsip Peraturan Desa (Perdes), Peraturan Kepala Desa (Perkades), dan Keputusan Kepala Desa Sukoharjo.",
 };
 
-const sampleDokumen = [
-  {
-    id: 1,
-    nomor: "Perdes No. 03 Tahun 2025",
-    judul: "Peraturan Desa tentang Rencana Kerja Pemerintah Desa (RKPDes) Tahun 2026",
-    jenis: "Perdes",
-    tahun: 2025,
-    size: "1.2 MB",
-  },
-  {
-    id: 2,
-    nomor: "Perdes No. 01 Tahun 2025",
-    judul: "Peraturan Desa tentang Pengelolaan Sampah dan Pelestarian Lingkungan Hidup",
-    jenis: "Perdes",
-    tahun: 2025,
-    size: "850 KB",
-  },
-  {
-    id: 3,
-    nomor: "SK Kades No. 12 Tahun 2026",
-    judul: "Keputusan Kepala Desa tentang Pembentukan Pengurus BUMDes Sukoharjo Sejahtera",
-    jenis: "SK Kades",
-    tahun: 2026,
-    size: "520 KB",
-  },
-];
+export default async function ProdukHukumPage() {
+  const dokumenList = await getProdukHukumList();
 
-export default function ProdukHukumPage() {
   return (
     <div className="font-sans">
       <header className="page-header">
@@ -53,17 +29,17 @@ export default function ProdukHukumPage() {
       <section className="block">
         <div className="wrap">
           <div className="flex flex-col gap-4">
-            {sampleDokumen.map((doc) => (
+            {dokumenList.map((doc) => (
               <Card key={doc.id} className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-[color:var(--clay)] text-white border-none text-xs">
-                      {doc.jenis}
+                      {doc.kategori}
                     </Badge>
                     <span className="font-mono text-xs text-[color:var(--ink-soft)]">{doc.nomor}</span>
                   </div>
                   <h3 className="font-heading text-lg text-[color:var(--ink)] mt-1">{doc.judul}</h3>
-                  <span className="font-mono text-xs text-[color:var(--ink-soft)]">Tahun: {doc.tahun} · Ukuran: {doc.size}</span>
+                  <span className="font-mono text-xs text-[color:var(--ink-soft)]">Ditetapkan: {doc.tanggal}</span>
                 </div>
                 <Button variant="outline" className="btn btn-dark border-none text-xs px-4 py-2 flex items-center gap-2 self-start md:self-auto">
                   <span>📄 Unduh Dokumen PDF</span>

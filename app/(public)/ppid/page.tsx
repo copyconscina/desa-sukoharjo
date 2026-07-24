@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getPpidList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,25 +10,31 @@ export const metadata: Metadata = {
   description: "Layanan informasi publik sesuai UU No. 14 Tahun 2008 tentang Keterbukaan Informasi Publik di Desa Sukoharjo.",
 };
 
-const ppidKategori = [
-  {
-    title: "Informasi Berkala",
-    desc: "Informasi yang diperbarui secara rutin seperti Laporan Keuangan APBDes, Profil Desa, RKPDes, dan RPJMDes.",
-    items: ["Laporan Keuangan APBDes 2026", "Profil & Demografi Desa 2026", "Laporan Penyelenggaraan Pemdes (LPPD)"],
-  },
-  {
-    title: "Informasi Serta-Merta",
-    desc: "Informasi yang dapat mengancam hajat hidup orang banyak dan ketertiban umum seperti peringatan bencana dan wabah.",
-    items: ["Peringatan Dini Cuaca Ekstrem Wonogiri", "Panduan Kesiapsiagaan Bencana Tanah Longsor"],
-  },
-  {
-    title: "Informasi Setiap Saat",
-    desc: "Informasi yang wajib disediakan dan dapat diakses publik sewaktu-waktu sesuai ketentuan hukum.",
-    items: ["Daftar Inventaris & Aset Desa", "Daftar Peraturan Desa (Perdes)", "Struktur Organisasi Pemerintah Desa"],
-  },
-];
+export default async function PPIDPage() {
+  const ppidDocs = await getPpidList();
 
-export default function PPIDPage() {
+  const berkala = ppidDocs.filter((d) => d.kategori === "Berkala");
+  const sertaMerta = ppidDocs.filter((d) => d.kategori === "Serta-Merta");
+  const setiapSaat = ppidDocs.filter((d) => d.kategori === "Setiap Saat");
+
+  const categories = [
+    {
+      title: "Informasi Berkala",
+      desc: "Informasi yang diperbarui secara rutin seperti Laporan Keuangan APBDes, Profil Desa, RKPDes, dan RPJMDes.",
+      items: berkala,
+    },
+    {
+      title: "Informasi Serta-Merta",
+      desc: "Informasi yang dapat mengancam hajat hidup orang banyak dan ketertiban umum seperti peringatan bencana dan wabah.",
+      items: sertaMerta,
+    },
+    {
+      title: "Informasi Setiap Saat",
+      desc: "Informasi yang wajib disediakan dan dapat diakses publik sewaktu-waktu sesuai ketentuan hukum.",
+      items: setiapSaat,
+    },
+  ];
+
   return (
     <div className="font-sans">
       <header className="page-header">
@@ -43,7 +50,7 @@ export default function PPIDPage() {
       <section className="block">
         <div className="wrap flex flex-col gap-8">
           <div className="grid cols-3">
-            {ppidKategori.map((kat, idx) => (
+            {categories.map((kat, idx) => (
               <Card key={idx} className="card shadow-none border border-[color:var(--line)] p-6 flex flex-col justify-between">
                 <div>
                   <Badge className="bg-[color:var(--forest)] text-white border-none mb-3">
@@ -54,9 +61,15 @@ export default function PPIDPage() {
                   <div className="border-t border-[color:var(--line)] pt-3 flex flex-col gap-2">
                     <span className="text-xs font-mono uppercase text-[color:var(--clay)] font-semibold">Dokumen Disediakan:</span>
                     <ul className="text-xs text-[color:var(--ink)] list-disc pl-4 space-y-1">
-                      {kat.items.map((doc, i) => (
-                        <li key={i}>{doc}</li>
-                      ))}
+                      {kat.items.length > 0 ? (
+                        kat.items.map((doc) => (
+                          <li key={doc.id}>
+                            <strong>{doc.judul}</strong> ({doc.format} · {doc.ukuran})
+                          </li>
+                        ))
+                      ) : (
+                        <li className="italic text-[color:var(--ink-soft)]">Belum ada dokumen.</li>
+                      )}
                     </ul>
                   </div>
                 </div>

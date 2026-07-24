@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getBansosList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,31 +10,9 @@ export const metadata: Metadata = {
   description: "Transparansi data penerima dan program bantuan sosial (BLT Dana Desa, PKH, BPNT) Desa Sukoharjo.",
 };
 
-const bansosProgram = [
-  {
-    name: "BLT Dana Desa 2026",
-    quota: "48 KPM (Keluarga Penerima Manfaat)",
-    nominal: "Rp 300.000 / Bulan",
-    status: "Tersalurkan Tahap II",
-    desc: "Bantuan Langsung Tunai dari Dana Desa untuk keluarga miskin ekstrim & lansia tunggal.",
-  },
-  {
-    name: "Program Keluarga Harapan (PKH)",
-    quota: "142 KPM",
-    nominal: "Sesuai Komponen (Kesehatan/Pendidikan)",
-    status: "Tersalurkan via Himbara",
-    desc: "Bantuan sosial bersyarat dari Kementerian Sosial untuk keluarga kurang mampu.",
-  },
-  {
-    name: "Bantuan Pangan Non Tunai (BPNT)",
-    quota: "195 KPM",
-    nominal: "Bahan Pangan Pokok / Sembako",
-    status: "Rutin Bulanan",
-    desc: "Bantuan sembako beras dan bahan pangan pokok untuk menjaga ketahanan pangan keluarga.",
-  },
-];
+export default async function BansosPage() {
+  const bansosProgram = await getBansosList();
 
-export default function BansosPage() {
   return (
     <div className="font-sans">
       <header className="page-header">
@@ -49,8 +28,8 @@ export default function BansosPage() {
       <section className="block">
         <div className="wrap flex flex-col gap-8">
           <div className="grid cols-3">
-            {bansosProgram.map((prog, idx) => (
-              <Card key={idx} className="card shadow-none border border-[color:var(--line)] p-6 flex flex-col justify-between">
+            {bansosProgram.map((prog) => (
+              <Card key={prog.id} className="card shadow-none border border-[color:var(--line)] p-6 flex flex-col justify-between">
                 <div>
                   <Badge className="bg-[color:var(--forest)] text-white border-none mb-3">
                     {prog.status}
@@ -58,8 +37,9 @@ export default function BansosPage() {
                   <h3 className="font-heading text-xl text-[color:var(--ink)] mb-2">{prog.name}</h3>
                   <p className="text-sm text-[color:var(--ink-soft)] mb-4">{prog.desc}</p>
                   <div className="border-t border-[color:var(--line)] pt-3 flex flex-col gap-1 text-xs font-mono text-[color:var(--ink-soft)]">
-                    <div>👥 Penerima: <strong className="text-[color:var(--ink)]">{prog.quota}</strong></div>
+                    <div>👥 Penerima: <strong className="text-[color:var(--ink)]">{prog.kpmCount} KPM</strong></div>
                     <div>💰 Nominal: <strong className="text-[color:var(--clay)]">{prog.nominal}</strong></div>
+                    <div>🏛️ Sumber: <strong className="text-[color:var(--ink)]">{prog.source}</strong></div>
                   </div>
                 </div>
               </Card>

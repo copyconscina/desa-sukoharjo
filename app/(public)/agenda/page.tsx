@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getAgendaList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,37 +10,8 @@ export const metadata: Metadata = {
   description: "Jadwal dan kalender kegiatan masyarakat serta Pemerintah Desa Sukoharjo, Kecamatan Tirtomoyo, Wonogiri.",
 };
 
-const sampleAgenda = [
-  {
-    id: 1,
-    title: "Musyawarah Desa (Musdes) Rencana Pembangunan 2027",
-    desc: "Pembahasan prioritas pembangunan sarana infrastruktur jalan tani dan pemberdayaan ekonomi UMKM desa.",
-    location: "Balai Desa Sukoharjo",
-    date: "15 Juli 2026",
-    time: "09:00 WIB",
-    category: "Pemerintahan",
-  },
-  {
-    id: 2,
-    title: "Pelatihan Packaging & Pemasaran Digital UMKM",
-    desc: "Pelatihan pembuatan kemasan produk dan pendaftaran sertifikasi halal untuk pelaku UMKM lokal.",
-    location: "Pendopo Desa Sukoharjo",
-    date: "22 Juli 2026",
-    time: "13:00 WIB",
-    category: "Ekonomi",
-  },
-  {
-    id: 3,
-    title: "Gotong Royong & Pembersihan Akses Wisata",
-    desc: "Kerja bakti pembersihan jalur perbukitan dan lingkungan dusun bersama Karang Taruna.",
-    location: "Dusun Ngrancah & Sukorejo",
-    date: "28 Juli 2026",
-    time: "07:00 WIB",
-    category: "Kemasyarakatan",
-  },
-];
-
-export default function AgendaPage() {
+export default async function AgendaPage() {
+  const agendaList = await getAgendaList();
   return (
     <div className="font-sans">
       <header className="page-header">
@@ -55,7 +27,7 @@ export default function AgendaPage() {
       <section className="block">
         <div className="wrap">
           <div className="grid cols-3">
-            {sampleAgenda.map((item) => (
+            {agendaList.map((item) => (
               <Card key={item.id} className="card shadow-none border border-[color:var(--line)] flex flex-col justify-between">
                 <div>
                   <Badge className="bg-[color:var(--forest)] text-white border-none w-fit mb-3">
