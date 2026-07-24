@@ -62,3 +62,106 @@ export const STAT = {
   population: "4.915",
   umkm: 54,
 };
+
+// Profil & Lembaga
+export interface Lembaga {
+  id: number;
+  name: string;
+  leader: string;
+  desc: string;
+  members: string;
+  icon: string;
+}
+
+export interface ProfilDesa {
+  visi: string;
+  misi: string[];
+}
+
+// Layanan
+export interface Agenda {
+  id: number;
+  title: string;
+  desc: string;
+  location: string;
+  date: string;
+  time: string;
+  category: string;
+}
+
+export interface BukuTamu {
+  id: number;
+  name: string;
+  origin: string;
+  message: string;
+  date: string;
+}
+
+export interface PermohonanSurat {
+  id: number;
+  nama: string;
+  nik: string;
+  jenisSurat: string;
+  keperluan: string;
+  telepon: string;
+  tanggal: string;
+  status: "Menunggu" | "Diproses" | "Selesai" | "Ditolak";
+  catatan?: string;
+}
+
+export interface Pengaduan {
+  id: number;
+  nama: string;
+  dusun: string;
+  judul: string;
+  isi: string;
+  tanggal: string;
+  status: "Baru" | "Diproses" | "Selesai" | "Ditolak";
+  tanggapan?: string;
+}
+
+// Transparansi
+export interface ApbdesRingkasan {
+  pendapatan: string;
+  belanja: string;
+  pembiayaan: string;
+  tahun: number;
+}
+
+export interface ApbdesBidang {
+  id: number;
+  name: string;
+  anggaran: string;
+  realisasi: string;
+  pct: string;
+  desc: string;
+}
+
+export interface ProdukHukum {
+  id: number;
+  nomor: string;
+  judul: string;
+  kategori: string;
+  tanggal: string;
+  fileUrl?: string;
+}
+
+export interface PpidItem {
+  id: number;
+  judul: string;
+  kategori: "Berkala" | "Serta-Merta" | "Setiap Saat";
+  format: string;
+  ukuran: string;
+  tanggal: string;
+  fileUrl?: string;
+}
+
+export interface BansosItem {
+  id: number;
+  name: string;
+  source: string;
+  kpmCount: number;
+  nominal: string;
+  status: string;
+  desc: string;
+}
