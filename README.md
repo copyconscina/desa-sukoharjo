@@ -99,18 +99,6 @@ desa-sukoharjo/
 
 ---
 
-## ⚙️ Variabel Lingkungan (`.env`)
-
-Aplikasi menggunakan Supabase sebagai backend resmi. Pastikan file `.env` berisi kunci berikut:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://hdsirturragywteqmioc.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-> ⚠️ **Catatan Keamanan**: Jangan pernah menyimpan password admin dalam bentuk teks polos di file `.env`. Akun admin dikelola secara aman melalui Dashboard Supabase pada menu **Authentication -> Users**.
-
 ---
 
 ## ⚙️ Panduan Menjalankan Proyek Secara Lokal
