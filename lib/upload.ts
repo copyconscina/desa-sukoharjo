@@ -1,30 +1,54 @@
 import { supabaseServer } from "@/utils/supabase/admin";
+import sharp from "sharp";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // Allow up to 15MB input file since server compresses it down to ~300KB
 
 export async function uploadSingleFile(file: File): Promise<string> {
   if (!file || file.size === 0) {
     throw new Error("Tidak ada file yang diunggah.");
   }
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error("Ukuran gambar tidak boleh melebihi 5MB.");
-  }
   if (!file.type.startsWith("image/")) {
     throw new Error("File harus berupa gambar (JPG, PNG, WebP, dll).");
   }
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("Ukuran file asli tidak boleh melebihi 15MB.");
+  }
 
   const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+  const inputBuffer = Buffer.from(bytes);
 
-  const fileExtension = file.name.split(".").pop();
+  let outputBuffer: Buffer = inputBuffer;
+  let contentType = file.type;
+  let fileExtension = file.name.split(".").pop() || "jpg";
+
+  // Kompresi otomatis untuk semua format gambar raster menggunakan sharp
+  if (file.type !== "image/svg+xml") {
+    try {
+      outputBuffer = await sharp(inputBuffer)
+        .resize({
+          width: 1920,
+          height: 1920,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 82 })
+        .toBuffer();
+
+      contentType = "image/webp";
+      fileExtension = "webp";
+    } catch (compressErr) {
+      console.warn("Gagal kompresi gambar dengan sharp, menggunakan buffer asli:", compressErr);
+    }
+  }
+
   const uniqueFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
 
-  // Upload to Supabase Storage bucket 'sukoharjo-assets'
+  // Upload file yang sudah dikompresi ke Supabase Storage bucket 'sukoharjo-assets'
   const { error: uploadError } = await supabaseServer.storage
     .from("sukoharjo-assets")
-    .upload(uniqueFilename, buffer, {
-      contentType: file.type,
-      duplex: "half", // standard option for node streams
+    .upload(uniqueFilename, outputBuffer, {
+      contentType,
+      duplex: "half",
     } as any);
 
   if (uploadError) {
