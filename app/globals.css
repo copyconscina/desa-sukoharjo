@@ -264,7 +264,7 @@ p {
   gap: 2px;
   list-style: none;
 }
-.nav-links a,
+.nav-links > li > a,
 .nav-links .nav-dropdown-trigger {
   display: flex;
   align-items: center;
@@ -275,15 +275,43 @@ p {
   color: var(--ink-soft);
   transition: background .15s, color .15s;
 }
-.nav-links a:hover,
+.nav-links > li > a:hover,
 .nav-links .nav-dropdown-trigger:hover {
   background: var(--parchment-2);
   color: var(--ink);
 }
-.nav-links a.active,
+.nav-links > li > a.active,
 .nav-links .nav-dropdown-trigger.active {
   background: var(--forest);
-  color: #fff;
+  color: #ffffff !important;
+}
+.nav-links > li > a.active:hover,
+.nav-links .nav-dropdown-trigger.active:hover {
+  background: var(--forest);
+  color: #ffffff !important;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink) !important;
+  margin: 0 4px;
+  transition: background .15s, color .15s;
+}
+.dropdown-menu a:hover {
+  background: var(--parchment-2) !important;
+  color: var(--ink) !important;
+}
+.dropdown-menu a.active {
+  background: var(--forest) !important;
+  color: #ffffff !important;
+}
+.dropdown-menu a.active:hover {
+  background: var(--forest) !important;
+  color: #ffffff !important;
 }
 .nav-toggle {
   display: none;

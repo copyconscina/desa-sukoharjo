@@ -27,8 +27,7 @@ Website ini dirancang secara modular, modern, dan responsif:
 12. **Layanan Surat Online (`/layanan-surat`)**: Permohonan pengurusan surat publik secara mandiri.
 13. **Layanan Pengaduan (`/pengaduan`)**: Form aspirasi dan pengaduan warga secara online.
 14. **Buku Tamu Digital (`/buku-tamu`)**: Form pendaftaran kunjungan tamu/dinas desa.
-15. **Peta Wilayah (`/peta`)**: Peta geografis dan batas wilayah Desa Sukoharjo.
-16. **Statistik Desa (`/statistik`)**: Visualisasi data demografi dan kependudukan interaktif.
+15. **Statistik Desa (`/statistik`)**: Visualisasi data demografi dan kependudukan interaktif.
 
 ### 🔐 Panel Administrasi (`/admin`)
 - **Keamanan Tingkat Tinggi**: Autentikasi berbasis **Supabase Auth** dan kebijakan **Row Level Security (RLS)** pada database PostgreSQL.
@@ -77,7 +76,6 @@ desa-sukoharjo/
 │   ├── layanan-surat/        # Halaman Layanan Surat Online (/layanan-surat)
 │   ├── lembaga/              # Halaman Profil Lembaga Desa (/lembaga)
 │   ├── pengaduan/            # Halaman Pengaduan Warga (/pengaduan)
-│   ├── peta/                 # Halaman Peta Wilayah (/peta)
 │   ├── potensi/              # Halaman Potensi Desa (/potensi)
 │   ├── ppid/                 # Halaman Informasi Publik PPID (/ppid)
 │   ├── produk-hukum/         # Halaman Perdes & Produk Hukum (/produk-hukum)
