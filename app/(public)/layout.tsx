@@ -42,9 +42,6 @@ export default function PublicLayout({
               <li>
                 <Link href="/galeri">Galeri</Link>
               </li>
-              <li>
-                <Link href="/admin" className="text-emerald-400 font-medium">Panel Admin 🔒</Link>
-              </li>
             </ul>
           </div>
           <div>
