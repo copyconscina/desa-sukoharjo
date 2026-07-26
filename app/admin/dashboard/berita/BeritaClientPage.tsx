@@ -156,10 +156,14 @@ export default function BeritaClientPage({ initialNews }: Props) {
                     <SelectValue placeholder="Pilih Kategori / Tag" />
                   </SelectTrigger>
                   <SelectContent className="bg-[color:var(--card)] border border-[color:var(--line)] text-[color:var(--ink)]">
-                    <SelectItem value="Kegiatan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kegiatan</SelectItem>
-                    <SelectItem value="Pengumuman" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pengumuman</SelectItem>
-                    <SelectItem value="Agenda" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Agenda</SelectItem>
-                    <SelectItem value="Pembangunan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pembangunan</SelectItem>
+                    <SelectItem value="Kegiatan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kegiatan Desa</SelectItem>
+                    <SelectItem value="Pengumuman" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pengumuman Resmi</SelectItem>
+                    <SelectItem value="Pembangunan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pembangunan & Infrastruktur</SelectItem>
+                    <SelectItem value="Kesehatan & Bansos" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kesehatan & Bansos</SelectItem>
+                    <SelectItem value="Pendidikan & Kepemudaan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pendidikan & Kepemudaan</SelectItem>
+                    <SelectItem value="Pertanian & Ketahanan Pangan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pertanian & Ketahanan Pangan</SelectItem>
+                    <SelectItem value="Pemerintahan & Hukum" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pemerintahan & Hukum</SelectItem>
+                    <SelectItem value="Keagamaan & Adat" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Keagamaan & Adat</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

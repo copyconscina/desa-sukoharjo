@@ -175,9 +175,13 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                     <SelectValue placeholder="Pilih Kategori" />
                   </SelectTrigger>
                   <SelectContent className="bg-[color:var(--card)] border border-[color:var(--line)] text-[color:var(--ink)]">
-                    <SelectItem value="Kegiatan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kegiatan</SelectItem>
-                    <SelectItem value="UMKM" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">UMKM</SelectItem>
-                    <SelectItem value="Potensi" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Potensi</SelectItem>
+                    <SelectItem value="Kegiatan Desa" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kegiatan Desa</SelectItem>
+                    <SelectItem value="Pembangunan" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pembangunan & Infrastruktur</SelectItem>
+                    <SelectItem value="Kesenian & Budaya" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Kesenian & Budaya</SelectItem>
+                    <SelectItem value="Potensi & Alam" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Potensi & Alam</SelectItem>
+                    <SelectItem value="UMKM & Ekonomi" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">UMKM & Ekonomi</SelectItem>
+                    <SelectItem value="Sosial & Bansos" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Sosial & Keanggotaan</SelectItem>
+                    <SelectItem value="Pemuda & Olahraga" className="focus:bg-[color:var(--parchment)] focus:text-[color:var(--forest-deep)]">Pemuda & Olahraga</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -324,7 +328,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
           file={rawFile}
           isOpen={isCropOpen}
           onClose={() => setIsCropOpen(false)}
-          defaultAspectRatio="free"
+          defaultAspectRatio="16:9"
           onCrop={(cropped) => {
             setFile(cropped);
           }}

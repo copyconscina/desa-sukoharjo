@@ -109,9 +109,32 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
   };
 
   const saved = await addBerita(newBerita);
-  
+
+  // Otomatis masukkan gambar berita ke halaman Galeri
+  if (images && images.trim().length > 0) {
+    const imageUrlList = images
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    for (const imgUrl of imageUrlList) {
+      try {
+        await addGaleri({
+          label: title,
+          cat: tag || "Kegiatan Desa",
+          grad: "g1",
+          image: imgUrl,
+          desc: `Foto dari Berita: ${title}`,
+        });
+      } catch (err) {
+        console.error("Gagal menyalin gambar berita ke galeri:", err);
+      }
+    }
+  }
+
   revalidatePath("/");
   revalidatePath("/berita");
+  revalidatePath("/galeri");
   return { success: true, item: saved };
 }
 

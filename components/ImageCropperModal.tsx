@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -17,7 +24,7 @@ export default function ImageCropperModal({
   isOpen,
   onClose,
   onCrop,
-  defaultAspectRatio = "free",
+  defaultAspectRatio = "16:9",
 }: Props) {
   const [aspectRatio, setAspectRatio] = useState<string>(defaultAspectRatio);
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -176,8 +183,8 @@ export default function ImageCropperModal({
       const w = (cropWidth / 100) * img.naturalWidth;
       const h = (cropHeight / 100) * img.naturalHeight;
 
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = Math.max(1, w);
+      canvas.height = Math.max(1, h);
 
       const ctx = canvas.getContext("2d");
       if (ctx) {
@@ -185,14 +192,14 @@ export default function ImageCropperModal({
         canvas.toBlob((blob) => {
           if (blob) {
             const croppedFile = new File([blob], file.name, {
-              type: file.type,
+              type: file.type || "image/jpeg",
               lastModified: Date.now(),
             });
             onCrop(croppedFile);
           }
           setIsProcessing(false);
           onClose();
-        }, file.type);
+        }, file.type || "image/jpeg");
       } else {
         setIsProcessing(false);
       }
@@ -204,44 +211,41 @@ export default function ImageCropperModal({
     };
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
-      <Card className="w-full max-w-lg bg-[color:var(--card)] border border-[color:var(--line)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg bg-[color:var(--card)] border border-[color:var(--line)] rounded-2xl p-0 gap-0 overflow-hidden shadow-2xl">
         
         {/* Modal Header */}
-        <div className="p-4 border-b border-[color:var(--line)] flex justify-between items-center bg-[color:var(--parchment)]">
-          <div>
-            <h3 className="font-heading text-sm text-[color:var(--forest-deep)]">Sesuaikan & Potong Foto</h3>
-            <p className="text-[10px] text-[color:var(--ink-soft)] font-mono uppercase tracking-wider mt-0.5">Atur Letak / Rasio Tampilan Gambar</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-black/5 text-[color:var(--ink-soft)] rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-          >
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2.5" stroke="currentColor" width="18" height="18">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+        <DialogHeader className="p-4 border-b border-[color:var(--line)] bg-[color:var(--parchment)] flex flex-col justify-start">
+          <DialogTitle className="font-heading text-base text-[color:var(--forest-deep)] text-left">
+            Potong & Atur Gambar
+          </DialogTitle>
+          <DialogDescription className="text-xs text-[color:var(--ink-soft)] font-mono uppercase tracking-wider text-left mt-0.5">
+            Atur Letak & Rasio Pemotongan Foto
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Modal Content / Preview Area */}
-        <div className="p-6 flex-1 overflow-y-auto flex flex-col gap-4">
-          <div className="flex items-center justify-center bg-black/5 rounded-xl border border-[color:var(--line)] min-h-[220px] p-4">
+        {/* Modal Body */}
+        <div className="p-5 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
+          
+          {/* Canvas / Image Preview Container (Strictly Clipped Container) */}
+          <div className="flex items-center justify-center bg-slate-900/95 rounded-xl border border-[color:var(--line)] min-h-[220px] p-3 overflow-hidden relative">
             <div 
               ref={containerRef}
-              className="relative overflow-hidden cursor-move select-none touch-none w-fit h-fit"
+              className="relative overflow-hidden cursor-move select-none touch-none w-fit h-fit max-w-full max-h-[280px] rounded-lg flex items-center justify-center"
+              style={{ clipPath: "inset(0)", isolation: "isolate" }}
               onMouseDown={handleDragStart}
               onTouchStart={handleTouchStart}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={imageUrl} 
-                alt="Crop preview source" 
-                className="max-w-full h-auto max-h-[300px] block pointer-events-none rounded-lg"
-              />
+              {imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img 
+                  src={imageUrl} 
+                  alt="Crop preview source" 
+                  className="max-w-full h-auto max-h-[280px] block pointer-events-none rounded-lg object-contain"
+                />
+              )}
+              
               {/* Dark semi-transparent overlay with clear cutout */}
               <div 
                 style={{
@@ -251,7 +255,7 @@ export default function ImageCropperModal({
                   width: `${cropWidth}%`,
                   height: `${cropHeight}%`,
                   border: "2px dashed #ffffff",
-                  boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+                  boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.65)",
                   pointerEvents: "none",
                 }}
               >
@@ -271,11 +275,11 @@ export default function ImageCropperModal({
             </label>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { name: "Bebas", val: "free" },
-                { name: "1:1 (Kotak)", val: "1:1" },
                 { name: "16:9 (Banner)", val: "16:9" },
+                { name: "1:1 (Persegi)", val: "1:1" },
                 { name: "4:3 (Foto)", val: "4:3" },
                 { name: "3:2 (Klasik)", val: "3:2" },
+                { name: "Bebas", val: "free" },
               ].map((item) => (
                 <button
                   key={item.val}
@@ -294,7 +298,7 @@ export default function ImageCropperModal({
           </div>
 
           {/* Position & Size Adjustment Sliders */}
-          <div className="flex flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-1">
             <div>
               <div className="flex justify-between text-[11px] font-mono text-[color:var(--ink-soft)] mb-1">
                 <span>LEBAR BINGKAI POTONG</span>
@@ -363,10 +367,11 @@ export default function ImageCropperModal({
               * Tips: Anda juga dapat mengeklik atau mengusap (drag) gambar di atas untuk memindahkan bingkai potong.
             </p>
           </div>
+
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-[color:var(--line)] bg-[color:var(--parchment)] flex gap-2 justify-end">
+        <DialogFooter className="p-4 border-t border-[color:var(--line)] bg-[color:var(--parchment)] flex flex-row gap-2 justify-end">
           <Button
             type="button"
             variant="outline"
@@ -384,9 +389,9 @@ export default function ImageCropperModal({
           >
             {isProcessing ? "Memotong..." : "Potong & Simpan"}
           </Button>
-        </div>
+        </DialogFooter>
 
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
