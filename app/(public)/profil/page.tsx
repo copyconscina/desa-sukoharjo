@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { popData } from "@/lib/data";
-import { getProfilData } from "@/lib/db";
+import { getProfilData, getLembagaList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ export const metadata: Metadata = {
 
 export default async function ProfilPage() {
   const profil = await getProfilData();
+  const lembagaList = await getLembagaList();
+  const pemdes = lembagaList.find((l) => l.name.toLowerCase().includes("pemerintah")) || lembagaList[0];
   const popMax = Math.max(...popData.map((d) => d.val));
 
   return (
@@ -75,11 +78,19 @@ export default async function ProfilPage() {
       {/* STRUKTUR PEMERINTAHAN */}
       <section className="block on-parchment2">
         <div className="wrap">
-          <div className="section-head" style={{ margin: "0 auto 40px", textAlign: "center" }}>
+          <div className="section-head" style={{ margin: "0 auto 30px", textAlign: "center" }}>
             <p className="eyebrow" style={{ textAlign: "center" }}>
               Struktur Pemerintahan
             </p>
             <h2>Perangkat Desa Sukoharjo</h2>
+            {pemdes && (
+              <div className="flex justify-center items-center gap-2 mt-2">
+                <Badge className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none">
+                  {pemdes.members}
+                </Badge>
+                <span className="text-xs font-mono text-[color:var(--clay)] font-semibold">{pemdes.leader}</span>
+              </div>
+            )}
           </div>
           <div className="org-chart">
             <div className="org-node top">
