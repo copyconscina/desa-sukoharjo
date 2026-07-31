@@ -3,6 +3,7 @@ import { getGaleriList } from "@/lib/db";
 import GaleriList from "@/components/GaleriList";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Galeri Desa Sukoharjo",

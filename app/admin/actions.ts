@@ -33,7 +33,6 @@ import {
   GaleriItem,
   Lembaga,
   Agenda,
-  PermohonanSurat,
   Pengaduan,
   ApbdesRingkasan,
   ApbdesBidang,
@@ -49,6 +48,10 @@ import {
 } from "@/lib/auth";
 import { uploadSingleFile, uploadMultipleFiles } from "@/lib/upload";
 import { headers } from "next/headers";
+
+function revalidateAll() {
+  revalidatePath("/", "layout");
+}
 
 // Auth Actions
 export async function loginAction(formData: FormData) {
@@ -103,7 +106,6 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
 
   const saved = await addBerita(newBerita);
 
-  // Otomatis masukkan gambar berita ke halaman Galeri
   if (images && images.trim().length > 0) {
     const imageUrlList = images
       .split(",")
@@ -125,9 +127,7 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
     }
   }
 
-  revalidatePath("/");
-  revalidatePath("/berita");
-  revalidatePath("/galeri");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -136,9 +136,7 @@ export async function deleteBeritaAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteBerita(id);
-
-  revalidatePath("/");
-  revalidatePath("/berita");
+  revalidateAll();
   return { success: true };
 }
 
@@ -156,9 +154,7 @@ export async function addGaleriAction(label: string, cat: string, grad: string, 
   };
 
   await addGaleri(newItem);
-
-  revalidatePath("/");
-  revalidatePath("/galeri");
+  revalidateAll();
   return { success: true };
 }
 
@@ -167,9 +163,7 @@ export async function deleteGaleriAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteGaleri(id);
-
-  revalidatePath("/");
-  revalidatePath("/galeri");
+  revalidateAll();
   return { success: true };
 }
 
@@ -179,9 +173,7 @@ export async function updatePotensiAction(num: string, title: string, desc: stri
   if (!isAuth) throw new Error("Unauthorized");
 
   await updatePotensi(num, title, desc);
-
-  revalidatePath("/");
-  revalidatePath("/potensi");
+  revalidateAll();
   return { success: true };
 }
 
@@ -191,12 +183,7 @@ export async function saveUmkmAction(itemData: Omit<Umkm, "id"> & { id?: number 
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveUmkm(itemData);
-
-  revalidatePath("/");
-  revalidatePath("/umkm");
-  if (itemData.id) {
-    revalidatePath(`/umkm/${itemData.id}`);
-  }
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -205,10 +192,7 @@ export async function deleteUmkmAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteUmkm(id);
-
-  revalidatePath("/");
-  revalidatePath("/umkm");
-  revalidatePath(`/umkm/${id}`);
+  revalidateAll();
   return { success: true };
 }
 
@@ -246,9 +230,7 @@ export async function saveLembagaAction(item: Omit<Lembaga, "id"> & { id?: numbe
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveLembaga(item);
-  revalidatePath("/");
-  revalidatePath("/lembaga");
-  revalidatePath("/profil");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -257,9 +239,7 @@ export async function deleteLembagaAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteLembaga(id);
-  revalidatePath("/");
-  revalidatePath("/lembaga");
-  revalidatePath("/profil");
+  revalidateAll();
   return { success: true };
 }
 
@@ -268,8 +248,7 @@ export async function updateProfilVisiMisiAction(visi: string, misi: string[]) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await updateProfilVisiMisi({ visi, misi });
-  revalidatePath("/");
-  revalidatePath("/profil");
+  revalidateAll();
   return { success: true };
 }
 
@@ -279,8 +258,7 @@ export async function saveAgendaAction(item: Omit<Agenda, "id"> & { id?: number 
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveAgenda(item);
-  revalidatePath("/");
-  revalidatePath("/agenda");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -289,8 +267,7 @@ export async function deleteAgendaAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteAgenda(id);
-  revalidatePath("/");
-  revalidatePath("/agenda");
+  revalidateAll();
   return { success: true };
 }
 
@@ -299,7 +276,7 @@ export async function deleteBukuTamuAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteBukuTamu(id);
-  revalidatePath("/buku-tamu");
+  revalidateAll();
   return { success: true };
 }
 
@@ -308,7 +285,7 @@ export async function updateStatusPengaduanAction(id: number, status: Pengaduan[
   if (!isAuth) throw new Error("Unauthorized");
 
   await updateStatusPengaduan(id, status, tanggapan);
-  revalidatePath("/pengaduan");
+  revalidateAll();
   return { success: true };
 }
 
@@ -317,7 +294,7 @@ export async function deletePengaduanAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deletePengaduan(id);
-  revalidatePath("/pengaduan");
+  revalidateAll();
   return { success: true };
 }
 
@@ -327,8 +304,7 @@ export async function updateApbdesRingkasanAction(data: ApbdesRingkasan) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await updateApbdesRingkasan(data);
-  revalidatePath("/");
-  revalidatePath("/apbdes");
+  revalidateAll();
   return { success: true };
 }
 
@@ -337,8 +313,7 @@ export async function saveApbdesBidangAction(item: Omit<ApbdesBidang, "id"> & { 
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveApbdesBidang(item);
-  revalidatePath("/");
-  revalidatePath("/apbdes");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -347,8 +322,7 @@ export async function deleteApbdesBidangAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteApbdesBidang(id);
-  revalidatePath("/");
-  revalidatePath("/apbdes");
+  revalidateAll();
   return { success: true };
 }
 
@@ -357,7 +331,7 @@ export async function saveProdukHukumAction(item: Omit<ProdukHukum, "id"> & { id
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveProdukHukum(item);
-  revalidatePath("/produk-hukum");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -366,7 +340,7 @@ export async function deleteProdukHukumAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteProdukHukum(id);
-  revalidatePath("/produk-hukum");
+  revalidateAll();
   return { success: true };
 }
 
@@ -375,8 +349,6 @@ export async function updateStatistikPendudukAction(dataInput: StatistikPenduduk
   if (!isAuth) throw new Error("Unauthorized");
 
   await updateStatistikPenduduk(dataInput);
-  revalidatePath("/statistik");
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }
-

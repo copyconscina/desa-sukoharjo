@@ -3,6 +3,7 @@ import { getUmkmList } from "@/lib/db";
 import UmkmList from "@/components/UmkmList";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Database UMKM Desa Sukoharjo",

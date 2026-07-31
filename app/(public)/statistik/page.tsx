@@ -3,6 +3,7 @@ import { getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Statistik Kependudukan — Desa Sukoharjo",
