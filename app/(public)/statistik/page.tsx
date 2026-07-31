@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Statistik Kependudukan — Desa Sukoharjo",

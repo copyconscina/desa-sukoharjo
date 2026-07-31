@@ -3,7 +3,7 @@ import { getApbdesRingkasan, getApbdesBidangList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Transparansi Keuangan (APBDes) — Desa Sukoharjo",

@@ -17,9 +17,6 @@ import {
   deleteAgenda,
   addBukuTamu,
   deleteBukuTamu,
-  addPermohonanSurat,
-  updateStatusSurat,
-  deletePermohonanSurat,
   addPengaduan,
   updateStatusPengaduan,
   deletePengaduan,
@@ -270,7 +267,7 @@ export async function updateProfilVisiMisiAction(visi: string, misi: string[]) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  await updateProfilVisiMisi(visi, misi);
+  await updateProfilVisiMisi({ visi, misi });
   revalidatePath("/");
   revalidatePath("/profil");
   return { success: true };
@@ -303,24 +300,6 @@ export async function deleteBukuTamuAction(id: number) {
 
   await deleteBukuTamu(id);
   revalidatePath("/buku-tamu");
-  return { success: true };
-}
-
-export async function updateStatusSuratAction(id: number, status: PermohonanSurat["status"], catatan?: string) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await updateStatusSurat(id, status, catatan);
-  revalidatePath("/layanan-surat");
-  return { success: true };
-}
-
-export async function deletePermohonanSuratAction(id: number) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await deletePermohonanSurat(id);
-  revalidatePath("/layanan-surat");
   return { success: true };
 }
 

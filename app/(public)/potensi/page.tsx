@@ -4,7 +4,7 @@ import { getPotensiList } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Potensi Desa — Desa Sukoharjo",

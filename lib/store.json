@@ -1,0 +1,206 @@
+{
+  "umkm": [
+    {
+      "id": 1,
+      "name": "Kopi Gunung Nglanggeran / Sukoharjo",
+      "owner": "Bpk. Slamet Raharjo",
+      "category": "Makanan & Minuman",
+      "year": 2019,
+      "product": "Kopi Robusta & Arabika Sangrai Dusun Ngrancah",
+      "desc": "Kopi olahan khas pegunungan Sukoharjo yang dipetik dari perkebunan warga dusun, diproses secara alami dengan cita rasa rempah hangat.",
+      "address": "Dusun Ngrancah RT 02/RW 03, Desa Sukoharjo",
+      "wa": "6281234567890",
+      "social": "@kopidesasukoharjo",
+      "grad": "from-amber-900 to-amber-700",
+      "image": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=800&auto=format&fit=crop"
+    },
+    {
+      "id": 2,
+      "name": "Keripik Singkong & Pisang Gurih 'Sari Rasa'",
+      "owner": "Ibu Marni",
+      "category": "Makanan & Minuman",
+      "year": 2017,
+      "product": "Keripik Singkong Renyah, Pisang Sale & Keripik Gadung",
+      "desc": "Olahan camilan olahan rumahan hasil panen kebun sendiri tanpa bahan pengawet. Tersedia aneka rasa original dan pedas manis.",
+      "address": "Dusun Bonagung RT 01/RW 01, Desa Sukoharjo",
+      "wa": "6282134567891",
+      "social": "@sarirasa_sukoharjo",
+      "grad": "from-amber-700 to-yellow-600",
+      "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?q=80&w=800&auto=format&fit=crop"
+    },
+    {
+      "id": 3,
+      "name": "Batik Tulis & Cap Sukoharjo Indah",
+      "owner": "Ibu Rahayu",
+      "category": "Kerajinan & Fashion",
+      "year": 2021,
+      "product": "Kain Batik Motif Flora Pegunungan & Selendang Tradisional",
+      "desc": "Kerajinan batik pewarna alam motif khas flora lokal Tirtomoyo yang dibuat secara handmade oleh kelompok wanita tani desa.",
+      "address": "Dusun Sukorejo RT 03/RW 02, Desa Sukoharjo",
+      "wa": "6283123456789",
+      "social": "@batik_sukoharjo",
+      "grad": "from-amber-800 to-stone-700",
+      "image": "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?q=80&w=800&auto=format&fit=crop"
+    },
+    {
+      "id": 4,
+      "name": "Madu Murni 'Wono Asri'",
+      "owner": "Mas Rahmat",
+      "category": "Pertanian & Peternakan",
+      "year": 2020,
+      "product": "Madu Liar Hutan & Madu Budidaya Klanceng",
+      "desc": "Madu murni alami kaya khasiat dipanen langsung dari peternakan lebah hias dan lebah liar di sekitar hutan perbukitan Sukoharjo.",
+      "address": "Dusun Tirto RT 02/RW 01, Desa Sukoharjo",
+      "wa": "6285234567892",
+      "social": "@madu_wonoasri",
+      "grad": "from-yellow-700 to-amber-600",
+      "image": "https://images.unsplash.com/photo-1587049352847-4a222e784d38?q=80&w=800&auto=format&fit=crop"
+    }
+  ],
+  "berita": [
+    {
+      "id": 1,
+      "tag": "Pemerintahan",
+      "cls": "tag-pemdes",
+      "title": "Musyawarah Desa Pembahasan Rencana Kerja Pemerintah Desa (RKPDes) Tahun 2027",
+      "desc": "Pemerintah Desa Sukoharjo menggelar Musdes bersama BPD, tokoh masyarakat, dan perwakilan perempuan untuk menentukan skala prioritas pembangunan fisik serta pemberdayaan ekonomi warga.",
+      "date": "24 Jul 2026",
+      "images": ["https://images.unsplash.com/photo-1577495508048-b635879837f1?q=80&w=800&auto=format&fit=crop"]
+    },
+    {
+      "id": 2,
+      "tag": "Pembangunan",
+      "cls": "tag-pembangunan",
+      "title": "Realisasi Pengaspalan Jalan Tani Dusun Ngrancah Sukses Membantu Akses Panen Warga",
+      "desc": "Melalui alokasi APBDes 2026, pembangunan akses jalan tani sepanjang 600 meter kini dapat dilalui kendaraan roda tiga untuk mempercepat pengangkutan hasil pertanian sawah dan perbukitan.",
+      "date": "18 Jul 2026",
+      "images": ["https://images.unsplash.com/photo-1584467735871-8e85353a8413?q=80&w=800&auto=format&fit=crop"]
+    },
+    {
+      "id": 3,
+      "tag": "Ekonomi",
+      "cls": "tag-ekonomi",
+      "title": "Pelatihan Kemasan Produk & Pemasaran Digital untuk Pelaku UMKM Lokal Sukoharjo",
+      "desc": "Bekerjasama dengan Dinas Perdagangan Wonogiri, Pemdes menggelar lokakarya bagi 30 pengrajin dan produsen makanan olahan desa agar siap menembus pasar e-commerce.",
+      "date": "10 Jul 2026",
+      "images": ["https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop"]
+    }
+  ],
+  "galeri": [
+    {
+      "id": 1,
+      "label": "Pemandangan Perbukitan & Sawah Dusun Sukorejo",
+      "cat": "Alam & Lanskap",
+      "grad": "from-green-900 to-emerald-700",
+      "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=800&auto=format&fit=crop",
+      "desc": "Pesona alam hamparan hijau persawahan terasering yang dikelilingi perbukitan asri Desa Sukoharjo."
+    },
+    {
+      "id": 2,
+      "label": "Gotong Royong Perbaikan Irigasi Desa",
+      "cat": "Kegiatan Warga",
+      "grad": "from-amber-900 to-yellow-800",
+      "image": "https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=800&auto=format&fit=crop",
+      "desc": "Kekompakan warga dusun dalam tradisi gotong royong membersihkan saluran irigasi menjelang musim tanam."
+    },
+    {
+      "id": 3,
+      "label": "Pentas Seni Budaya & Jathilan Desa",
+      "cat": "Kebudayaan",
+      "grad": "from-stone-900 to-amber-950",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800&auto=format&fit=crop",
+      "desc": "Pelestarian seni tari tradisional jathilan yang rutin diadakan saat perayaan bersih desa."
+    }
+  ],
+  "potensi": [
+    {
+      "num": "01",
+      "title": "Pertanian Padi & Perkebunan Kopi",
+      "desc": "Lahan pertanian subur dengan sistem terasering menghasilkan beras kualitas unggul serta komoditas kopi robusta pegunungan khas Tirtomoyo."
+    },
+    {
+      "num": "02",
+      "title": "Industri Rumahan & Kerajinan UMKM",
+      "desc": "Dukungan kelompok olahan makanan keripik, pembuatan batik tulis pewarna alam, dan budidaya madu hutan murni yang terus berkembang."
+    },
+    {
+      "num": "03",
+      "title": "Potensi Wisata Perbukitan Asri",
+      "desc": "Panorama bukit asri yang sejuk, spot panorama sunrise, serta jalur tracking perbukitan yang cocok dikembangkan sebagai destinasi ekowisata desa."
+    }
+  ],
+  "lembaga": [
+    { "id": 1, "name": "Pemerintah Desa Sukoharjo", "leader": "Kepala Desa: Bpk. Sunarto", "desc": "Unsur penyelenggara pemerintahan desa yang bertugas memimpin pelaksanaan urusan pemerintahan, pembangunan, dan kemasyarakatan.", "members": "14 Perangkat Desa & Staf", "icon": "🏛️" },
+    { "id": 2, "name": "Badan Permusyawaratan Desa (BPD)", "leader": "Ketua: Bpk. Drs. Mulyono", "desc": "Lembaga perwujudan demokrasi dalam penyelenggaraan pemerintahan desa yang mengawasi kinerja Kades dan menyalurkan aspirasi warga.", "members": "9 Anggota BPD", "icon": "📜" },
+    { "id": 3, "name": "Pemberdayaan Kesejahteraan Keluarga (PKK)", "leader": "Ketua: Ibu Suparmi", "desc": "Lembaga kemasyarakatan sebagai mitra kerja pemerintah desa dalam membina dan memberdayakan keluarga sejahtera.", "members": "35 Pengurus & Kader Pokja", "icon": "🌸" },
+    { "id": 4, "name": "Karang Taruna Sukoharjo Mandiri", "leader": "Ketua: Mas Rizky Febrian", "desc": "Wadah pengembangan generasi muda desa di bidang olahraga, kebudayaan, sosial, dan kewirausahaan pemuda.", "members": "45 Pemuda & Pemudi Dusun", "icon": "⚽" },
+    { "id": 5, "name": "Lembaga Pemberdayaan Masyarakat Desa (LPMD)", "leader": "Ketua: Bpk. Suroto", "desc": "Wadah yang dibentuk atas prakarsa masyarakat sebagai mitra pemerintah desa dalam menampung dan menyalurkan aspirasi pembangunan.", "members": "11 Pengurus LPMD", "icon": "🤝" },
+    { "id": 6, "name": "Pengurus RT & RW se-Desa Sukoharjo", "leader": "Koordinator: Bpk. Wagiman", "desc": "Lembaga kemasyarakatan terdepan yang membantu pelayanan administratif dan menjaga keharmonisan antar warga dusun.", "members": "11 RW & 38 RT", "icon": "🏡" }
+  ],
+  "profil": {
+    "visi": "Nyawiji sesarengan mbangun Desa Sukoharjo menjadi maju, inovatif, dan bermartabat.",
+    "misi": [
+      "Memperkuat tata kelola pemerintah yang bersih, demokratis, dan transparan, meliputi manajemen keuangan dan manajemen pelayanan pada masyarakat.",
+      "Pemerataan pembangunan yang berkeadilan.",
+      "Meningkatkan sumber daya manusia yang unggul dan berkualitas.",
+      "Mendorong kemandirian ekonomi kerakyatan yang berbasis pada sektor pertanian, peternakan, dan industri rumah tangga.",
+      "Meningkatkan inovasi desa dengan pemberdayaan masyarakat.",
+      "Meningkatkan kualitas kehidupan beragama, serta melestarikan adat istiadat dan budaya pada masyarakat."
+    ]
+  },
+  "agenda": [
+    { "id": 1, "title": "Musyawarah Desa (Musdes) Rencana Pembangunan 2027", "desc": "Pembahasan prioritas pembangunan sarana infrastruktur jalan tani dan pemberdayaan ekonomi UMKM desa.", "location": "Balai Desa Sukoharjo", "date": "15 Juli 2026", "time": "09:00 WIB", "category": "Pemerintahan" },
+    { "id": 2, "title": "Pelatihan Packaging & Pemasaran Digital UMKM", "desc": "Pelatihan pembuatan kemasan produk dan pendaftaran sertifikasi halal untuk pelaku UMKM lokal.", "location": "Pendopo Desa Sukoharjo", "date": "22 Juli 2026", "time": "13:00 WIB", "category": "Ekonomi" },
+    { "id": 3, "title": "Gotong Royong & Pembersihan Akses Wisata", "desc": "Kerja bakti pembersihan jalur perbukitan dan lingkungan dusun bersama Karang Taruna.", "location": "Dusun Ngrancah & Sukorejo", "date": "28 Juli 2026", "time": "07:00 WIB", "category": "Kemasyarakatan" }
+  ],
+  "buku_tamu": [
+    { "id": 1, "name": "Bpk. Bambang Wijaya", "origin": "Semarang", "message": "Aplikasi website desanya sangat bagus dan informatif!", "date": "20 Juli 2026" },
+    { "id": 2, "name": "Ibu Rina Susanti", "origin": "Solo", "message": "Mohon info jadwal layanan di Balai Desa.", "date": "21 Juli 2026" }
+  ],
+  "pengaduan": [
+    { "id": 1, "nama": "Sugeng Mulyono", "dusun": "Sukorejo", "judul": "Penerangan Jalan Dusun Bonagung Mati", "isi": "Lampu PJU dekat pertigaan RT 02 Bonagung padam sejak 3 hari lalu.", "tanggal": "21 Juli 2026", "status": "Diproses", "tanggapan": "Tim teknis perangkat desa akan mengecek lokasi hari ini." }
+  ],
+  "apbdes_ringkasan": {
+    "pendapatan": "Rp 1.485.000.000",
+    "belanja": "Rp 1.450.000.000",
+    "pembiayaan": "Rp 35.000.000",
+    "tahun": 2026
+  },
+  "apbdes_bidang": [
+    { "id": 1, "name": "Bidang Pembangunan Desa", "anggaran": "Rp 680.000.000", "realisasi": "Rp 450.000.000", "pct": "66.2%", "desc": "Pengaspalan jalan tani dusun, perbaikan drainase sawah, dan penerangan jalan umum." },
+    { "id": 2, "name": "Bidang Penyelenggaraan Pemerintahan", "anggaran": "Rp 390.000.000", "realisasi": "Rp 310.000.000", "pct": "79.4%", "desc": "Siltap & tunjangan Kades/perangkat, operasional kantor desa, dan tata kelola sistem digital." },
+    { "id": 3, "name": "Bidang Pembinaan Kemasyarakatan", "anggaran": "Rp 180.000.000", "realisasi": "Rp 145.000.000", "pct": "80.5%", "desc": "Dukungan kegiatan Karang Taruna, PKK, posyandu balita/lansia, dan festival budaya lokal." },
+    { "id": 4, "name": "Bidang Pemberdayaan Masyarakat (UMKM)", "anggaran": "Rp 150.000.000", "realisasi": "Rp 110.000.000", "pct": "73.3%", "desc": "Penyertaan modal BUMDes, pelatihan kemasan UMKM, dan bantuan bibit ternak kambing etawa." },
+    { "id": 5, "name": "Bidang Penanggulangan Bencana & Darurat", "anggaran": "Rp 50.000.000", "realisasi": "Rp 15.000.000", "pct": "30.0%", "desc": "Dana siaga bencana alam tanah longsor dan bantuan darurat sosial warga." }
+  ],
+  "produk_hukum": [
+    { "id": 1, "nomor": "Perdes No. 03 Tahun 2026", "judul": "Peraturan Desa tentang Rencana Kerja Pemerintah Desa (RKPDes) 2026", "kategori": "Peraturan Desa", "tanggal": "10 Januari 2026" },
+    { "id": 2, "nomor": "SK Kades No. 12 Tahun 2026", "judul": "Keputusan Kepala Desa tentang Pengangkatan Pengurus BUMDes Sukoharjo", "kategori": "SK Kepala Desa", "tanggal": "05 Februari 2026" }
+  ],
+  "statistik_penduduk": {
+    "totalPenduduk": 3842,
+    "totalKk": 1145,
+    "lakiLaki": 1928,
+    "perempuan": 1914,
+    "dusunList": [
+      { "nama": "Sukorejo", "rt": 8, "rw": 2, "jiwa": 840 },
+      { "nama": "Bonagung", "rt": 10, "rw": 3, "jiwa": 980 },
+      { "nama": "Ngrancah", "rt": 7, "rw": 2, "jiwa": 710 },
+      { "nama": "Tirto", "rt": 6, "rw": 2, "jiwa": 660 },
+      { "nama": "Pagerun", "rt": 7, "rw": 2, "jiwa": 652 }
+    ],
+    "pekerjaanList": [
+      { "name": "Petani & Pekebun", "pct": 45, "count": 1728 },
+      { "name": "Buruh Tani / Harian", "pct": 22, "count": 845 },
+      { "name": "Wiraswasta / UMKM", "pct": 15, "count": 576 },
+      { "name": "Karyawan Swasta", "pct": 10, "count": 384 },
+      { "name": "PNS / TNI / POLRI", "pct": 8, "count": 309 }
+    ],
+    "pendidikanList": [
+      { "name": "SD / Sederajat", "count": 1150 },
+      { "name": "SMP / Sederajat", "count": 980 },
+      { "name": "SMA / SMK / Sederajat", "count": 1240 },
+      { "name": "Diploma / Sarjana (D3/S1/S2)", "count": 472 }
+    ]
+  }
+}

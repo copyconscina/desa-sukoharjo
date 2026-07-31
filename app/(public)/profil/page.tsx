@@ -3,7 +3,7 @@ import { popData } from "@/lib/data";
 import { getProfilData } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Profil Desa Sukoharjo",
@@ -64,7 +64,7 @@ export default async function ProfilPage() {
             <p className="text-[#e7e6d6]">"{profil.visi}"</p>
             <h3 className="text-white" style={{ marginTop: "20px" }}>Misi</h3>
             <ul className="text-[#e7e6d6]">
-              {profil.misi.map((m, idx) => (
+              {profil.misi.map((m: string, idx: number) => (
                 <li key={idx}>{m}</li>
               ))}
             </ul>

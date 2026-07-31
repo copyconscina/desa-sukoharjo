@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getUmkmList } from "@/lib/db";
 import UmkmList from "@/components/UmkmList";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Database UMKM Desa Sukoharjo",
