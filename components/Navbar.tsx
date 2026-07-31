@@ -130,7 +130,7 @@ export default function Navbar() {
             <button
               className={cn(
                 "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
-                (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/layanan-surat") || pathname.startsWith("/pengaduan")) && "active"
+                (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/pengaduan")) && "active"
               )}
               onClick={() => toggleDropdown("layanan")}
             >
@@ -142,13 +142,6 @@ export default function Navbar() {
                 activeDropdown === "layanan" ? "flex" : "hidden"
               )}
             >
-              <Link
-                href="/layanan-surat"
-                className={cn(pathname.startsWith("/layanan-surat") && "active")}
-                onClick={closeAll}
-              >
-                Permohonan Surat Online
-              </Link>
               <Link
                 href="/pengaduan"
                 className={cn(pathname.startsWith("/pengaduan") && "active")}
@@ -178,7 +171,7 @@ export default function Navbar() {
             <button
               className={cn(
                 "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
-                (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik") || pathname.startsWith("/ppid") || pathname.startsWith("/bansos")) && "active"
+                (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik")) && "active"
               )}
               onClick={() => toggleDropdown("transparansi")}
             >
@@ -198,13 +191,6 @@ export default function Navbar() {
                 APBDes & Keuangan
               </Link>
               <Link
-                href="/statistik"
-                className={cn(pathname.startsWith("/statistik") && "active")}
-                onClick={closeAll}
-              >
-                Statistik Kependudukan
-              </Link>
-              <Link
                 href="/produk-hukum"
                 className={cn(pathname.startsWith("/produk-hukum") && "active")}
                 onClick={closeAll}
@@ -212,22 +198,14 @@ export default function Navbar() {
                 Produk Hukum Desa
               </Link>
               <Link
-                href="/ppid"
-                className={cn(pathname.startsWith("/ppid") && "active")}
+                href="/statistik"
+                className={cn(pathname.startsWith("/statistik") && "active")}
                 onClick={closeAll}
               >
-                PPID (Informasi Publik)
-              </Link>
-              <Link
-                href="/bansos"
-                className={cn(pathname.startsWith("/bansos") && "active")}
-                onClick={closeAll}
-              >
-                Transparansi Bansos
+                Statistik Kependudukan
               </Link>
             </div>
           </li>
-
 
           <li>
             <Link

@@ -2,8 +2,7 @@ import {
   getApbdesRingkasan,
   getApbdesBidangList,
   getProdukHukumList,
-  getPpidList,
-  getBansosList,
+  getStatistikPenduduk,
 } from "@/lib/db";
 import TransparansiClientPage from "./TransparansiClientPage";
 
@@ -13,16 +12,14 @@ export default async function TransparansiAdminPage() {
   const ringkasan = await getApbdesRingkasan();
   const bidangList = await getApbdesBidangList();
   const produkHukumList = await getProdukHukumList();
-  const ppidList = await getPpidList();
-  const bansosList = await getBansosList();
+  const statistik = await getStatistikPenduduk();
 
   return (
     <TransparansiClientPage
       initialRingkasan={ringkasan}
       initialBidangList={bidangList}
       initialProdukHukum={produkHukumList}
-      initialPpid={ppidList}
-      initialBansos={bansosList}
+      initialStatistik={statistik}
     />
   );
 }

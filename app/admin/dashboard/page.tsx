@@ -4,7 +4,7 @@ import {
   getUmkmList,
   getPotensiList,
   getLembagaList,
-  getPermohonanSuratList,
+  getPengaduanList,
   getProdukHukumList,
 } from "@/lib/db";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   const umkmList = await getUmkmList();
   const potentialsList = await getPotensiList();
   const lembagaList = await getLembagaList();
-  const suratList = await getPermohonanSuratList();
+  const pengaduanList = await getPengaduanList();
   const produkHukumList = await getProdukHukumList();
 
   const stats = [
@@ -32,16 +32,16 @@ export default async function DashboardPage() {
     },
     {
       label: "Layanan Warga",
-      value: suratList.length,
-      desc: "Pengajuan surat & Pengaduan",
+      value: pengaduanList.length,
+      desc: "Pengaduan, Agenda & Buku Tamu",
       href: "/admin/dashboard/layanan",
       color: "border-l-4 border-l-[color:var(--clay)]",
-      ic: "📝",
+      ic: "📢",
     },
     {
       label: "Transparansi",
       value: produkHukumList.length,
-      desc: "APBDes, Perdes, PPID & Bansos",
+      desc: "APBDes, Perdes & Statistik",
       href: "/admin/dashboard/transparansi",
       color: "border-l-4 border-l-[color:var(--padi)]",
       ic: "📜",

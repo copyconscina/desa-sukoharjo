@@ -14,8 +14,7 @@ import {
   ApbdesRingkasan,
   ApbdesBidang,
   ProdukHukum,
-  PpidItem,
-  BansosItem,
+  StatistikPenduduk,
 } from "./data";
 import dbJson from "./db.json";
 
@@ -412,16 +411,48 @@ let memoryProdukHukum: ProdukHukum[] = [
   { id: 2, nomor: "SK Kades No. 12 Tahun 2026", judul: "Keputusan Kepala Desa tentang Pengangkatan Pengurus BUMDes Sukoharjo", kategori: "SK Kepala Desa", tanggal: "05 Februari 2026" }
 ];
 
-let memoryPpid: PpidItem[] = [
-  { id: 1, judul: "Laporan Realisasi APBDes Sukoharjo TA 2025", kategori: "Berkala", format: "PDF", ukuran: "1.2 MB", tanggal: "15 Jan 2026" },
-  { id: 2, judul: "SOP Pelayanan Permohonan Surat Mandiri Warga", kategori: "Setiap Saat", format: "PDF", ukuran: "450 KB", tanggal: "01 Mar 2026" }
-];
+let memoryStatistikPenduduk: StatistikPenduduk = {
+  totalPenduduk: 3842,
+  totalKk: 1145,
+  lakiLaki: 1928,
+  perempuan: 1914,
+  dusunList: [
+    { nama: "Sukorejo", rt: 8, rw: 2, jiwa: 840 },
+    { nama: "Bonagung", rt: 10, rw: 3, jiwa: 980 },
+    { nama: "Ngrancah", rt: 7, rw: 2, jiwa: 710 },
+    { nama: "Tirto", rt: 6, rw: 2, jiwa: 660 },
+    { nama: "Pagerun", rt: 7, rw: 2, jiwa: 652 },
+  ],
+  pekerjaanList: [
+    { name: "Petani & Pekebun", pct: 45, count: 1728 },
+    { name: "Buruh Tani / Harian", pct: 22, count: 845 },
+    { name: "Wiraswasta / UMKM", pct: 15, count: 576 },
+    { name: "Karyawan Swasta", pct: 10, count: 384 },
+    { name: "PNS / TNI / POLRI", pct: 8, count: 309 },
+  ],
+  pendidikanList: [
+    { name: "SD / Sederajat", count: 1150 },
+    { name: "SMP / Sederajat", count: 980 },
+    { name: "SMA / SMK / Sederajat", count: 1240 },
+    { name: "Diploma / Sarjana (D3/S1/S2)", count: 472 },
+  ],
+};
 
-let memoryBansos: BansosItem[] = [
-  { id: 1, name: "Bantuan Langsung Tunai (BLT Dana Desa)", source: "Dana Desa Sukoharjo", kpmCount: 45, nominal: "Rp 300.000 / Bulan", status: "Tersalurkan Tahap II", desc: "Sasaran keluarga miskin ekstrem yang tidak menerima program bantuan sosial PKH/BPNT." },
-  { id: 2, name: "Program Keluarga Harapan (PKH)", source: "Kemensos RI", kpmCount: 120, nominal: "Bervariasi per Komponen", status: "Aktif Penyaluran", desc: "Bantuan bersyarat untuk keluarga memiliki anak sekolah, balita, ibu hamil, dan lansia." },
-  { id: 3, name: "Bantuan Sembako (BPNT)", source: "Kemensos RI", kpmCount: 185, nominal: "Rp 200.000 / Bulan", status: "Aktif Penyaluran", desc: "Bantuan Pangan Non-Tunai dalam bentuk e-warong sembako." }
-];
+export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
+  if (!isPlaceholderSupabase) {
+    const { data } = await supabase.from("statistik_penduduk").select("*").single();
+    if (data) return data as StatistikPenduduk;
+  }
+  return memoryStatistikPenduduk;
+}
+
+export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    await supabaseServer.from("statistik_penduduk").upsert({ id: 1, ...dataInput });
+  }
+  memoryStatistikPenduduk = dataInput;
+  return true;
+}
 
 // --- LEMBAGA & PROFIL ---
 export async function getLembagaList(): Promise<Lembaga[]> {
@@ -714,82 +745,6 @@ export async function deleteProdukHukum(id: number): Promise<boolean> {
     await supabaseServer.from("produk_hukum").delete().eq("id", id);
   }
   memoryProdukHukum = memoryProdukHukum.filter((p) => p.id !== id);
-  return true;
-}
-
-// --- PPID INFORMASI PUBLIK ---
-export async function getPpidList(): Promise<PpidItem[]> {
-  if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("ppid").select("*").order("id", { ascending: false });
-    if (!error && data) return data as PpidItem[];
-  }
-  return memoryPpid;
-}
-
-export async function savePpid(item: Omit<PpidItem, "id"> & { id?: number }): Promise<PpidItem> {
-  if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("ppid").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as PpidItem;
-    } else {
-      const { data, error } = await supabaseServer.from("ppid").insert(item).select().single();
-      if (!error && data) return data as PpidItem;
-    }
-  }
-  if (item.id) {
-    memoryPpid = memoryPpid.map((p) => (p.id === item.id ? { ...p, ...item } : p));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryPpid.length > 0 ? Math.max(...memoryPpid.map((p) => p.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryPpid.unshift(newItem);
-    return newItem;
-  }
-}
-
-export async function deletePpid(id: number): Promise<boolean> {
-  if (!isPlaceholderSupabase) {
-    await supabaseServer.from("ppid").delete().eq("id", id);
-  }
-  memoryPpid = memoryPpid.filter((p) => p.id !== id);
-  return true;
-}
-
-// --- BANSOS ---
-export async function getBansosList(): Promise<BansosItem[]> {
-  if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("bansos").select("*").order("id", { ascending: true });
-    if (!error && data) return data as BansosItem[];
-  }
-  return memoryBansos;
-}
-
-export async function saveBansos(item: Omit<BansosItem, "id"> & { id?: number }): Promise<BansosItem> {
-  if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("bansos").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as BansosItem;
-    } else {
-      const { data, error } = await supabaseServer.from("bansos").insert(item).select().single();
-      if (!error && data) return data as BansosItem;
-    }
-  }
-  if (item.id) {
-    memoryBansos = memoryBansos.map((b) => (b.id === item.id ? { ...b, ...item } : b));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryBansos.length > 0 ? Math.max(...memoryBansos.map((b) => b.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryBansos.push(newItem);
-    return newItem;
-  }
-}
-
-export async function deleteBansos(id: number): Promise<boolean> {
-  if (!isPlaceholderSupabase) {
-    await supabaseServer.from("bansos").delete().eq("id", id);
-  }
-  memoryBansos = memoryBansos.filter((b) => b.id !== id);
   return true;
 }
 

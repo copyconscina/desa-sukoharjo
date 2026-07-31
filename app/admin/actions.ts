@@ -28,10 +28,7 @@ import {
   deleteApbdesBidang,
   saveProdukHukum,
   deleteProdukHukum,
-  savePpid,
-  deletePpid,
-  saveBansos,
-  deleteBansos,
+  updateStatistikPenduduk,
 } from "@/lib/db";
 import {
   Umkm,
@@ -44,8 +41,7 @@ import {
   ApbdesRingkasan,
   ApbdesBidang,
   ProdukHukum,
-  PpidItem,
-  BansosItem,
+  StatistikPenduduk,
 } from "@/lib/data";
 import {
   checkAuth,
@@ -395,38 +391,13 @@ export async function deleteProdukHukumAction(id: number) {
   return { success: true };
 }
 
-export async function savePpidAction(item: Omit<PpidItem, "id"> & { id?: number }) {
+export async function updateStatistikPendudukAction(dataInput: StatistikPenduduk) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  const saved = await savePpid(item);
-  revalidatePath("/ppid");
-  return { success: true, item: saved };
-}
-
-export async function deletePpidAction(id: number) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await deletePpid(id);
-  revalidatePath("/ppid");
+  await updateStatistikPenduduk(dataInput);
+  revalidatePath("/statistik");
+  revalidatePath("/");
   return { success: true };
 }
 
-export async function saveBansosAction(item: Omit<BansosItem, "id"> & { id?: number }) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  const saved = await saveBansos(item);
-  revalidatePath("/bansos");
-  return { success: true, item: saved };
-}
-
-export async function deleteBansosAction(id: number) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await deleteBansos(id);
-  revalidatePath("/bansos");
-  return { success: true };
-}

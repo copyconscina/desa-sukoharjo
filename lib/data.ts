@@ -156,12 +156,13 @@ export interface PpidItem {
   fileUrl?: string;
 }
 
-export interface BansosItem {
-  id: number;
-  name: string;
-  source: string;
-  kpmCount: number;
-  nominal: string;
-  status: string;
-  desc: string;
+export interface StatistikPenduduk {
+  totalPenduduk: number;
+  totalKk: number;
+  lakiLaki: number;
+  perempuan: number;
+  dusunList: { nama: string; rt: number; rw: number; jiwa: number }[];
+  pekerjaanList: { name: string; pct: number; count: number }[];
+  pendidikanList: { name: string; count: number }[];
 }
+

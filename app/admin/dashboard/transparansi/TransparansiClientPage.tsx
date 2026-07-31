@@ -5,8 +5,7 @@ import {
   ApbdesRingkasan,
   ApbdesBidang,
   ProdukHukum,
-  PpidItem,
-  BansosItem,
+  StatistikPenduduk,
 } from "@/lib/data";
 import {
   updateApbdesRingkasanAction,
@@ -14,10 +13,7 @@ import {
   deleteApbdesBidangAction,
   saveProdukHukumAction,
   deleteProdukHukumAction,
-  savePpidAction,
-  deletePpidAction,
-  saveBansosAction,
-  deleteBansosAction,
+  updateStatistikPendudukAction,
 } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,42 +23,36 @@ interface Props {
   initialRingkasan: ApbdesRingkasan;
   initialBidangList: ApbdesBidang[];
   initialProdukHukum: ProdukHukum[];
-  initialPpid: PpidItem[];
-  initialBansos: BansosItem[];
+  initialStatistik: StatistikPenduduk;
 }
 
 export default function TransparansiClientPage({
   initialRingkasan,
   initialBidangList,
   initialProdukHukum,
-  initialPpid,
-  initialBansos,
+  initialStatistik,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"apbdes" | "produkhukum" | "ppid" | "bansos">("apbdes");
+  const [activeTab, setActiveTab] = useState<"apbdes" | "produkhukum" | "statistik">("apbdes");
 
   // State
   const [ringkasan, setRingkasan] = useState<ApbdesRingkasan>(initialRingkasan);
   const [bidangList, setBidangList] = useState<ApbdesBidang[]>(initialBidangList);
   const [produkHukumList, setProdukHukumList] = useState<ProdukHukum[]>(initialProdukHukum);
-  const [ppidList, setPpidList] = useState<PpidItem[]>(initialPpid);
-  const [bansosList, setBansosList] = useState<BansosItem[]>(initialBansos);
+  const [statistik, setStatistik] = useState<StatistikPenduduk>(initialStatistik);
 
-  // Modals state
+  // Ringkasan & Bidang state
   const [isRingkasanSaving, setIsRingkasanSaving] = useState(false);
-
   const [editingBidang, setEditingBidang] = useState<Partial<ApbdesBidang> | null>(null);
   const [isBidangModalOpen, setIsBidangModalOpen] = useState(false);
 
+  // Produk Hukum state
   const [editingProdukHukum, setEditingProdukHukum] = useState<Partial<ProdukHukum> | null>(null);
   const [isProdukHukumModalOpen, setIsProdukHukumModalOpen] = useState(false);
 
-  const [editingPpid, setEditingPpid] = useState<Partial<PpidItem> | null>(null);
-  const [isPpidModalOpen, setIsPpidModalOpen] = useState(false);
+  // Statistik state
+  const [isStatistikSaving, setIsStatistikSaving] = useState(false);
 
-  const [editingBansos, setEditingBansos] = useState<Partial<BansosItem> | null>(null);
-  const [isBansosModalOpen, setIsBansosModalOpen] = useState(false);
-
-  // APBDES RINGKASAN
+  // --- HANDLERS APBDES ---
   const handleSaveRingkasan = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsRingkasanSaving(true);
@@ -70,13 +60,12 @@ export default function TransparansiClientPage({
       await updateApbdesRingkasanAction(ringkasan);
       alert("Ringkasan APBDes berhasil diperbarui!");
     } catch (err: any) {
-      alert("Gagal memperbarui ringkasan: " + err.message);
+      alert("Gagal menyimpan APBDes: " + err.message);
     } finally {
       setIsRingkasanSaving(false);
     }
   };
 
-  // APBDES BIDANG
   const handleSaveBidang = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingBidang?.name) return;
@@ -96,9 +85,10 @@ export default function TransparansiClientPage({
           setBidangList([...bidangList, res.item]);
         }
         setIsBidangModalOpen(false);
+        setEditingBidang(null);
       }
     } catch (err: any) {
-      alert("Gagal menyimpan bidang APBDes: " + err.message);
+      alert("Gagal menyimpan bidang belanja: " + err.message);
     }
   };
 
@@ -108,7 +98,7 @@ export default function TransparansiClientPage({
     setBidangList(bidangList.filter((b) => b.id !== id));
   };
 
-  // PRODUK HUKUM
+  // --- HANDLERS PRODUK HUKUM ---
   const handleSaveProdukHukum = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProdukHukum?.judul) return;
@@ -118,7 +108,7 @@ export default function TransparansiClientPage({
         nomor: editingProdukHukum.nomor || "",
         judul: editingProdukHukum.judul || "",
         kategori: editingProdukHukum.kategori || "Peraturan Desa",
-        tanggal: editingProdukHukum.tanggal || "",
+        tanggal: editingProdukHukum.tanggal || new Date().toLocaleDateString("id-ID"),
         fileUrl: editingProdukHukum.fileUrl || "",
       });
       if (res.success && res.item) {
@@ -128,6 +118,7 @@ export default function TransparansiClientPage({
           setProdukHukumList([res.item, ...produkHukumList]);
         }
         setIsProdukHukumModalOpen(false);
+        setEditingProdukHukum(null);
       }
     } catch (err: any) {
       alert("Gagal menyimpan produk hukum: " + err.message);
@@ -135,75 +126,23 @@ export default function TransparansiClientPage({
   };
 
   const handleDeleteProdukHukum = async (id: number) => {
-    if (!confirm("Hapus produk hukum ini?")) return;
+    if (!confirm("Hapus dokumen produk hukum ini?")) return;
     await deleteProdukHukumAction(id);
     setProdukHukumList(produkHukumList.filter((p) => p.id !== id));
   };
 
-  // PPID
-  const handleSavePpid = async (e: React.FormEvent) => {
+  // --- HANDLERS STATISTIK ---
+  const handleSaveStatistik = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPpid?.judul) return;
+    setIsStatistikSaving(true);
     try {
-      const res = await savePpidAction({
-        id: editingPpid.id,
-        judul: editingPpid.judul || "",
-        kategori: (editingPpid.kategori as any) || "Berkala",
-        format: editingPpid.format || "PDF",
-        ukuran: editingPpid.ukuran || "1 MB",
-        tanggal: editingPpid.tanggal || "",
-        fileUrl: editingPpid.fileUrl || "",
-      });
-      if (res.success && res.item) {
-        if (editingPpid.id) {
-          setPpidList(ppidList.map((p) => (p.id === res.item.id ? res.item : p)));
-        } else {
-          setPpidList([res.item, ...ppidList]);
-        }
-        setIsPpidModalOpen(false);
-      }
+      await updateStatistikPendudukAction(statistik);
+      alert("Statistik kependudukan berhasil disimpan!");
     } catch (err: any) {
-      alert("Gagal menyimpan PPID: " + err.message);
+      alert("Gagal menyimpan statistik: " + err.message);
+    } finally {
+      setIsStatistikSaving(false);
     }
-  };
-
-  const handleDeletePpid = async (id: number) => {
-    if (!confirm("Hapus dokumen PPID ini?")) return;
-    await deletePpidAction(id);
-    setPpidList(ppidList.filter((p) => p.id !== id));
-  };
-
-  // BANSOS
-  const handleSaveBansos = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingBansos?.name) return;
-    try {
-      const res = await saveBansosAction({
-        id: editingBansos.id,
-        name: editingBansos.name || "",
-        source: editingBansos.source || "",
-        kpmCount: Number(editingBansos.kpmCount) || 0,
-        nominal: editingBansos.nominal || "",
-        status: editingBansos.status || "Aktif",
-        desc: editingBansos.desc || "",
-      });
-      if (res.success && res.item) {
-        if (editingBansos.id) {
-          setBansosList(bansosList.map((b) => (b.id === res.item.id ? res.item : b)));
-        } else {
-          setBansosList([...bansosList, res.item]);
-        }
-        setIsBansosModalOpen(false);
-      }
-    } catch (err: any) {
-      alert("Gagal menyimpan bansos: " + err.message);
-    }
-  };
-
-  const handleDeleteBansos = async (id: number) => {
-    if (!confirm("Hapus program bansos ini?")) return;
-    await deleteBansosAction(id);
-    setBansosList(bansosList.filter((b) => b.id !== id));
   };
 
   return (
@@ -211,10 +150,10 @@ export default function TransparansiClientPage({
       <div>
         <p className="eyebrow">Kelola Transparansi Desa</p>
         <h1 className="text-3xl font-heading mt-1" style={{ color: "var(--forest-deep)" }}>
-          APBDes, Produk Hukum, PPID & Bansos
+          APBDes, Produk Hukum & Statistik Kependudukan
         </h1>
         <p className="text-sm text-[color:var(--ink-soft)] mt-1">
-          Kelola transparansi keuangan desa (APBDes), regulasi Perdes/SK Kades, dokumen PPID KIP, dan program bantuan sosial.
+          Kelola transparansi keuangan APBDes, arsip Peraturan Desa / SK Kades, serta demografi statistik kependudukan.
         </p>
       </div>
 
@@ -222,615 +161,422 @@ export default function TransparansiClientPage({
       <div className="flex border-b border-[color:var(--line)] gap-4 overflow-x-auto">
         <button
           onClick={() => setActiveTab("apbdes")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
+          className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors duration-200 cursor-pointer ${
             activeTab === "apbdes"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)] font-semibold"
               : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
           }`}
         >
-          APBDes & Keuangan ({bidangList.length} Bidang)
+          💰 APBDes & Keuangan
         </button>
         <button
           onClick={() => setActiveTab("produkhukum")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
+          className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors duration-200 cursor-pointer ${
             activeTab === "produkhukum"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)] font-semibold"
               : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
           }`}
         >
-          Produk Hukum ({produkHukumList.length})
+          📜 Produk Hukum Desa
         </button>
         <button
-          onClick={() => setActiveTab("ppid")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
-            activeTab === "ppid"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+          onClick={() => setActiveTab("statistik")}
+          className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors duration-200 cursor-pointer ${
+            activeTab === "statistik"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)] font-semibold"
               : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
           }`}
         >
-          PPID Informasi Publik ({ppidList.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("bansos")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
-            activeTab === "bansos"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
-              : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
-          }`}
-        >
-          Transparansi Bansos ({bansosList.length})
+          📊 Statistik Kependudukan
         </button>
       </div>
 
-      {/* TAB APBDES */}
+      {/* TAB 1: APBDES */}
       {activeTab === "apbdes" && (
         <div className="flex flex-col gap-6">
-          {/* RINGKASAN FORM */}
-          <Card className="p-6 border border-[color:var(--line)] bg-[color:var(--card)] shadow-sm">
-            <h3 className="font-heading text-lg text-[color:var(--forest-deep)] mb-4">
-              Ringkasan APBDes TA {ringkasan.tahun}
-            </h3>
+          {/* Ringkasan Form */}
+          <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)]">
+            <h3 className="text-lg font-heading mb-4 text-[color:var(--ink)]">Ringkasan APBDes TA {ringkasan.tahun}</h3>
             <form onSubmit={handleSaveRingkasan} className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Tahun Anggaran</label>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Tahun Anggaran</label>
                 <input
                   type="number"
                   value={ringkasan.tahun}
-                  onChange={(e) => setRingkasan({ ...ringkasan, tahun: Number(e.target.value) })}
-                  className="w-full p-2.5 rounded-lg border text-sm font-mono"
-                  required
+                  onChange={(e) => setRingkasan({ ...ringkasan, tahun: parseInt(e.target.value) || 2026 })}
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Total Pendapatan</label>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total Pendapatan</label>
                 <input
                   type="text"
                   value={ringkasan.pendapatan}
                   onChange={(e) => setRingkasan({ ...ringkasan, pendapatan: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border text-sm font-mono"
-                  required
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Total Belanja</label>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total Belanja</label>
                 <input
                   type="text"
                   value={ringkasan.belanja}
                   onChange={(e) => setRingkasan({ ...ringkasan, belanja: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border text-sm font-mono"
-                  required
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Pembiayaan / SILPA</label>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Pembiayaan (SiLPA)</label>
                 <input
                   type="text"
                   value={ringkasan.pembiayaan}
                   onChange={(e) => setRingkasan({ ...ringkasan, pembiayaan: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border text-sm font-mono"
-                  required
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div className="md:col-span-4 flex justify-end">
-                <Button type="submit" disabled={isRingkasanSaving} className="bg-[color:var(--forest)] text-white text-xs px-5">
+                <Button type="submit" disabled={isRingkasanSaving} className="btn btn-primary bg-[color:var(--forest)] text-white border-none px-6">
                   {isRingkasanSaving ? "Menyimpan..." : "Simpan Ringkasan APBDes"}
                 </Button>
               </div>
             </form>
           </Card>
 
-          {/* DETAIL BIDANG BELANJA */}
-          <div className="flex flex-col gap-4">
+          {/* Bidang Belanja Table */}
+          <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-4">
             <div className="flex justify-between items-center">
-              <h3 className="font-heading text-lg text-[color:var(--ink)]">Rincian Realisasi per Bidang</h3>
+              <h3 className="text-lg font-heading text-[color:var(--ink)]">Rincian Realisasi Belanja per Bidang</h3>
               <Button
                 onClick={() => {
-                  setEditingBidang({ name: "", anggaran: "Rp ", realisasi: "Rp ", pct: "0%", desc: "" });
+                  setEditingBidang({ name: "", anggaran: "", realisasi: "", pct: "", desc: "" });
                   setIsBidangModalOpen(true);
                 }}
-                className="bg-[color:var(--forest)] text-white text-sm"
+                className="btn btn-primary bg-[color:var(--forest)] text-white border-none text-xs"
               >
                 + Tambah Bidang Belanja
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              {bidangList.map((item) => (
-                <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col gap-2 shadow-sm">
-                  <div className="flex flex-col md:flex-row justify-between md:items-center gap-2">
-                    <h4 className="font-heading text-lg text-[color:var(--ink)]">{item.name}</h4>
-                    <div className="flex items-center gap-3 font-mono text-sm">
-                      <span>Anggaran: <strong>{item.anggaran}</strong></span>
-                      <span>Realisasi: <strong>{item.realisasi}</strong></span>
-                      <Badge className="bg-[color:var(--forest)] text-white border-none">{item.pct}</Badge>
+            <div className="flex flex-col gap-3">
+              {bidangList.map((b) => (
+                <div key={b.id} className="p-4 border border-[color:var(--line)] rounded-xl bg-[color:var(--parchment)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div>
+                    <h4 className="font-heading font-semibold text-base text-[color:var(--ink)]">{b.name}</h4>
+                    <p className="text-xs text-[color:var(--ink-soft)] mt-1">{b.desc}</p>
+                    <div className="flex gap-4 mt-2 text-xs font-mono">
+                      <span>Anggaran: <strong>{b.anggaran}</strong></span>
+                      <span>Realisasi: <strong className="text-[color:var(--forest)]">{b.realisasi} ({b.pct})</strong></span>
                     </div>
                   </div>
-                  <p className="text-xs text-[color:var(--ink-soft)]">{item.desc}</p>
-                  <div className="flex justify-end gap-2 border-t border-[color:var(--line)] pt-3 mt-2">
-                    <button
+                  <div className="flex gap-2">
+                    <Button
                       onClick={() => {
-                        setEditingBidang(item);
+                        setEditingBidang(b);
                         setIsBidangModalOpen(true);
                       }}
-                      className="text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded font-semibold cursor-pointer border border-amber-200"
+                      variant="outline"
+                      className="text-xs border-[color:var(--line)] px-3 py-1"
                     >
                       Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBidang(item.id)}
-                      className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded font-semibold cursor-pointer border border-red-200"
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteBidang(b.id)}
+                      variant="outline"
+                      className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                     >
                       Hapus
-                    </button>
+                    </Button>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* TAB PRODUK HUKUM */}
+      {/* TAB 2: PRODUK HUKUM */}
       {activeTab === "produkhukum" && (
-        <div className="flex flex-col gap-4">
+        <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[color:var(--ink-soft)]">
-              Peraturan Desa (Perdes) dan Keputusan Kepala Desa (SK Kades).
-            </p>
+            <h3 className="text-lg font-heading text-[color:var(--ink)]">Daftar Peraturan Desa & SK Kades</h3>
             <Button
               onClick={() => {
-                setEditingProdukHukum({
-                  nomor: "Perdes No. 00 Tahun 2026",
-                  judul: "",
-                  kategori: "Peraturan Desa",
-                  tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-                  fileUrl: "",
-                });
+                setEditingProdukHukum({ nomor: "", judul: "", kategori: "Peraturan Desa", tanggal: "", fileUrl: "" });
                 setIsProdukHukumModalOpen(true);
               }}
-              className="bg-[color:var(--forest)] text-white text-sm"
+              className="btn btn-primary bg-[color:var(--forest)] text-white border-none text-xs"
             >
               + Tambah Dokumen Hukum
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {produkHukumList.map((item) => (
-              <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col justify-between shadow-sm">
+          <div className="flex flex-col gap-3">
+            {produkHukumList.map((doc) => (
+              <div key={doc.id} className="p-4 border border-[color:var(--line)] rounded-xl bg-[color:var(--parchment)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
-                  <Badge className="bg-[color:var(--forest)] text-white text-xs mb-2 border-none">
-                    {item.kategori}
-                  </Badge>
-                  <h4 className="font-mono text-xs font-bold text-[color:var(--clay)]">{item.nomor}</h4>
-                  <h3 className="font-heading text-base font-semibold text-[color:var(--ink)] mt-1 mb-2">{item.judul}</h3>
-                  <span className="text-xs font-mono text-[color:var(--ink-soft)] block">Ditetapkan: {item.tanggal}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-[color:var(--clay)] text-white border-none text-xs">{doc.kategori}</Badge>
+                    <span className="font-mono text-xs text-[color:var(--ink-soft)]">{doc.nomor}</span>
+                  </div>
+                  <h4 className="font-heading font-semibold text-base text-[color:var(--ink)]">{doc.judul}</h4>
+                  <span className="text-xs font-mono text-[color:var(--ink-soft)] block mt-1">Ditetapkan: {doc.tanggal}</span>
                 </div>
-                <div className="flex justify-end gap-2 border-t border-[color:var(--line)] pt-3 mt-3">
-                  <button
+                <div className="flex gap-2">
+                  <Button
                     onClick={() => {
-                      setEditingProdukHukum(item);
+                      setEditingProdukHukum(doc);
                       setIsProdukHukumModalOpen(true);
                     }}
-                    className="text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded font-semibold cursor-pointer border border-amber-200"
+                    variant="outline"
+                    className="text-xs border-[color:var(--line)] px-3 py-1"
                   >
                     Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProdukHukum(item.id)}
-                    className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded font-semibold cursor-pointer border border-red-200"
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteProdukHukum(doc.id)}
+                    variant="outline"
+                    className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                   >
                     Hapus
-                  </button>
+                  </Button>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* TAB PPID */}
-      {activeTab === "ppid" && (
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-[color:var(--ink-soft)]">
-              Dokumen Layanan Keterbukaan Informasi Publik (UU KIP).
-            </p>
-            <Button
-              onClick={() => {
-                setEditingPpid({
-                  judul: "",
-                  kategori: "Berkala",
-                  format: "PDF",
-                  ukuran: "500 KB",
-                  tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
-                });
-                setIsPpidModalOpen(true);
-              }}
-              className="bg-[color:var(--forest)] text-white text-sm"
-            >
-              + Tambah Dokumen PPID
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ppidList.map((item) => (
-              <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col justify-between shadow-sm">
-                <div>
-                  <Badge className="bg-[color:var(--forest)] text-white text-xs mb-2 border-none">
-                    Info {item.kategori}
-                  </Badge>
-                  <h3 className="font-heading text-base font-semibold text-[color:var(--ink)] mb-2">{item.judul}</h3>
-                  <span className="text-xs font-mono text-[color:var(--ink-soft)] block">Format: {item.format} ({item.ukuran}) · {item.tanggal}</span>
-                </div>
-                <div className="flex justify-end gap-2 border-t border-[color:var(--line)] pt-3 mt-3">
-                  <button
-                    onClick={() => {
-                      setEditingPpid(item);
-                      setIsPpidModalOpen(true);
-                    }}
-                    className="text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded font-semibold cursor-pointer border border-amber-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeletePpid(item.id)}
-                    className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded font-semibold cursor-pointer border border-red-200"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB BANSOS */}
-      {activeTab === "bansos" && (
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-[color:var(--ink-soft)]">
-              Program Bantuan Sosial Warga (BLT Dana Desa, PKH, BPNT, dsb.).
-            </p>
-            <Button
-              onClick={() => {
-                setEditingBansos({
-                  name: "",
-                  source: "Dana Desa Sukoharjo",
-                  kpmCount: 50,
-                  nominal: "Rp 300.000 / Bulan",
-                  status: "Aktif Penyaluran",
-                  desc: "",
-                });
-                setIsBansosModalOpen(true);
-              }}
-              className="bg-[color:var(--forest)] text-white text-sm"
-            >
-              + Tambah Program Bansos
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {bansosList.map((item) => (
-              <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col justify-between shadow-sm">
-                <div>
-                  <Badge className="bg-[color:var(--forest)] text-white text-xs mb-2 border-none">
-                    {item.status}
-                  </Badge>
-                  <h3 className="font-heading text-base font-semibold text-[color:var(--ink)] mb-1">{item.name}</h3>
-                  <span className="text-xs font-mono text-[color:var(--clay)] font-semibold block mb-2">Sumber: {item.source}</span>
-                  <p className="text-xs text-[color:var(--ink-soft)] mb-3">{item.desc}</p>
-                  <div className="text-xs font-mono text-[color:var(--ink)] bg-[color:var(--parchment-2)] p-2.5 rounded-lg border">
-                    👥 <strong>{item.kpmCount} KPM</strong> · 💰 <strong>{item.nominal}</strong>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2 border-t border-[color:var(--line)] pt-3 mt-4">
-                  <button
-                    onClick={() => {
-                      setEditingBansos(item);
-                      setIsBansosModalOpen(true);
-                    }}
-                    className="text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded font-semibold cursor-pointer border border-amber-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBansos(item.id)}
-                    className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded font-semibold cursor-pointer border border-red-200"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL BIDANG APBDES */}
-      {isBidangModalOpen && editingBidang && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">
-              {editingBidang.id ? "Edit Bidang Belanja APBDes" : "Tambah Bidang Belanja"}
-            </h3>
-            <form onSubmit={handleSaveBidang} className="flex flex-col gap-3">
+      {/* TAB 3: STATISTIK KEPENDUDUKAN */}
+      {activeTab === "statistik" && (
+        <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-6">
+          <h3 className="text-lg font-heading text-[color:var(--ink)]">Kelola Statistik Kependudukan Publik</h3>
+          <form onSubmit={handleSaveStatistik} className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Nama Bidang</label>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total Penduduk (Jiwa)</label>
+                <input
+                  type="number"
+                  value={statistik.totalPenduduk}
+                  onChange={(e) => setStatistik({ ...statistik, totalPenduduk: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total KK</label>
+                <input
+                  type="number"
+                  value={statistik.totalKk}
+                  onChange={(e) => setStatistik({ ...statistik, totalKk: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Laki-Laki (Jiwa)</label>
+                <input
+                  type="number"
+                  value={statistik.lakiLaki}
+                  onChange={(e) => setStatistik({ ...statistik, lakiLaki: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Perempuan (Jiwa)</label>
+                <input
+                  type="number"
+                  value={statistik.perempuan}
+                  onChange={(e) => setStatistik({ ...statistik, perempuan: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                />
+              </div>
+            </div>
+
+            {/* SEBARAN DUSUN EDIT */}
+            <div>
+              <h4 className="font-heading font-semibold text-sm mb-2 text-[color:var(--ink)]">Data Sebaran Dusun</h4>
+              <div className="flex flex-col gap-2">
+                {statistik.dusunList.map((dusun, idx) => (
+                  <div key={idx} className="grid grid-cols-4 gap-2 items-center">
+                    <input
+                      type="text"
+                      value={dusun.nama}
+                      onChange={(e) => {
+                        const newList = [...statistik.dusunList];
+                        newList[idx].nama = e.target.value;
+                        setStatistik({ ...statistik, dusunList: newList });
+                      }}
+                      placeholder="Nama Dusun"
+                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                    />
+                    <input
+                      type="number"
+                      value={dusun.rt}
+                      onChange={(e) => {
+                        const newList = [...statistik.dusunList];
+                        newList[idx].rt = parseInt(e.target.value) || 0;
+                        setStatistik({ ...statistik, dusunList: newList });
+                      }}
+                      placeholder="Jumlah RT"
+                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                    />
+                    <input
+                      type="number"
+                      value={dusun.rw}
+                      onChange={(e) => {
+                        const newList = [...statistik.dusunList];
+                        newList[idx].rw = parseInt(e.target.value) || 0;
+                        setStatistik({ ...statistik, dusunList: newList });
+                      }}
+                      placeholder="Jumlah RW"
+                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                    />
+                    <input
+                      type="number"
+                      value={dusun.jiwa}
+                      onChange={(e) => {
+                        const newList = [...statistik.dusunList];
+                        newList[idx].jiwa = parseInt(e.target.value) || 0;
+                        setStatistik({ ...statistik, dusunList: newList });
+                      }}
+                      placeholder="Jumlah Jiwa"
+                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isStatistikSaving} className="btn btn-primary bg-[color:var(--forest)] text-white border-none px-6">
+                {isStatistikSaving ? "Menyimpan..." : "Simpan Statistik Kependudukan"}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {/* MODAL BIDANG BELANJA */}
+      {isBidangModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
+            <h3 className="text-xl font-heading mb-4">Edit / Tambah Bidang Belanja APBDes</h3>
+            <form onSubmit={handleSaveBidang} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase mb-1">Nama Bidang</label>
                 <input
                   type="text"
                   required
-                  value={editingBidang.name || ""}
+                  value={editingBidang?.name || ""}
                   onChange={(e) => setEditingBidang({ ...editingBidang, name: e.target.value })}
-                  placeholder="Bidang Pembangunan Desa"
-                  className="w-full p-2.5 rounded-lg border text-sm"
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Anggaran</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Anggaran</label>
                   <input
                     type="text"
                     required
-                    value={editingBidang.anggaran || ""}
+                    value={editingBidang?.anggaran || ""}
                     onChange={(e) => setEditingBidang({ ...editingBidang, anggaran: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border text-xs font-mono"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Realisasi</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Realisasi</label>
                   <input
                     type="text"
                     required
-                    value={editingBidang.realisasi || ""}
+                    value={editingBidang?.realisasi || ""}
                     onChange={(e) => setEditingBidang({ ...editingBidang, realisasi: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border text-xs font-mono"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Persen %</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Persen (%)</label>
                   <input
                     type="text"
                     required
-                    value={editingBidang.pct || ""}
+                    value={editingBidang?.pct || ""}
                     onChange={(e) => setEditingBidang({ ...editingBidang, pct: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border text-xs font-mono"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Deskripsi Kegiatan</label>
+                <label className="block text-xs font-mono uppercase mb-1">Deskripsi Kegiatan</label>
                 <textarea
                   rows={3}
-                  value={editingBidang.desc || ""}
+                  value={editingBidang?.desc || ""}
                   onChange={(e) => setEditingBidang({ ...editingBidang, desc: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border text-sm"
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div className="flex justify-end gap-2 mt-2">
-                <Button type="button" variant="outline" onClick={() => setIsBidangModalOpen(false)} className="text-xs">Batal</Button>
-                <Button type="submit" className="bg-[color:var(--forest)] text-white text-xs">Simpan Bidang</Button>
+                <Button type="button" variant="outline" onClick={() => setIsBidangModalOpen(false)}>Batal</Button>
+                <Button type="submit" className="bg-[color:var(--forest)] text-white">Simpan Bidang</Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* MODAL PRODUK HUKUM */}
-      {isProdukHukumModalOpen && editingProdukHukum && (
+      {isProdukHukumModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">
-              {editingProdukHukum.id ? "Edit Dokumen Hukum" : "Tambah Dokumen Hukum"}
-            </h3>
-            <form onSubmit={handleSaveProdukHukum} className="flex flex-col gap-3">
+          <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
+            <h3 className="text-xl font-heading mb-4">Edit / Tambah Produk Hukum</h3>
+            <form onSubmit={handleSaveProdukHukum} className="flex flex-col gap-4">
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Nomor / Tahun</label>
+                <label className="block text-xs font-mono uppercase mb-1">Nomor / Tahun Peraturan</label>
                 <input
                   type="text"
                   required
-                  value={editingProdukHukum.nomor || ""}
-                  onChange={(e) => setEditingProdukHukum({ ...editingProdukHukum, nomor: e.target.value })}
                   placeholder="Perdes No. 03 Tahun 2026"
-                  className="w-full p-2.5 rounded-lg border text-sm"
+                  value={editingProdukHukum?.nomor || ""}
+                  onChange={(e) => setEditingProdukHukum({ ...editingProdukHukum, nomor: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Judul Peraturan</label>
+                <label className="block text-xs font-mono uppercase mb-1">Judul Peraturan</label>
                 <input
                   type="text"
                   required
-                  value={editingProdukHukum.judul || ""}
+                  value={editingProdukHukum?.judul || ""}
                   onChange={(e) => setEditingProdukHukum({ ...editingProdukHukum, judul: e.target.value })}
-                  placeholder="Judul lengkap peraturan..."
-                  className="w-full p-2.5 rounded-lg border text-sm"
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Kategori</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Kategori</label>
                   <select
-                    value={editingProdukHukum.kategori || "Peraturan Desa"}
+                    value={editingProdukHukum?.kategori || "Peraturan Desa"}
                     onChange={(e) => setEditingProdukHukum({ ...editingProdukHukum, kategori: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border text-sm"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   >
                     <option value="Peraturan Desa">Peraturan Desa</option>
+                    <option value="Peraturan Kades">Peraturan Kades</option>
                     <option value="SK Kepala Desa">SK Kepala Desa</option>
-                    <option value="Peraturan Kepala Desa">Peraturan Kepala Desa</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Tanggal Penetapan</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Tanggal Penetapan</label>
                   <input
                     type="text"
-                    required
-                    value={editingProdukHukum.tanggal || ""}
-                    onChange={(e) => setEditingProdukHukum({ ...editingProdukHukum, tanggal: e.target.value })}
                     placeholder="10 Januari 2026"
-                    className="w-full p-2.5 rounded-lg border text-sm"
+                    value={editingProdukHukum?.tanggal || ""}
+                    onChange={(e) => setEditingProdukHukum({ ...editingProdukHukum, tanggal: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-2">
-                <Button type="button" variant="outline" onClick={() => setIsProdukHukumModalOpen(false)} className="text-xs">Batal</Button>
-                <Button type="submit" className="bg-[color:var(--forest)] text-white text-xs">Simpan</Button>
+                <Button type="button" variant="outline" onClick={() => setIsProdukHukumModalOpen(false)}>Batal</Button>
+                <Button type="submit" className="bg-[color:var(--forest)] text-white">Simpan Dokumen</Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL PPID */}
-      {isPpidModalOpen && editingPpid && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">
-              {editingPpid.id ? "Edit Dokumen PPID" : "Tambah Dokumen PPID"}
-            </h3>
-            <form onSubmit={handleSavePpid} className="flex flex-col gap-3">
-              <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Judul Dokumen</label>
-                <input
-                  type="text"
-                  required
-                  value={editingPpid.judul || ""}
-                  onChange={(e) => setEditingPpid({ ...editingPpid, judul: e.target.value })}
-                  placeholder="Laporan Realisasi APBDes TA 2025"
-                  className="w-full p-2.5 rounded-lg border text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Kategori</label>
-                  <select
-                    value={editingPpid.kategori || "Berkala"}
-                    onChange={(e) => setEditingPpid({ ...editingPpid, kategori: e.target.value as any })}
-                    className="w-full p-2 rounded-lg border text-xs"
-                  >
-                    <option value="Berkala">Berkala</option>
-                    <option value="Serta-Merta">Serta-Merta</option>
-                    <option value="Setiap Saat">Setiap Saat</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Format</label>
-                  <input
-                    type="text"
-                    value={editingPpid.format || "PDF"}
-                    onChange={(e) => setEditingPpid({ ...editingPpid, format: e.target.value })}
-                    className="w-full p-2 rounded-lg border text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Ukuran</label>
-                  <input
-                    type="text"
-                    value={editingPpid.ukuran || "1 MB"}
-                    onChange={(e) => setEditingPpid({ ...editingPpid, ukuran: e.target.value })}
-                    className="w-full p-2 rounded-lg border text-xs"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Tanggal Terbit</label>
-                <input
-                  type="text"
-                  value={editingPpid.tanggal || ""}
-                  onChange={(e) => setEditingPpid({ ...editingPpid, tanggal: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border text-sm"
-                />
-              </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <Button type="button" variant="outline" onClick={() => setIsPpidModalOpen(false)} className="text-xs">Batal</Button>
-                <Button type="submit" className="bg-[color:var(--forest)] text-white text-xs">Simpan PPID</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL BANSOS */}
-      {isBansosModalOpen && editingBansos && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">
-              {editingBansos.id ? "Edit Program Bansos" : "Tambah Program Bansos"}
-            </h3>
-            <form onSubmit={handleSaveBansos} className="flex flex-col gap-3">
-              <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Nama Program Bantuan</label>
-                <input
-                  type="text"
-                  required
-                  value={editingBansos.name || ""}
-                  onChange={(e) => setEditingBansos({ ...editingBansos, name: e.target.value })}
-                  placeholder="BLT Dana Desa"
-                  className="w-full p-2.5 rounded-lg border text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Sumber Dana</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingBansos.source || ""}
-                    onChange={(e) => setEditingBansos({ ...editingBansos, source: e.target.value })}
-                    placeholder="Dana Desa Sukoharjo"
-                    className="w-full p-2.5 rounded-lg border text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Jumlah KPM</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingBansos.kpmCount || 0}
-                    onChange={(e) => setEditingBansos({ ...editingBansos, kpmCount: Number(e.target.value) })}
-                    className="w-full p-2.5 rounded-lg border text-sm"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Nominal Bantuan</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingBansos.nominal || ""}
-                    onChange={(e) => setEditingBansos({ ...editingBansos, nominal: e.target.value })}
-                    placeholder="Rp 300.000 / Bulan"
-                    className="w-full p-2.5 rounded-lg border text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Status Penyaluran</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingBansos.status || ""}
-                    onChange={(e) => setEditingBansos({ ...editingBansos, status: e.target.value })}
-                    placeholder="Tersalurkan Tahap II"
-                    className="w-full p-2.5 rounded-lg border text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Kriteria KPM / Deskripsi</label>
-                <textarea
-                  rows={3}
-                  value={editingBansos.desc || ""}
-                  onChange={(e) => setEditingBansos({ ...editingBansos, desc: e.target.value })}
-                  placeholder="Kriteria penerima..."
-                  className="w-full p-2.5 rounded-lg border text-sm"
-                />
-              </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <Button type="button" variant="outline" onClick={() => setIsBansosModalOpen(false)} className="text-xs">Batal</Button>
-                <Button type="submit" className="bg-[color:var(--forest)] text-white text-xs">Simpan Program</Button>
-              </div>
-            </form>
-          </div>
+          </Card>
         </div>
       )}
     </div>

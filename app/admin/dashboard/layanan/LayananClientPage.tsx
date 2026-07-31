@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Agenda, BukuTamu, PermohonanSurat, Pengaduan } from "@/lib/data";
+import { Agenda, BukuTamu, Pengaduan } from "@/lib/data";
 import {
   saveAgendaAction,
   deleteAgendaAction,
   deleteBukuTamuAction,
-  updateStatusSuratAction,
-  deletePermohonanSuratAction,
   updateStatusPengaduanAction,
   deletePengaduanAction,
 } from "@/app/admin/actions";
@@ -18,22 +16,19 @@ import { Badge } from "@/components/ui/badge";
 interface Props {
   initialAgenda: Agenda[];
   initialBukuTamu: BukuTamu[];
-  initialSurat: PermohonanSurat[];
   initialPengaduan: Pengaduan[];
 }
 
 export default function LayananClientPage({
   initialAgenda,
   initialBukuTamu,
-  initialSurat,
   initialPengaduan,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"surat" | "pengaduan" | "agenda" | "bukutamu">("surat");
+  const [activeTab, setActiveTab] = useState<"pengaduan" | "agenda" | "bukutamu">("pengaduan");
 
   // State
   const [agendaList, setAgendaList] = useState<Agenda[]>(initialAgenda);
   const [bukuTamuList, setBukuTamuList] = useState<BukuTamu[]>(initialBukuTamu);
-  const [suratList, setSuratList] = useState<PermohonanSurat[]>(initialSurat);
   const [pengaduanList, setPengaduanList] = useState<Pengaduan[]>(initialPengaduan);
 
   // Agenda Form Modal State
@@ -41,11 +36,7 @@ export default function LayananClientPage({
   const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
   const [isSubmittingAgenda, setIsSubmittingAgenda] = useState(false);
 
-  // Status Modals State
-  const [selectedSurat, setSelectedSurat] = useState<PermohonanSurat | null>(null);
-  const [suratStatusInput, setSuratStatusInput] = useState<PermohonanSurat["status"]>("Diproses");
-  const [suratCatatanInput, setSuratCatatanInput] = useState("");
-
+  // Pengaduan Status Modal State
   const [selectedPengaduan, setSelectedPengaduan] = useState<Pengaduan | null>(null);
   const [pengaduanStatusInput, setPengaduanStatusInput] = useState<Pengaduan["status"]>("Diproses");
   const [pengaduanTanggapanInput, setPengaduanTanggapanInput] = useState("");
@@ -99,28 +90,6 @@ export default function LayananClientPage({
     setAgendaList(agendaList.filter((a) => a.id !== id));
   };
 
-  // SURAT HANDLERS
-  const handleSaveSuratStatus = async () => {
-    if (!selectedSurat) return;
-    try {
-      await updateStatusSuratAction(selectedSurat.id, suratStatusInput, suratCatatanInput);
-      setSuratList(
-        suratList.map((s) =>
-          s.id === selectedSurat.id ? { ...s, status: suratStatusInput, catatan: suratCatatanInput } : s
-        )
-      );
-      setSelectedSurat(null);
-    } catch (err: any) {
-      alert("Gagal memperbarui status surat: " + err.message);
-    }
-  };
-
-  const handleDeleteSurat = async (id: number) => {
-    if (!confirm("Hapus permohonan surat ini?")) return;
-    await deletePermohonanSuratAction(id);
-    setSuratList(suratList.filter((s) => s.id !== id));
-  };
-
   // PENGADUAN HANDLERS
   const handleSavePengaduanStatus = async () => {
     if (!selectedPengaduan) return;
@@ -157,437 +126,297 @@ export default function LayananClientPage({
       <div>
         <p className="eyebrow">Kelola Layanan Desa</p>
         <h1 className="text-3xl font-heading mt-1" style={{ color: "var(--forest-deep)" }}>
-          Pengaduan, Surat Mandiri & Agenda Desa
+          Pengaduan Warga, Agenda & Buku Tamu
         </h1>
         <p className="text-sm text-[color:var(--ink-soft)] mt-1">
-          Kelola respon pengajuan surat warga, tindak lanjuti laporan pengaduan, agenda kegiatan desa, dan moderasi buku tamu.
+          Tindak lanjuti laporan pengaduan warga, kelola agenda kegiatan desa, dan moderasi buku tamu.
         </p>
       </div>
 
       {/* TABS */}
       <div className="flex border-b border-[color:var(--line)] gap-4 overflow-x-auto">
         <button
-          onClick={() => setActiveTab("surat")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
-            activeTab === "surat"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
-              : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
-          }`}
-        >
-          Permohonan Surat ({suratList.length})
-        </button>
-        <button
           onClick={() => setActiveTab("pengaduan")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
+          className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors duration-200 cursor-pointer ${
             activeTab === "pengaduan"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)] font-semibold"
               : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
           }`}
         >
-          Pengaduan Warga ({pengaduanList.length})
+          📢 Pengaduan Warga ({pengaduanList.length})
         </button>
         <button
           onClick={() => setActiveTab("agenda")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
+          className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors duration-200 cursor-pointer ${
             activeTab === "agenda"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)] font-semibold"
               : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
           }`}
         >
-          Agenda Kegiatan ({agendaList.length})
+          📅 Agenda Kegiatan ({agendaList.length})
         </button>
         <button
           onClick={() => setActiveTab("bukutamu")}
-          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border-b-2 ${
+          className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors duration-200 cursor-pointer ${
             activeTab === "bukutamu"
-              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)] font-semibold"
               : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
           }`}
         >
-          Buku Tamu ({bukuTamuList.length})
+          📖 Buku Tamu ({bukuTamuList.length})
         </button>
       </div>
 
-      {/* TAB PERMOHONAN SURAT */}
-      {activeTab === "surat" && (
-        <div className="flex flex-col gap-4">
-          <div className="overflow-x-auto border border-[color:var(--line)] rounded-xl bg-[color:var(--card)] shadow-sm">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead className="bg-[color:var(--parchment-2)] text-xs uppercase font-mono text-[color:var(--ink-soft)] border-b border-[color:var(--line)]">
-                <tr>
-                  <th className="p-3.5">Pemohon</th>
-                  <th className="p-3.5">Jenis Surat & Keperluan</th>
-                  <th className="p-3.5">Kontak</th>
-                  <th className="p-3.5">Tanggal</th>
-                  <th className="p-3.5">Status</th>
-                  <th className="p-3.5 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[color:var(--line)]">
-                {suratList.map((item) => (
-                  <tr key={item.id} className="hover:bg-[color:var(--parchment)]">
-                    <td className="p-3.5">
-                      <span className="font-semibold block text-[color:var(--ink)]">{item.nama}</span>
-                      <span className="text-xs font-mono text-[color:var(--ink-soft)]">NIK: {item.nik}</span>
-                    </td>
-                    <td className="p-3.5">
-                      <span className="font-medium block text-[color:var(--forest-deep)]">{item.jenisSurat}</span>
-                      <span className="text-xs text-[color:var(--ink-soft)]">{item.keperluan}</span>
-                    </td>
-                    <td className="p-3.5 text-xs font-mono text-[color:var(--ink-soft)]">{item.telepon}</td>
-                    <td className="p-3.5 text-xs font-mono text-[color:var(--ink-soft)]">{item.tanggal}</td>
-                    <td className="p-3.5">
-                      <Badge
-                        className={
-                          item.status === "Selesai"
-                            ? "bg-emerald-600 text-white"
-                            : item.status === "Diproses"
-                            ? "bg-amber-600 text-white"
-                            : item.status === "Ditolak"
-                            ? "bg-red-600 text-white"
-                            : "bg-slate-600 text-white"
-                        }
-                      >
-                        {item.status}
-                      </Badge>
-                      {item.catatan && <span className="text-[11px] text-[color:var(--ink-soft)] block mt-1">Note: {item.catatan}</span>}
-                    </td>
-                    <td className="p-3.5 text-right flex justify-end gap-2">
-                      <button
+      {/* TAB 1: PENGADUAN WARGA */}
+      {activeTab === "pengaduan" && (
+        <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-4">
+          <h3 className="text-lg font-heading text-[color:var(--ink)]">Pengaduan & Laporan Masalah Warga</h3>
+          <div className="flex flex-col gap-3">
+            {pengaduanList.length === 0 ? (
+              <p className="text-sm text-[color:var(--ink-soft)] italic">Belum ada pengaduan warga.</p>
+            ) : (
+              pengaduanList.map((p) => (
+                <div key={p.id} className="p-4 border border-[color:var(--line)] rounded-xl bg-[color:var(--parchment)] flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-[color:var(--clay)] text-white border-none text-xs">{p.status}</Badge>
+                        <span className="font-mono text-xs text-[color:var(--ink-soft)]">Dusun: {p.dusun}</span>
+                        <span className="font-mono text-xs text-[color:var(--ink-soft)]">• {p.tanggal}</span>
+                      </div>
+                      <h4 className="font-heading font-semibold text-base text-[color:var(--ink)]">{p.judul}</h4>
+                      <p className="text-xs text-[color:var(--ink-soft)] font-mono">Pelapor: {p.nama}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
                         onClick={() => {
-                          setSelectedSurat(item);
-                          setSuratStatusInput(item.status);
-                          setSuratCatatanInput(item.catatan || "");
+                          setSelectedPengaduan(p);
+                          setPengaduanStatusInput(p.status);
+                          setPengaduanTanggapanInput(p.tanggapan || "");
                         }}
-                        className="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold px-2.5 py-1 rounded border border-amber-200 cursor-pointer"
+                        className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none"
                       >
-                        Respon
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSurat(item.id)}
-                        className="text-xs bg-red-50 text-red-700 hover:bg-red-100 font-semibold px-2.5 py-1 rounded border border-red-200 cursor-pointer"
+                        Tindak Lanjuti
+                      </Button>
+                      <Button
+                        onClick={() => handleDeletePengaduan(p.id)}
+                        variant="outline"
+                        className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                       >
                         Hapus
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-[color:var(--ink)] bg-[color:var(--card)] p-3 rounded-lg border border-[color:var(--line)]">{p.isi}</p>
+                  {p.tanggapan && (
+                    <div className="text-xs bg-[color:var(--forest)]/10 text-[color:var(--forest-deep)] p-2.5 rounded-lg border border-[color:var(--forest)]/20">
+                      <strong>Tanggapan Resmi Desa:</strong> {p.tanggapan}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* TAB PENGADUAN WARGA */}
-      {activeTab === "pengaduan" && (
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4">
-            {pengaduanList.map((item) => (
-              <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col gap-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading font-semibold text-lg text-[color:var(--ink)]">{item.judul}</span>
-                    <Badge
-                      className={
-                        item.status === "Selesai"
-                          ? "bg-emerald-600 text-white"
-                          : item.status === "Diproses"
-                          ? "bg-amber-600 text-white"
-                          : item.status === "Ditolak"
-                          ? "bg-red-600 text-white"
-                          : "bg-blue-600 text-white"
-                      }
-                    >
-                      {item.status}
-                    </Badge>
-                  </div>
-                  <span className="text-xs font-mono text-[color:var(--ink-soft)]">{item.tanggal}</span>
-                </div>
-                <p className="text-sm text-[color:var(--ink-soft)] leading-relaxed">{item.isi}</p>
-                <div className="text-xs font-mono text-[color:var(--clay)] font-medium">
-                  Pelapor: {item.nama} (Dusun {item.dusun})
-                </div>
-
-                {item.tanggapan && (
-                  <div className="p-3 bg-[color:var(--parchment-2)] rounded-lg border-l-4 border-l-[color:var(--forest)] text-xs text-[color:var(--ink)] mt-1">
-                    <strong className="block text-[color:var(--forest)] mb-0.5">Tanggapan Admin Desa:</strong>
-                    {item.tanggapan}
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-2 border-t border-[color:var(--line)] pt-3">
-                  <button
-                    onClick={() => {
-                      setSelectedPengaduan(item);
-                      setPengaduanStatusInput(item.status);
-                      setPengaduanTanggapanInput(item.tanggapan || "");
-                    }}
-                    className="text-xs bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold px-3 py-1.5 rounded border border-emerald-200 cursor-pointer"
-                  >
-                    Tindak Lanjuti & Tanggapi
-                  </button>
-                  <button
-                    onClick={() => handleDeletePengaduan(item.id)}
-                    className="text-xs bg-red-50 text-red-700 hover:bg-red-100 font-semibold px-3 py-1.5 rounded border border-red-200 cursor-pointer"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB AGENDA KEGIATAN */}
+      {/* TAB 2: AGENDA KEGIATAN */}
       {activeTab === "agenda" && (
-        <div className="flex flex-col gap-4">
+        <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-[color:var(--ink-soft)]">
-              Kalender kegiatan pemerintahan & kemasyarakatan Desa Sukoharjo.
-            </p>
-            <Button onClick={handleOpenAddAgenda} className="bg-[color:var(--forest)] text-white text-sm">
+            <h3 className="text-lg font-heading text-[color:var(--ink)]">Agenda & Kalender Kegiatan Desa</h3>
+            <Button onClick={handleOpenAddAgenda} className="btn btn-primary bg-[color:var(--forest)] text-white border-none text-xs">
               + Tambah Agenda Baru
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {agendaList.map((item) => (
-              <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col justify-between shadow-sm">
+          <div className="flex flex-col gap-3">
+            {agendaList.map((a) => (
+              <div key={a.id} className="p-4 border border-[color:var(--line)] rounded-xl bg-[color:var(--parchment)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
-                  <Badge className="bg-[color:var(--forest)] text-white text-xs mb-2 border-none">
-                    {item.category}
-                  </Badge>
-                  <h3 className="font-heading text-lg text-[color:var(--ink)] mb-2">{item.title}</h3>
-                  <p className="text-xs text-[color:var(--ink-soft)] mb-4">{item.desc}</p>
-                </div>
-                <div className="border-t border-[color:var(--line)] pt-3 flex flex-col gap-2">
-                  <div className="text-xs font-mono text-[color:var(--ink-soft)]">
-                    📍 {item.location} <br />
-                    📅 {item.date} · {item.time}
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-[color:var(--forest)] text-white border-none text-xs">{a.category}</Badge>
+                    <span className="font-mono text-xs text-[color:var(--ink-soft)]">📍 {a.location}</span>
+                    <span className="font-mono text-xs text-[color:var(--ink-soft)]">📅 {a.date} ({a.time})</span>
                   </div>
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button
-                      onClick={() => {
-                        setEditingAgenda(item);
-                        setIsAgendaModalOpen(true);
-                      }}
-                      className="text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded font-semibold cursor-pointer border border-amber-200"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAgenda(item.id)}
-                      className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded font-semibold cursor-pointer border border-red-200"
-                    >
-                      Hapus
-                    </button>
-                  </div>
+                  <h4 className="font-heading font-semibold text-base text-[color:var(--ink)]">{a.title}</h4>
+                  <p className="text-xs text-[color:var(--ink-soft)] mt-1">{a.desc}</p>
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB BUKU TAMU */}
-      {activeTab === "bukutamu" && (
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {bukuTamuList.map((item) => (
-              <Card key={item.id} className="p-5 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col justify-between shadow-sm">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <h3 className="font-heading text-base font-semibold text-[color:var(--ink)]">{item.name}</h3>
-                    <span className="text-xs font-mono text-[color:var(--ink-soft)]">{item.date}</span>
-                  </div>
-                  <span className="text-xs font-mono text-[color:var(--forest)] block mb-3">Asal: {item.origin}</span>
-                  <p className="text-sm text-[color:var(--ink-soft)] italic bg-[color:var(--parchment-2)] p-3 rounded-lg border border-[color:var(--line)]">
-                    "{item.message}"
-                  </p>
-                </div>
-                <div className="flex justify-end mt-4">
-                  <button
-                    onClick={() => handleDeleteBukuTamu(item.id)}
-                    className="text-xs bg-red-50 text-red-700 hover:bg-red-100 font-semibold px-3 py-1 rounded border border-red-200 cursor-pointer"
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setEditingAgenda(a);
+                      setIsAgendaModalOpen(true);
+                    }}
+                    variant="outline"
+                    className="text-xs border-[color:var(--line)] px-3 py-1"
                   >
-                    Hapus Entri
-                  </button>
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteAgenda(a.id)}
+                    variant="outline"
+                    className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
+                  >
+                    Hapus
+                  </Button>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* MODAL RESPON SURAT */}
-      {selectedSurat && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border border-[color:var(--line)]">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">Respon Permohonan Surat</h3>
-            <div className="text-xs text-[color:var(--ink-soft)] font-mono bg-[color:var(--parchment-2)] p-3 rounded-lg border">
-              Pemohon: <strong>{selectedSurat.nama}</strong> ({selectedSurat.jenisSurat})
-            </div>
-            <div>
-              <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Status Permohonan</label>
-              <select
-                value={suratStatusInput}
-                onChange={(e) => setSuratStatusInput(e.target.value as any)}
-                className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
-              >
-                <option value="Menunggu">Menunggu</option>
-                <option value="Diproses">Diproses</option>
-                <option value="Selesai">Selesai (Siap Diambil)</option>
-                <option value="Ditolak">Ditolak</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Catatan Admin / Syarat Tambahan</label>
-              <textarea
-                rows={3}
-                value={suratCatatanInput}
-                onChange={(e) => setSuratCatatanInput(e.target.value)}
-                placeholder="Misal: Surat selesai dicetak, silakan ambil di Balai Desa dengan membawa Pengantar RT."
-                className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-2">
-              <Button variant="outline" onClick={() => setSelectedSurat(null)} className="text-xs">Batal</Button>
-              <Button onClick={handleSaveSuratStatus} className="bg-[color:var(--forest)] text-white text-xs">Simpan Respon</Button>
-            </div>
+      {/* TAB 3: BUKU TAMU */}
+      {activeTab === "bukutamu" && (
+        <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-4">
+          <h3 className="text-lg font-heading text-[color:var(--ink)]">Moderasi Pesan Buku Tamu</h3>
+          <div className="flex flex-col gap-3">
+            {bukuTamuList.map((b) => (
+              <div key={b.id} className="p-4 border border-[color:var(--line)] rounded-xl bg-[color:var(--parchment)] flex justify-between items-start gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-[color:var(--ink)]">{b.name}</span>
+                    <span className="text-xs font-mono text-[color:var(--clay)]">({b.origin})</span>
+                    <span className="text-xs font-mono text-[color:var(--ink-soft)]">• {b.date}</span>
+                  </div>
+                  <p className="text-sm text-[color:var(--ink-soft)] italic">"{b.message}"</p>
+                </div>
+                <Button
+                  onClick={() => handleDeleteBukuTamu(b.id)}
+                  variant="outline"
+                  className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
+                >
+                  Hapus
+                </Button>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-
-      {/* MODAL PENGADUAN */}
-      {selectedPengaduan && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border border-[color:var(--line)]">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">Tanggapi Laporan Pengaduan</h3>
-            <div className="text-xs text-[color:var(--ink-soft)] bg-[color:var(--parchment-2)] p-3 rounded-lg border">
-              Judul: <strong>{selectedPengaduan.judul}</strong> ({selectedPengaduan.nama})
-            </div>
-            <div>
-              <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Status Penanganan</label>
-              <select
-                value={pengaduanStatusInput}
-                onChange={(e) => setPengaduanStatusInput(e.target.value as any)}
-                className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
-              >
-                <option value="Baru">Baru</option>
-                <option value="Diproses">Diproses (Ditinjau)</option>
-                <option value="Selesai">Selesai Ditangani</option>
-                <option value="Ditolak">Ditolak</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Tanggapan / Jawaban Resmi Desa</label>
-              <textarea
-                rows={3}
-                value={pengaduanTanggapanInput}
-                onChange={(e) => setPengaduanTanggapanInput(e.target.value)}
-                placeholder="Tuliskan tindakan atau klarifikasi dari pihak pemerintah desa..."
-                className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-2">
-              <Button variant="outline" onClick={() => setSelectedPengaduan(null)} className="text-xs">Batal</Button>
-              <Button onClick={handleSavePengaduanStatus} className="bg-[color:var(--forest)] text-white text-xs">Simpan Tanggapan</Button>
-            </div>
-          </div>
-        </div>
+        </Card>
       )}
 
       {/* MODAL AGENDA */}
-      {isAgendaModalOpen && editingAgenda && (
+      {isAgendaModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 border border-[color:var(--line)]">
-            <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">
-              {editingAgenda.id ? "Edit Agenda Desa" : "Tambah Agenda Baru"}
-            </h3>
-            <form onSubmit={handleSaveAgenda} className="flex flex-col gap-3">
+          <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
+            <h3 className="text-xl font-heading mb-4">{editingAgenda?.id ? "Edit Agenda Desa" : "Tambah Agenda Baru"}</h3>
+            <form onSubmit={handleSaveAgenda} className="flex flex-col gap-4">
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Judul Agenda</label>
+                <label className="block text-xs font-mono uppercase mb-1">Judul Agenda</label>
                 <input
                   type="text"
                   required
-                  value={editingAgenda.title || ""}
+                  value={editingAgenda?.title || ""}
                   onChange={(e) => setEditingAgenda({ ...editingAgenda, title: e.target.value })}
-                  placeholder="Misal: Pelatihan Kemasan UMKM"
-                  className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Kategori</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Kategori</label>
                   <select
-                    value={editingAgenda.category || "Pemerintahan"}
+                    value={editingAgenda?.category || "Pemerintahan"}
                     onChange={(e) => setEditingAgenda({ ...editingAgenda, category: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   >
                     <option value="Pemerintahan">Pemerintahan</option>
-                    <option value="Ekonomi">Ekonomi</option>
+                    <option value="Ekonomi">Ekonomi / UMKM</option>
                     <option value="Kemasyarakatan">Kemasyarakatan</option>
-                    <option value="Budaya">Budaya</option>
+                    <option value="Budaya">Budaya & Olahraga</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Lokasi</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Lokasi</label>
                   <input
                     type="text"
                     required
-                    value={editingAgenda.location || ""}
+                    value={editingAgenda?.location || ""}
                     onChange={(e) => setEditingAgenda({ ...editingAgenda, location: e.target.value })}
-                    placeholder="Balai Desa Sukoharjo"
-                    className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Tanggal</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Tanggal</label>
                   <input
                     type="text"
                     required
-                    value={editingAgenda.date || ""}
+                    placeholder="15 Juli 2026"
+                    value={editingAgenda?.date || ""}
                     onChange={(e) => setEditingAgenda({ ...editingAgenda, date: e.target.value })}
-                    placeholder="25 Juli 2026"
-                    className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Waktu / Jam</label>
+                  <label className="block text-xs font-mono uppercase mb-1">Waktu / Jam</label>
                   <input
                     type="text"
                     required
-                    value={editingAgenda.time || ""}
-                    onChange={(e) => setEditingAgenda({ ...editingAgenda, time: e.target.value })}
                     placeholder="09:00 WIB"
-                    className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
+                    value={editingAgenda?.time || ""}
+                    onChange={(e) => setEditingAgenda({ ...editingAgenda, time: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
               </div>
-
               <div>
-                <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Deskripsi Ringkas</label>
+                <label className="block text-xs font-mono uppercase mb-1">Deskripsi Kegiatan</label>
                 <textarea
                   rows={3}
-                  value={editingAgenda.desc || ""}
+                  value={editingAgenda?.desc || ""}
                   onChange={(e) => setEditingAgenda({ ...editingAgenda, desc: e.target.value })}
-                  placeholder="Rincian kegiatan..."
-                  className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
-
-              <div className="flex justify-end gap-2 mt-3">
-                <Button type="button" variant="outline" onClick={() => setIsAgendaModalOpen(false)} className="text-xs">Batal</Button>
-                <Button type="submit" disabled={isSubmittingAgenda} className="bg-[color:var(--forest)] text-white text-xs">
+              <div className="flex justify-end gap-2 mt-2">
+                <Button type="button" variant="outline" onClick={() => setIsAgendaModalOpen(false)}>Batal</Button>
+                <Button type="submit" disabled={isSubmittingAgenda} className="bg-[color:var(--forest)] text-white">
                   {isSubmittingAgenda ? "Menyimpan..." : "Simpan Agenda"}
                 </Button>
               </div>
             </form>
-          </div>
+          </Card>
+        </div>
+      )}
+
+      {/* MODAL PENGADUAN STATUS */}
+      {selectedPengaduan && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
+            <h3 className="text-xl font-heading mb-4">Tindak Lanjuti Pengaduan Warga</h3>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase mb-1">Status Penanganan</label>
+                <select
+                  value={pengaduanStatusInput}
+                  onChange={(e) => setPengaduanStatusInput(e.target.value as any)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
+                >
+                  <option value="Baru">Baru</option>
+                  <option value="Diproses">Diproses</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Ditolak">Ditolak</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase mb-1">Tanggapan Resmi Desa</label>
+                <textarea
+                  rows={4}
+                  placeholder="Masukkan tanggapan atau instruksi penyelesaian dari Balai Desa..."
+                  value={pengaduanTanggapanInput}
+                  onChange={(e) => setPengaduanTanggapanInput(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
+                />
+              </div>
+              <div className="flex justify-end gap-2 mt-2">
+                <Button variant="outline" onClick={() => setSelectedPengaduan(null)}>Batal</Button>
+                <Button onClick={handleSavePengaduanStatus} className="bg-[color:var(--forest)] text-white">
+                  Simpan Tanggapan
+                </Button>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
     </div>
