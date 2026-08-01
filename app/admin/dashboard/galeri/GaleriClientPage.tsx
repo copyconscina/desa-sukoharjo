@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { GaleriItem } from "@/lib/data";
 import { addGaleriAction, deleteGaleriAction, uploadImageAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
@@ -15,12 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ImageCropperModal from "@/components/ImageCropperModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialGallery: GaleriItem[];
 }
 
 export default function GaleriClientPage({ initialGallery }: Props) {
+  const router = useRouter();
   const [gallery, setGallery] = useState<GaleriItem[]>(initialGallery);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +37,20 @@ export default function GaleriClientPage({ initialGallery }: Props) {
   const [rawFile, setRawFile] = useState<File | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const promptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -49,12 +65,19 @@ export default function GaleriClientPage({ initialGallery }: Props) {
       return;
     }
 
-    setLoading(true);
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Tambah Galeri",
+      message: `Apakah Anda yakin ingin menyimpan foto galeri "${label.trim()}"?`,
+      onConfirm: executeSubmit,
+    });
+  };
 
+  const executeSubmit = async () => {
+    setLoading(true);
     try {
-      // 1. Upload the image file using Server Action
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", file!);
       
       const uploadRes = await uploadImageAction(formData);
       if (!uploadRes.success || !uploadRes.url) {
@@ -63,7 +86,6 @@ export default function GaleriClientPage({ initialGallery }: Props) {
         return;
       }
 
-      // 2. Save the gallery item to database
       const res = await addGaleriAction(label.trim(), cat, "", uploadRes.url, desc.trim());
       if (res.success) {
         const newItem: GaleriItem = {
@@ -77,11 +99,12 @@ export default function GaleriClientPage({ initialGallery }: Props) {
         setLabel("");
         setDesc("");
         setFile(null);
-        // Reset file input element manually
         const fileInput = document.getElementById("galleryFileInput") as HTMLInputElement;
         if (fileInput) fileInput.value = "";
 
-        setSuccess("Item galeri berhasil ditambahkan dengan foto dan keterangan!");
+        setSuccess("Item galeri berhasil ditambahkan dan disimpan!");
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        router.refresh();
       }
     } catch (err) {
       console.error(err);
@@ -97,23 +120,27 @@ export default function GaleriClientPage({ initialGallery }: Props) {
       return;
     }
 
-    if (!confirm(`Apakah Anda yakin ingin menghapus item galeri "${item.label}"?`)) {
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const res = await deleteGaleriAction(item.id);
-      if (res.success) {
-        setGallery(gallery.filter((g) => g.id !== item.id));
-        setSuccess("Item galeri berhasil dihapus!");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Gagal menghapus item galeri.");
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Galeri",
+      message: `Apakah Anda yakin ingin menghapus item galeri "${item.label}"? Tindakan ini tidak bisa dibatalkan.`,
+      onConfirm: async () => {
+        setError(null);
+        setSuccess(null);
+        try {
+          const res = await deleteGaleriAction(item.id!);
+          if (res.success) {
+            setGallery(gallery.filter((g) => g.id !== item.id));
+            setSuccess("Item galeri berhasil dihapus!");
+            setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+            router.refresh();
+          }
+        } catch (err) {
+          console.error(err);
+          setError("Gagal menghapus item galeri.");
+        }
+      },
+    });
   };
 
   const previewUrl = file ? URL.createObjectURL(file) : null;
@@ -138,7 +165,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
               Tambah Foto Baru
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={promptSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Nama Kegiatan / Judul Foto *
@@ -334,6 +361,14 @@ export default function GaleriClientPage({ initialGallery }: Props) {
           }}
         />
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={loading}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Umkm } from "@/lib/data";
 import { saveUmkmAction, deleteUmkmAction, uploadImageAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ImageCropperModal from "@/components/ImageCropperModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialUmkm: Umkm[];
@@ -23,6 +25,7 @@ interface Props {
 const CATEGORIES = ["Kuliner", "Fashion & Batik", "Kerajinan", "Pertanian", "Peternakan", "Jasa", "Lainnya"];
 
 export default function UmkmClientPage({ initialUmkm }: Props) {
+  const router = useRouter();
   const [umkmList, setUmkmList] = useState<Umkm[]>(initialUmkm);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -48,6 +51,19 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +123,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     if (fileInput) fileInput.value = "";
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const promptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -127,7 +143,6 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       return;
     }
 
-    // Clean WA format: remove leading +, spaces, dashes, etc.
     let cleanWa = wa.trim().replace(/[^0-9]/g, "");
     if (cleanWa.startsWith("0")) {
       cleanWa = "62" + cleanWa.slice(1);
@@ -137,13 +152,25 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       return;
     }
 
+    setConfirmModal({
+      isOpen: true,
+      title: editingId ? "Konfirmasi Perbarui UMKM" : "Konfirmasi UMKM Baru",
+      message: `Apakah Anda yakin ingin menyimpan data UMKM "${name.trim()}"?`,
+      onConfirm: executeSubmit,
+    });
+  };
+
+  const executeSubmit = async () => {
+    const activeCategory = category === "Lainnya" ? customCategory.trim() : category;
+    let cleanWa = wa.trim().replace(/[^0-9]/g, "");
+    if (cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
+
     setLoading(true);
 
     try {
       let imageUrl = currentImageUrl;
-      let finalGrad = currentGrad || "linear-gradient(135deg,#8b4226,#b0623d)"; // fallback gradient
+      let finalGrad = currentGrad || "linear-gradient(135deg,#8b4226,#b0623d)";
 
-      // 1. Upload new cover image if file is selected
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -155,7 +182,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
           return;
         }
         imageUrl = uploadRes.url;
-        finalGrad = ""; // Clear default gradient if we use image cover
+        finalGrad = "";
       }
 
       const payload = {
@@ -172,7 +199,6 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
         image: imageUrl,
       };
 
-      // 2. Save UMKM data
       const res = await saveUmkmAction(editingId ? { ...payload, id: editingId } : payload);
       if (res.success && res.item) {
         if (editingId) {
@@ -184,6 +210,8 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
           setSuccess(`Pelaku UMKM "${name.trim()}" berhasil didaftarkan!`);
         }
         resetForm();
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        router.refresh();
       }
     } catch (err) {
       console.error(err);
@@ -194,26 +222,28 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   };
 
   const handleDelete = async (id: number, targetName: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus profil UMKM "${targetName}"? Tindakan ini tidak bisa dibatalkan.`)) {
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const res = await deleteUmkmAction(id);
-      if (res.success) {
-        setUmkmList(umkmList.filter((u) => u.id !== id));
-        setSuccess("Profil UMKM berhasil dihapus dari database!");
-        if (editingId === id) {
-          handleCancelEdit();
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus UMKM",
+      message: `Apakah Anda yakin ingin menghapus profil UMKM "${targetName}"? Tindakan ini tidak bisa dibatalkan.`,
+      onConfirm: async () => {
+        setError(null);
+        setSuccess(null);
+        try {
+          const res = await deleteUmkmAction(id);
+          if (res.success) {
+            setUmkmList(umkmList.filter((u) => u.id !== id));
+            setSuccess("Profil UMKM berhasil dihapus!");
+            if (editingId === id) handleCancelEdit();
+            setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+            router.refresh();
+          }
+        } catch (err) {
+          console.error(err);
+          setError("Gagal menghapus profil UMKM.");
         }
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Gagal menghapus profil UMKM.");
-    }
+      },
+    });
   };
 
   const previewUrl = file ? URL.createObjectURL(file) : currentImageUrl;
@@ -238,7 +268,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
               {editingId ? "Ubah Profil UMKM" : "Daftarkan UMKM Baru"}
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={promptSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Nama Usaha *
@@ -539,6 +569,14 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
           }}
         />
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={loading}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ApbdesRingkasan,
   ApbdesBidang,
@@ -18,6 +19,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialRingkasan: ApbdesRingkasan;
@@ -32,6 +34,7 @@ export default function TransparansiClientPage({
   initialProdukHukum,
   initialStatistik,
 }: Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"apbdes" | "produkhukum" | "statistik">("apbdes");
 
   // State
@@ -52,13 +55,37 @@ export default function TransparansiClientPage({
   // Statistik state
   const [isStatistikSaving, setIsStatistikSaving] = useState(false);
 
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
   // --- HANDLERS APBDES ---
-  const handleSaveRingkasan = async (e: React.FormEvent) => {
+  const promptSaveRingkasan = (e: React.FormEvent) => {
     e.preventDefault();
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi APBDes Ringkasan",
+      message: "Apakah Anda yakin ingin menyimpan perubahan ringkasan APBDes?",
+      onConfirm: executeSaveRingkasan,
+    });
+  };
+
+  const executeSaveRingkasan = async () => {
     setIsRingkasanSaving(true);
     try {
       await updateApbdesRingkasanAction(ringkasan);
-      alert("Ringkasan APBDes berhasil diperbarui!");
+      alert("Ringkasan APBDes berhasil diperbarui dan tersimpan!");
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      router.refresh();
     } catch (err: any) {
       alert("Gagal menyimpan APBDes: " + err.message);
     } finally {
@@ -66,8 +93,22 @@ export default function TransparansiClientPage({
     }
   };
 
-  const handleSaveBidang = async (e: React.FormEvent) => {
+  const promptSaveBidang = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingBidang?.name) {
+      alert("Nama bidang belanja wajib diisi!");
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      title: editingBidang.id ? "Konfirmasi Edit Bidang APBDes" : "Konfirmasi Bidang APBDes Baru",
+      message: `Apakah Anda yakin ingin menyimpan bidang belanja "${editingBidang.name}"?`,
+      onConfirm: executeSaveBidang,
+    });
+  };
+
+  const executeSaveBidang = async () => {
     if (!editingBidang?.name) return;
     try {
       const res = await saveApbdesBidangAction({
@@ -86,21 +127,47 @@ export default function TransparansiClientPage({
         }
         setIsBidangModalOpen(false);
         setEditingBidang(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert(`Bidang belanja "${res.item.name}" berhasil disimpan!`);
+        router.refresh();
       }
     } catch (err: any) {
       alert("Gagal menyimpan bidang belanja: " + err.message);
     }
   };
 
-  const handleDeleteBidang = async (id: number) => {
-    if (!confirm("Hapus bidang belanja ini?")) return;
-    await deleteApbdesBidangAction(id);
-    setBidangList(bidangList.filter((b) => b.id !== id));
+  const handleDeleteBidang = async (id: number, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Bidang APBDes",
+      message: `Apakah Anda yakin ingin menghapus bidang belanja "${name}"?`,
+      onConfirm: async () => {
+        await deleteApbdesBidangAction(id);
+        setBidangList(bidangList.filter((b) => b.id !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert("Bidang belanja berhasil dihapus!");
+        router.refresh();
+      },
+    });
   };
 
   // --- HANDLERS PRODUK HUKUM ---
-  const handleSaveProdukHukum = async (e: React.FormEvent) => {
+  const promptSaveProdukHukum = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingProdukHukum?.judul) {
+      alert("Judul dokumen wajib diisi!");
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      title: editingProdukHukum.id ? "Konfirmasi Edit Produk Hukum" : "Konfirmasi Produk Hukum Baru",
+      message: `Apakah Anda yakin ingin menyimpan dokumen produk hukum "${editingProdukHukum.judul}"?`,
+      onConfirm: executeSaveProdukHukum,
+    });
+  };
+
+  const executeSaveProdukHukum = async () => {
     if (!editingProdukHukum?.judul) return;
     try {
       const res = await saveProdukHukumAction({
@@ -119,25 +186,48 @@ export default function TransparansiClientPage({
         }
         setIsProdukHukumModalOpen(false);
         setEditingProdukHukum(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert(`Produk hukum "${res.item.judul}" berhasil disimpan!`);
+        router.refresh();
       }
     } catch (err: any) {
       alert("Gagal menyimpan produk hukum: " + err.message);
     }
   };
 
-  const handleDeleteProdukHukum = async (id: number) => {
-    if (!confirm("Hapus dokumen produk hukum ini?")) return;
-    await deleteProdukHukumAction(id);
-    setProdukHukumList(produkHukumList.filter((p) => p.id !== id));
+  const handleDeleteProdukHukum = async (id: number, judul: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Produk Hukum",
+      message: `Apakah Anda yakin ingin menghapus produk hukum "${judul}"?`,
+      onConfirm: async () => {
+        await deleteProdukHukumAction(id);
+        setProdukHukumList(produkHukumList.filter((p) => p.id !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert("Dokumen berhasil dihapus!");
+        router.refresh();
+      },
+    });
   };
 
   // --- HANDLERS STATISTIK ---
-  const handleSaveStatistik = async (e: React.FormEvent) => {
+  const promptSaveStatistik = (e: React.FormEvent) => {
     e.preventDefault();
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Statistik Kependudukan",
+      message: "Apakah Anda yakin ingin menyimpan perubahan data statistik kependudukan?",
+      onConfirm: executeSaveStatistik,
+    });
+  };
+
+  const executeSaveStatistik = async () => {
     setIsStatistikSaving(true);
     try {
       await updateStatistikPendudukAction(statistik);
       alert("Statistik kependudukan berhasil disimpan!");
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      router.refresh();
     } catch (err: any) {
       alert("Gagal menyimpan statistik: " + err.message);
     } finally {
@@ -197,7 +287,7 @@ export default function TransparansiClientPage({
           {/* Ringkasan Form */}
           <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)]">
             <h3 className="text-lg font-heading mb-4 text-[color:var(--ink)]">Ringkasan APBDes TA {ringkasan.tahun}</h3>
-            <form onSubmit={handleSaveRingkasan} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <form onSubmit={promptSaveRingkasan} className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Tahun Anggaran</label>
                 <input
@@ -280,7 +370,7 @@ export default function TransparansiClientPage({
                       Edit
                     </Button>
                     <Button
-                      onClick={() => handleDeleteBidang(b.id)}
+                      onClick={() => handleDeleteBidang(b.id, b.name)}
                       variant="outline"
                       className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                     >
@@ -333,7 +423,7 @@ export default function TransparansiClientPage({
                     Edit
                   </Button>
                   <Button
-                    onClick={() => handleDeleteProdukHukum(doc.id)}
+                    onClick={() => handleDeleteProdukHukum(doc.id, doc.judul)}
                     variant="outline"
                     className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                   >
@@ -350,7 +440,7 @@ export default function TransparansiClientPage({
       {activeTab === "statistik" && (
         <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-6">
           <h3 className="text-lg font-heading text-[color:var(--ink)]">Kelola Statistik Kependudukan Publik</h3>
-          <form onSubmit={handleSaveStatistik} className="flex flex-col gap-6">
+          <form onSubmit={promptSaveStatistik} className="flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total Penduduk (Jiwa)</label>
@@ -459,7 +549,7 @@ export default function TransparansiClientPage({
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
             <h3 className="text-xl font-heading mb-4">Edit / Tambah Bidang Belanja APBDes</h3>
-            <form onSubmit={handleSaveBidang} className="flex flex-col gap-4">
+            <form onSubmit={promptSaveBidang} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase mb-1">Nama Bidang</label>
                 <input
@@ -525,7 +615,7 @@ export default function TransparansiClientPage({
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
             <h3 className="text-xl font-heading mb-4">Edit / Tambah Produk Hukum</h3>
-            <form onSubmit={handleSaveProdukHukum} className="flex flex-col gap-4">
+            <form onSubmit={promptSaveProdukHukum} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase mb-1">Nomor / Tahun Peraturan</label>
                 <input
@@ -579,6 +669,15 @@ export default function TransparansiClientPage({
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={isRingkasanSaving || isStatistikSaving}
+      />
     </div>
   );
 }

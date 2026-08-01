@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Agenda, BukuTamu, Pengaduan } from "@/lib/data";
 import {
   saveAgendaAction,
@@ -12,6 +13,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialAgenda: Agenda[];
@@ -24,6 +26,7 @@ export default function LayananClientPage({
   initialBukuTamu,
   initialPengaduan,
 }: Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"pengaduan" | "agenda" | "bukutamu">("pengaduan");
 
   // State
@@ -41,6 +44,19 @@ export default function LayananClientPage({
   const [pengaduanStatusInput, setPengaduanStatusInput] = useState<Pengaduan["status"]>("Diproses");
   const [pengaduanTanggapanInput, setPengaduanTanggapanInput] = useState("");
 
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
   // AGENDA HANDLERS
   const handleOpenAddAgenda = () => {
     setEditingAgenda({
@@ -54,8 +70,22 @@ export default function LayananClientPage({
     setIsAgendaModalOpen(true);
   };
 
-  const handleSaveAgenda = async (e: React.FormEvent) => {
+  const promptSaveAgenda = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingAgenda?.title) {
+      alert("Judul agenda wajib diisi!");
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      title: editingAgenda.id ? "Konfirmasi Edit Agenda" : "Konfirmasi Agenda Baru",
+      message: `Apakah Anda yakin ingin menyimpan kegiatan agenda "${editingAgenda.title}"?`,
+      onConfirm: executeSaveAgenda,
+    });
+  };
+
+  const executeSaveAgenda = async () => {
     if (!editingAgenda?.title) return;
     setIsSubmittingAgenda(true);
     try {
@@ -76,6 +106,9 @@ export default function LayananClientPage({
         }
         setIsAgendaModalOpen(false);
         setEditingAgenda(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert(`Agenda "${res.item.title}" berhasil disimpan!`);
+        router.refresh();
       }
     } catch (err: any) {
       alert("Gagal menyimpan agenda: " + err.message);
@@ -84,14 +117,33 @@ export default function LayananClientPage({
     }
   };
 
-  const handleDeleteAgenda = async (id: number) => {
-    if (!confirm("Hapus agenda ini?")) return;
-    await deleteAgendaAction(id);
-    setAgendaList(agendaList.filter((a) => a.id !== id));
+  const handleDeleteAgenda = async (id: number, title: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Agenda",
+      message: `Apakah Anda yakin ingin menghapus agenda "${title}"?`,
+      onConfirm: async () => {
+        await deleteAgendaAction(id);
+        setAgendaList(agendaList.filter((a) => a.id !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert("Agenda berhasil dihapus!");
+        router.refresh();
+      },
+    });
   };
 
   // PENGADUAN HANDLERS
-  const handleSavePengaduanStatus = async () => {
+  const promptSavePengaduanStatus = () => {
+    if (!selectedPengaduan) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Update Status Pengaduan",
+      message: `Apakah Anda yakin ingin memperbarui status pengaduan dari "${selectedPengaduan.nama}" menjadi "${pengaduanStatusInput}"?`,
+      onConfirm: executeSavePengaduanStatus,
+    });
+  };
+
+  const executeSavePengaduanStatus = async () => {
     if (!selectedPengaduan) return;
     try {
       await updateStatusPengaduanAction(selectedPengaduan.id, pengaduanStatusInput, pengaduanTanggapanInput);
@@ -103,22 +155,43 @@ export default function LayananClientPage({
         )
       );
       setSelectedPengaduan(null);
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      alert("Status pengaduan berhasil diperbarui!");
+      router.refresh();
     } catch (err: any) {
       alert("Gagal memperbarui status pengaduan: " + err.message);
     }
   };
 
-  const handleDeletePengaduan = async (id: number) => {
-    if (!confirm("Hapus pengaduan ini?")) return;
-    await deletePengaduanAction(id);
-    setPengaduanList(pengaduanList.filter((p) => p.id !== id));
+  const handleDeletePengaduan = async (id: number, nama: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Pengaduan",
+      message: `Apakah Anda yakin ingin menghapus pengaduan dari "${nama}"?`,
+      onConfirm: async () => {
+        await deletePengaduanAction(id);
+        setPengaduanList(pengaduanList.filter((p) => p.id !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert("Laporan pengaduan berhasil dihapus!");
+        router.refresh();
+      },
+    });
   };
 
   // BUKU TAMU HANDLERS
-  const handleDeleteBukuTamu = async (id: number) => {
-    if (!confirm("Hapus entri buku tamu ini?")) return;
-    await deleteBukuTamuAction(id);
-    setBukuTamuList(bukuTamuList.filter((b) => b.id !== id));
+  const handleDeleteBukuTamu = async (id: number, nama: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Buku Tamu",
+      message: `Apakah Anda yakin ingin menghapus pesan buku tamu dari "${nama}"?`,
+      onConfirm: async () => {
+        await deleteBukuTamuAction(id);
+        setBukuTamuList(bukuTamuList.filter((b) => b.id !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert("Entri buku tamu berhasil dihapus!");
+        router.refresh();
+      },
+    });
   };
 
   return (
@@ -199,7 +272,7 @@ export default function LayananClientPage({
                         Tindak Lanjuti
                       </Button>
                       <Button
-                        onClick={() => handleDeletePengaduan(p.id)}
+                        onClick={() => handleDeletePengaduan(p.id, p.nama)}
                         variant="outline"
                         className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                       >
@@ -254,7 +327,7 @@ export default function LayananClientPage({
                     Edit
                   </Button>
                   <Button
-                    onClick={() => handleDeleteAgenda(a.id)}
+                    onClick={() => handleDeleteAgenda(a.id, a.title)}
                     variant="outline"
                     className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                   >
@@ -283,7 +356,7 @@ export default function LayananClientPage({
                   <p className="text-sm text-[color:var(--ink-soft)] italic">"{b.message}"</p>
                 </div>
                 <Button
-                  onClick={() => handleDeleteBukuTamu(b.id)}
+                  onClick={() => handleDeleteBukuTamu(b.id, b.name)}
                   variant="outline"
                   className="text-xs border-red-200 text-red-600 hover:bg-red-50 px-3 py-1"
                 >
@@ -300,7 +373,7 @@ export default function LayananClientPage({
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-lg p-6 bg-[color:var(--card)] border border-[color:var(--line)] shadow-xl">
             <h3 className="text-xl font-heading mb-4">{editingAgenda?.id ? "Edit Agenda Desa" : "Tambah Agenda Baru"}</h3>
-            <form onSubmit={handleSaveAgenda} className="flex flex-col gap-4">
+            <form onSubmit={promptSaveAgenda} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase mb-1">Judul Agenda</label>
                 <input
@@ -411,7 +484,7 @@ export default function LayananClientPage({
               </div>
               <div className="flex justify-end gap-2 mt-2">
                 <Button variant="outline" onClick={() => setSelectedPengaduan(null)}>Batal</Button>
-                <Button onClick={handleSavePengaduanStatus} className="bg-[color:var(--forest)] text-white">
+                <Button onClick={promptSavePengaduanStatus} className="bg-[color:var(--forest)] text-white">
                   Simpan Tanggapan
                 </Button>
               </div>
@@ -419,6 +492,15 @@ export default function LayananClientPage({
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={isSubmittingAgenda}
+      />
     </div>
   );
 }

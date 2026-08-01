@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Potensi } from "@/lib/data";
 import { updatePotensiAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialPotentials: Potensi[];
 }
 
 export default function PotensiClientPage({ initialPotentials }: Props) {
+  const router = useRouter();
   const [potentials, setPotentials] = useState<Potensi[]>(initialPotentials);
   const [editingItem, setEditingItem] = useState<Potensi | null>(null);
   
@@ -22,6 +25,19 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const handleEditClick = (item: Potensi) => {
     setEditingItem(item);
@@ -39,7 +55,7 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
     setSuccess(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const promptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
 
@@ -50,6 +66,17 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
       setError("Semua field wajib diisi.");
       return;
     }
+
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Update Potensi",
+      message: `Apakah Anda yakin ingin menyimpan perubahan pada Potensi "${editingItem.num} — ${editTitle.trim()}"?`,
+      onConfirm: executeSubmit,
+    });
+  };
+
+  const executeSubmit = async () => {
+    if (!editingItem) return;
 
     setLoading(true);
     try {
@@ -62,6 +89,8 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
         );
         setSuccess(`Potensi "${editingItem.num}" berhasil diperbarui!`);
         setEditingItem(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        router.refresh();
       }
     } catch (err) {
       console.error(err);
@@ -144,7 +173,7 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <form onSubmit={promptSubmit} className="flex flex-col gap-4">
                 <div>
                   <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                     Judul Potensi
@@ -206,6 +235,15 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
           {success}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={loading}
+      />
     </div>
   );
 }

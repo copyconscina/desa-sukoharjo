@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Berita } from "@/lib/data";
 import { addBeritaAction, deleteBeritaAction, uploadImageAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
@@ -16,12 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ImageCropperModal from "@/components/ImageCropperModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialNews: Berita[];
 }
 
 export default function BeritaClientPage({ initialNews }: Props) {
+  const router = useRouter();
   const [news, setNews] = useState<Berita[]>(initialNews);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,20 @@ export default function BeritaClientPage({ initialNews }: Props) {
   const [rawFiles, setRawFiles] = useState<File[]>([]);
   const [currentCropIndex, setCurrentCropIndex] = useState<number>(-1);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const promptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -45,11 +61,19 @@ export default function BeritaClientPage({ initialNews }: Props) {
       return;
     }
 
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Publis Berita",
+      message: `Apakah Anda yakin ingin mempublikasikan berita "${title.trim()}"?`,
+      onConfirm: executeSubmit,
+    });
+  };
+
+  const executeSubmit = async () => {
     setLoading(true);
     try {
       let uploadedUrlsString = "";
 
-      // 1. Upload cropped files sequentially
       if (croppedFiles.length > 0) {
         const uploadedUrls: string[] = [];
         for (const fileToUpload of croppedFiles) {
@@ -67,10 +91,8 @@ export default function BeritaClientPage({ initialNews }: Props) {
         uploadedUrlsString = uploadedUrls.join(",");
       }
 
-      // 2. Save news article
       const res = await addBeritaAction(tag, title.trim(), desc.trim(), uploadedUrlsString);
       if (res.success) {
-        const dateStr = res.item.date;
         const newArticle: Berita = {
           ...res.item,
           title: title.trim(),
@@ -84,11 +106,12 @@ export default function BeritaClientPage({ initialNews }: Props) {
         setCroppedFiles([]);
         setRawFiles([]);
 
-        // Reset file input element manually
         const fileInput = document.getElementById("beritaFileInput") as HTMLInputElement;
         if (fileInput) fileInput.value = "";
 
-        setSuccess("Berita berhasil ditambahkan!");
+        setSuccess("Berita berhasil ditambahkan dan disimpan!");
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        router.refresh();
       }
     } catch (err) {
       console.error(err);
@@ -104,23 +127,27 @@ export default function BeritaClientPage({ initialNews }: Props) {
       return;
     }
 
-    if (!confirm(`Apakah Anda yakin ingin menghapus berita "${item.title}"?`)) {
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const res = await deleteBeritaAction(item.id);
-      if (res.success) {
-        setNews(news.filter((b) => b.id !== item.id));
-        setSuccess("Berita berhasil dihapus!");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Gagal menghapus berita.");
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Berita",
+      message: `Apakah Anda yakin ingin menghapus berita "${item.title}"? Tindakan ini tidak bisa dibatalkan.`,
+      onConfirm: async () => {
+        setError(null);
+        setSuccess(null);
+        try {
+          const res = await deleteBeritaAction(item.id!);
+          if (res.success) {
+            setNews(news.filter((b) => b.id !== item.id));
+            setSuccess("Berita berhasil dihapus!");
+            setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+            router.refresh();
+          }
+        } catch (err) {
+          console.error(err);
+          setError("Gagal menghapus berita.");
+        }
+      },
+    });
   };
 
   // Convert cropped files to preview URLs
@@ -146,7 +173,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
               Tambah Berita Baru
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={promptSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Kategori / Tag
@@ -349,6 +376,14 @@ export default function BeritaClientPage({ initialNews }: Props) {
           }}
         />
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={loading}
+      />
     </div>
   );
 }
