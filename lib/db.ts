@@ -843,14 +843,23 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
 
   if (!isPlaceholderSupabase) {
     try {
-      // 1. Update ke 4 tabel terpisah di Supabase
-      await supabaseServer.from("statistik_ringkasan").upsert({
-        id: 1,
-        total_penduduk: dataInput.totalPenduduk,
-        total_kk: dataInput.totalKk,
-        laki_laki: dataInput.lakiLaki,
-        perempuan: dataInput.perempuan,
-      });
+      // 1. Update ke statistik_ringkasan (tanpa sertakan id di payload update untuk cegah error 428C9)
+      const { data: existingRingkasan } = await supabaseServer.from("statistik_ringkasan").select("id").limit(1);
+      if (existingRingkasan && existingRingkasan.length > 0) {
+        await supabaseServer.from("statistik_ringkasan").update({
+          total_penduduk: dataInput.totalPenduduk,
+          total_kk: dataInput.totalKk,
+          laki_laki: dataInput.lakiLaki,
+          perempuan: dataInput.perempuan,
+        }).eq("id", existingRingkasan[0].id);
+      } else {
+        await supabaseServer.from("statistik_ringkasan").insert({
+          total_penduduk: dataInput.totalPenduduk,
+          total_kk: dataInput.totalKk,
+          laki_laki: dataInput.lakiLaki,
+          perempuan: dataInput.perempuan,
+        });
+      }
 
       if (dataInput.dusunList && dataInput.dusunList.length > 0) {
         await supabaseServer.from("statistik_dusun").delete().neq("id", 0);
@@ -874,10 +883,16 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
       }
 
       // 2. Backup ke tabel tunggal lama
-      await supabaseServer.from("statistik_penduduk").upsert({ id: 1, ...dataInput });
+      const { data: existingLama } = await supabaseServer.from("statistik_penduduk").select("id").limit(1);
+      if (existingLama && existingLama.length > 0) {
+        await supabaseServer.from("statistik_penduduk").update(dataInput).eq("id", existingLama[0].id);
+      } else {
+        await supabaseServer.from("statistik_penduduk").insert(dataInput);
+      }
     } catch (e) {
       console.error("Error updating statistik in Supabase:", e);
     }
   }
+
   return true;
 }
