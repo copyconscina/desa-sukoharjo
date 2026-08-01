@@ -15,6 +15,7 @@ import {
   saveProdukHukumAction,
   deleteProdukHukumAction,
   updateStatistikPendudukAction,
+  uploadPdfAction,
 } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,9 @@ export default function TransparansiClientPage({
   // Produk Hukum state
   const [editingProdukHukum, setEditingProdukHukum] = useState<Partial<ProdukHukum> | null>(null);
   const [isProdukHukumModalOpen, setIsProdukHukumModalOpen] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [isProdukHukumSaving, setIsProdukHukumSaving] = useState(false);
 
   // Statistik state
   const [isStatistikSaving, setIsStatistikSaving] = useState(false);
@@ -169,14 +173,27 @@ export default function TransparansiClientPage({
 
   const executeSaveProdukHukum = async () => {
     if (!editingProdukHukum?.judul) return;
+    setIsProdukHukumSaving(true);
     try {
+      let finalFileUrl = editingProdukHukum.fileUrl || "";
+
+      if (pdfFile) {
+        setIsUploadingPdf(true);
+        const formData = new FormData();
+        formData.append("file", pdfFile);
+        const uploadRes = await uploadPdfAction(formData);
+        if (uploadRes.success && uploadRes.url) {
+          finalFileUrl = uploadRes.url;
+        }
+      }
+
       const res = await saveProdukHukumAction({
         id: editingProdukHukum.id,
         nomor: editingProdukHukum.nomor || "",
         judul: editingProdukHukum.judul || "",
         kategori: editingProdukHukum.kategori || "Peraturan Desa",
         tanggal: editingProdukHukum.tanggal || new Date().toLocaleDateString("id-ID"),
-        fileUrl: editingProdukHukum.fileUrl || "",
+        fileUrl: finalFileUrl,
       });
       if (res.success && res.item) {
         if (editingProdukHukum.id) {
@@ -186,12 +203,16 @@ export default function TransparansiClientPage({
         }
         setIsProdukHukumModalOpen(false);
         setEditingProdukHukum(null);
+        setPdfFile(null);
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         alert(`Produk hukum "${res.item.judul}" berhasil disimpan!`);
         router.refresh();
       }
     } catch (err: any) {
       alert("Gagal menyimpan produk hukum: " + err.message);
+    } finally {
+      setIsUploadingPdf(false);
+      setIsProdukHukumSaving(false);
     }
   };
 
@@ -409,12 +430,37 @@ export default function TransparansiClientPage({
                     <span className="font-mono text-xs text-[color:var(--ink-soft)]">{doc.nomor}</span>
                   </div>
                   <h4 className="font-heading font-semibold text-base text-[color:var(--ink)]">{doc.judul}</h4>
-                  <span className="text-xs font-mono text-[color:var(--ink-soft)] block mt-1">Ditetapkan: {doc.tanggal}</span>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs font-mono text-[color:var(--ink-soft)]">Ditetapkan: {doc.tanggal}</span>
+                    {doc.fileUrl ? (
+                      <a
+                        href={doc.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold text-[color:var(--forest)] hover:underline inline-flex items-center gap-1"
+                      >
+                        📄 Lihat Dokumen PDF
+                      </a>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-mono">⚠️ Belum Ada PDF</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
+                  {doc.fileUrl && (
+                    <a
+                      href={doc.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-outline text-xs border-[color:var(--line)] px-3 py-1 inline-flex items-center gap-1"
+                    >
+                      📄 PDF
+                    </a>
+                  )}
                   <Button
                     onClick={() => {
                       setEditingProdukHukum(doc);
+                      setPdfFile(null);
                       setIsProdukHukumModalOpen(true);
                     }}
                     variant="outline"
@@ -480,23 +526,13 @@ export default function TransparansiClientPage({
               </div>
             </div>
 
-            {/* SEBARAN DUSUN EDIT */}
+            {/* Per Dusun Table */}
             <div>
-              <h4 className="font-heading font-semibold text-sm mb-2 text-[color:var(--ink)]">Data Sebaran Dusun</h4>
-              <div className="flex flex-col gap-2">
+              <h4 className="font-heading font-semibold text-sm mb-2 text-[color:var(--ink)]">Demografi per Dusun</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {statistik.dusunList.map((dusun, idx) => (
-                  <div key={idx} className="grid grid-cols-4 gap-2 items-center">
-                    <input
-                      type="text"
-                      value={dusun.nama}
-                      onChange={(e) => {
-                        const newList = [...statistik.dusunList];
-                        newList[idx].nama = e.target.value;
-                        setStatistik({ ...statistik, dusunList: newList });
-                      }}
-                      placeholder="Nama Dusun"
-                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
-                    />
+                  <div key={idx} className="p-3 border border-[color:var(--line)] rounded-lg bg-[color:var(--parchment)] flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-[color:var(--ink)] w-36 truncate">{dusun.nama}</span>
                     <input
                       type="number"
                       value={dusun.rt}
@@ -505,8 +541,8 @@ export default function TransparansiClientPage({
                         newList[idx].rt = parseInt(e.target.value) || 0;
                         setStatistik({ ...statistik, dusunList: newList });
                       }}
-                      placeholder="Jumlah RT"
-                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                      className="w-16 px-2 py-1 border rounded text-xs"
+                      placeholder="RT"
                     />
                     <input
                       type="number"
@@ -516,8 +552,8 @@ export default function TransparansiClientPage({
                         newList[idx].rw = parseInt(e.target.value) || 0;
                         setStatistik({ ...statistik, dusunList: newList });
                       }}
-                      placeholder="Jumlah RW"
-                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                      className="w-16 px-2 py-1 border rounded text-xs"
+                      placeholder="RW"
                     />
                     <input
                       type="number"
@@ -527,8 +563,8 @@ export default function TransparansiClientPage({
                         newList[idx].jiwa = parseInt(e.target.value) || 0;
                         setStatistik({ ...statistik, dusunList: newList });
                       }}
-                      placeholder="Jumlah Jiwa"
-                      className="px-3 py-1.5 border border-[color:var(--line)] rounded-lg text-xs bg-[color:var(--parchment)]"
+                      className="w-20 px-2 py-1 border rounded text-xs"
+                      placeholder="Jiwa"
                     />
                   </div>
                 ))}
@@ -661,9 +697,49 @@ export default function TransparansiClientPage({
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase mb-1">Upload File Dokumen PDF (.pdf)</label>
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (!file.type.includes("pdf") && !file.name.toLowerCase().endsWith(".pdf")) {
+                        alert("File harus berformat PDF (.pdf)!");
+                        return;
+                      }
+                      setPdfFile(file);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)] file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[color:var(--forest)] file:text-white hover:file:opacity-90 cursor-pointer"
+                />
+                {pdfFile && (
+                  <p className="text-xs text-[color:var(--forest-deep)] mt-1 font-mono font-medium">
+                    ✅ Selected: {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+                {editingProdukHukum?.fileUrl && !pdfFile && (
+                  <div className="mt-2 text-xs flex items-center gap-2">
+                    <span className="text-[color:var(--ink-soft)]">File PDF Terpasang:</span>
+                    <a
+                      href={editingProdukHukum.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[color:var(--forest)] underline font-medium inline-flex items-center gap-1"
+                    >
+                      📄 Buka/Lihat PDF
+                    </a>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2 mt-2">
                 <Button type="button" variant="outline" onClick={() => setIsProdukHukumModalOpen(false)}>Batal</Button>
-                <Button type="submit" className="bg-[color:var(--forest)] text-white">Simpan Dokumen</Button>
+                <Button type="submit" disabled={isProdukHukumSaving || isUploadingPdf} className="bg-[color:var(--forest)] text-white">
+                  {isUploadingPdf ? "Mengunggah PDF..." : isProdukHukumSaving ? "Menyimpan..." : "Simpan Dokumen"}
+                </Button>
               </div>
             </form>
           </Card>

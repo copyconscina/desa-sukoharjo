@@ -42,9 +42,20 @@ export default async function ProdukHukumPage() {
                   <h3 className="font-heading text-lg text-[color:var(--ink)] mt-1">{doc.judul}</h3>
                   <span className="font-mono text-xs text-[color:var(--ink-soft)]">Ditetapkan: {doc.tanggal}</span>
                 </div>
-                <Button variant="outline" className="btn btn-dark border-none text-xs px-4 py-2 flex items-center gap-2 self-start md:self-auto">
-                  <span>📄 Unduh Dokumen PDF</span>
-                </Button>
+                {doc.fileUrl ? (
+                  <a
+                    href={doc.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-dark border-none text-xs px-4 py-2 flex items-center gap-2 self-start md:self-auto inline-flex"
+                  >
+                    <span>📄 Unduh Dokumen PDF</span>
+                  </a>
+                ) : (
+                  <Button disabled variant="outline" className="opacity-50 text-xs px-4 py-2 self-start md:self-auto">
+                    <span>📄 File PDF Belum Tersedia</span>
+                  </Button>
+                )}
               </Card>
             ))}
           </div>

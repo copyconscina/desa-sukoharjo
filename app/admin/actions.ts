@@ -46,8 +46,21 @@ import {
   checkRateLimit,
   resetRateLimit,
 } from "@/lib/auth";
-import { uploadSingleFile, uploadMultipleFiles } from "@/lib/upload";
+import { uploadSingleFile, uploadMultipleFiles, uploadPdfFile } from "@/lib/upload";
 import { headers } from "next/headers";
+
+export async function uploadPdfAction(formData: FormData) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) {
+    throw new Error("File PDF wajib diunggah.");
+  }
+
+  const fileUrl = await uploadPdfFile(file);
+  return { success: true, url: fileUrl };
+}
 
 function revalidateAll() {
   revalidatePath("/", "layout");
