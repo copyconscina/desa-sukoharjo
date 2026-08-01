@@ -355,12 +355,13 @@ export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): 
 
   if (!isPlaceholderSupabase) {
     try {
-      if (item.id) {
-        const { error } = await supabaseServer.from("lembaga").update(item).eq("id", item.id);
-        if (error) await supabase.from("lembaga").update(item).eq("id", item.id);
+      const { id: itemId, ...payload } = item;
+      if (itemId) {
+        const { error } = await supabaseServer.from("lembaga").update(payload).eq("id", itemId);
+        if (error) await supabase.from("lembaga").update(payload).eq("id", itemId);
       } else {
-        const { error } = await supabaseServer.from("lembaga").insert(item);
-        if (error) await supabase.from("lembaga").insert(item);
+        const { error } = await supabaseServer.from("lembaga").insert(payload);
+        if (error) await supabase.from("lembaga").insert(payload);
       }
     } catch (e) {}
   }
@@ -449,10 +450,13 @@ export async function saveAgenda(item: Omit<Agenda, "id"> & { id?: number }): Pr
 
   if (!isPlaceholderSupabase) {
     try {
-      if (item.id) {
-        await supabaseServer.from("agenda").update(item).eq("id", item.id);
+      const { id: itemId, ...payload } = item;
+      if (itemId) {
+        const { error } = await supabaseServer.from("agenda").update(payload).eq("id", itemId);
+        if (error) await supabase.from("agenda").update(payload).eq("id", itemId);
       } else {
-        await supabaseServer.from("agenda").insert(item);
+        const { error } = await supabaseServer.from("agenda").insert(payload);
+        if (error) await supabase.from("agenda").insert(payload);
       }
     } catch (e) {}
   }
@@ -650,10 +654,13 @@ export async function saveApbdesBidang(item: Omit<ApbdesBidang, "id"> & { id?: n
 
   if (!isPlaceholderSupabase) {
     try {
-      if (item.id) {
-        await supabaseServer.from("apbdes_bidang").update(item).eq("id", item.id);
+      const { id: itemId, ...payload } = item;
+      if (itemId) {
+        const { error } = await supabaseServer.from("apbdes_bidang").update(payload).eq("id", itemId);
+        if (error) await supabase.from("apbdes_bidang").update(payload).eq("id", itemId);
       } else {
-        await supabaseServer.from("apbdes_bidang").insert(item);
+        const { error } = await supabaseServer.from("apbdes_bidang").insert(payload);
+        if (error) await supabase.from("apbdes_bidang").insert(payload);
       }
     } catch (e) {}
   }
@@ -711,10 +718,13 @@ export async function saveProdukHukum(item: Omit<ProdukHukum, "id"> & { id?: num
 
   if (!isPlaceholderSupabase) {
     try {
-      if (item.id) {
-        await supabaseServer.from("produk_hukum").update(item).eq("id", item.id);
+      const { id: itemId, ...payload } = item;
+      if (itemId) {
+        const { error } = await supabaseServer.from("produk_hukum").update(payload).eq("id", itemId);
+        if (error) await supabase.from("produk_hukum").update(payload).eq("id", itemId);
       } else {
-        await supabaseServer.from("produk_hukum").insert(item);
+        const { error } = await supabaseServer.from("produk_hukum").insert(payload);
+        if (error) await supabase.from("produk_hukum").insert(payload);
       }
     } catch (e) {}
   }
