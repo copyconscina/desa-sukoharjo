@@ -751,55 +751,41 @@ export async function deleteProdukHukum(id: number): Promise<boolean> {
 export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
   const store = readStore();
   const defaultStatistik: StatistikPenduduk = {
-    totalPenduduk: 4815,
-    totalKk: 1753,
-    lakiLaki: 2532,
-    perempuan: 2383,
+    totalPenduduk: 4915,
+    totalKk: 1420,
+    lakiLaki: 2430,
+    perempuan: 2485,
     dusunList: [
-      { nama: "Dusun Blaraksari", rt: 2, rw: 1, jiwa: 168 },
-      { nama: "Dusun Sukoharjo", rt: 4, rw: 1, jiwa: 351 },
-      { nama: "Dusun Tulakan", rt: 2, rw: 1, jiwa: 410 },
-      { nama: "Dusun Jati", rt: 2, rw: 1, jiwa: 210 },
-      { nama: "Dusun Pule", rt: 2, rw: 1, jiwa: 364 },
-      { nama: "Dusun Dadapan", rt: 6, rw: 1, jiwa: 901 },
-      { nama: "Dusun Bonagung", rt: 2, rw: 1, jiwa: 279 },
-      { nama: "Dusun Dalan Gede", rt: 2, rw: 1, jiwa: 358 },
-      { nama: "Dusun Sendangsari", rt: 2, rw: 1, jiwa: 420 },
-      { nama: "Dusun Ngroto", rt: 4, rw: 1, jiwa: 739 },
-      { nama: "Dusun Ngandong", rt: 4, rw: 1, jiwa: 717 },
+      { nama: "Dusun Blaraksari", rt: 4, rw: 2, jiwa: 168 },
+      { nama: "Dusun Sukoharjo", rt: 6, rw: 2, jiwa: 351 },
+      { nama: "Dusun Tulakan", rt: 7, rw: 2, jiwa: 410 },
+      { nama: "Dusun Jati", rt: 5, rw: 2, jiwa: 210 },
+      { nama: "Dusun Pule", rt: 6, rw: 2, jiwa: 364 },
+      { nama: "Dusun Dadapan", rt: 12, rw: 4, jiwa: 901 },
+      { nama: "Dusun Bonagung", rt: 5, rw: 2, jiwa: 279 },
+      { nama: "Dusun Dalan Gede", rt: 6, rw: 2, jiwa: 358 },
+      { nama: "Dusun Sendangsari", rt: 7, rw: 2, jiwa: 420 },
+      { nama: "Dusun Ngroto", rt: 10, rw: 3, jiwa: 739 },
+      { nama: "Dusun Ngandong", rt: 10, rw: 3, jiwa: 717 },
     ],
     pendidikanList: [
-      { name: "Tidak / Belum Sekolah", count: 575 },
-      { name: "SD / Sederajat", count: 351 },
-      { name: "Tamat SD / Sederajat", count: 2248 },
-      { name: "SLTP / Sederajat", count: 956 },
-      { name: "SLTA / SMK / Sederajat", count: 679 },
-      { name: "Diploma / Sarjana (D3/S1/S2)", count: 106 },
+      { name: "SD / Sederajat", count: 1150 },
+      { name: "SMP / Sederajat", count: 980 },
+      { name: "SMA / SMK / Sederajat", count: 1240 },
+      { name: "Diploma / Sarjana (D3/S1/S2)", count: 472 },
     ],
     pekerjaanList: [
-      { name: "Pelajar / Mahasiswa", count: 248, pct: 25.5 },
-      { name: "Petani / Pekebun", count: 206, pct: 21.2 },
-      { name: "Wiraswasta / UMKM", count: 187, pct: 19.2 },
-      { name: "Karyawan Swasta", count: 62, pct: 6.4 },
-      { name: "Lainnya", count: 57, pct: 5.9 },
-      { name: "PNS", count: 27, pct: 2.8 },
-      { name: "Belum / Tidak Bekerja", count: 89, pct: 9.2 },
+      { name: "Petani & Pekebun", count: 1728, pct: 45 },
+      { name: "Buruh Tani / Harian", count: 845, pct: 22 },
+      { name: "Wiraswasta / UMKM", count: 576, pct: 15 },
+      { name: "Karyawan Swasta", count: 384, pct: 10 },
+      { name: "PNS / TNI / POLRI", count: 309, pct: 8 },
     ],
   };
 
-  if (store.statistik_penduduk && store.statistik_penduduk.totalPenduduk) {
-    return {
-      ...defaultStatistik,
-      ...store.statistik_penduduk,
-      dusunList: store.statistik_penduduk.dusunList?.length ? store.statistik_penduduk.dusunList : defaultStatistik.dusunList,
-      pendidikanList: store.statistik_penduduk.pendidikanList?.length ? store.statistik_penduduk.pendidikanList : defaultStatistik.pendidikanList,
-      pekerjaanList: store.statistik_penduduk.pekerjaanList?.length ? store.statistik_penduduk.pekerjaanList : defaultStatistik.pekerjaanList,
-    };
-  }
-
   if (!isPlaceholderSupabase) {
     try {
-      // 1. Coba baca dari 4 tabel terpisah terlebih dahulu
+      // 1. Coba baca dari 4 tabel terpisah Supabase terlebih dahulu
       const { data: ringkasan } = await supabase.from("statistik_ringkasan").select("*").single();
       const { data: dusun } = await supabase.from("statistik_dusun").select("*").order("id", { ascending: true });
       const { data: pendidikan } = await supabase.from("statistik_pendidikan").select("*").order("id", { ascending: true });
@@ -817,7 +803,7 @@ export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
         };
       }
 
-      // 2. Fallback ke tabel tunggal lama
+      // 2. Fallback ke tabel tunggal lama jika 4 tabel terpisah belum ada
       const { data, error } = await supabase.from("statistik_penduduk").select("*").single();
       if (!error && data) {
         return {
@@ -828,10 +814,22 @@ export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
           pekerjaanList: data.pekerjaanList?.length ? data.pekerjaanList : defaultStatistik.pekerjaanList,
         } as StatistikPenduduk;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Error reading statistik from Supabase:", e);
+    }
   }
 
-  return store.statistik_penduduk || defaultStatistik;
+  if (store.statistik_penduduk && store.statistik_penduduk.totalPenduduk) {
+    return {
+      ...defaultStatistik,
+      ...store.statistik_penduduk,
+      dusunList: store.statistik_penduduk.dusunList?.length ? store.statistik_penduduk.dusunList : defaultStatistik.dusunList,
+      pendidikanList: store.statistik_penduduk.pendidikanList?.length ? store.statistik_penduduk.pendidikanList : defaultStatistik.pendidikanList,
+      pekerjaanList: store.statistik_penduduk.pekerjaanList?.length ? store.statistik_penduduk.pekerjaanList : defaultStatistik.pekerjaanList,
+    };
+  }
+
+  return defaultStatistik;
 }
 
 export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Promise<boolean> {

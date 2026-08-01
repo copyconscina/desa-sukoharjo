@@ -59,7 +59,7 @@ export const popData: PopData[] = [
 
 export const STAT = {
   dusun: 11,
-  population: "4.815",
+  population: "4.915",
   umkm: 54,
 };
 
@@ -97,18 +97,6 @@ export interface BukuTamu {
   date: string;
 }
 
-export interface PermohonanSurat {
-  id: number;
-  nama: string;
-  nik: string;
-  jenisSurat: string;
-  keperluan: string;
-  telepon: string;
-  tanggal: string;
-  status: "Menunggu" | "Diproses" | "Selesai" | "Ditolak";
-  catatan?: string;
-}
-
 export interface Pengaduan {
   id: number;
   nama: string;
@@ -142,16 +130,6 @@ export interface ProdukHukum {
   nomor: string;
   judul: string;
   kategori: string;
-  tanggal: string;
-  fileUrl?: string;
-}
-
-export interface PpidItem {
-  id: number;
-  judul: string;
-  kategori: "Berkala" | "Serta-Merta" | "Setiap Saat";
-  format: string;
-  ukuran: string;
   tanggal: string;
   fileUrl?: string;
 }

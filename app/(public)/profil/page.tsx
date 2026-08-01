@@ -94,13 +94,14 @@ export default async function ProfilPage() {
                 <Badge className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none">
                   {pemdes.members}
                 </Badge>
+                <span className="text-xs font-mono text-[color:var(--clay)] font-semibold">{pemdes.leader}</span>
               </div>
             )}
           </div>
           <div className="org-chart">
             <div className="org-node top">
               Kepala Desa
-              <small>Sunarto</small>
+              <small>Sunarto.</small>
             </div>
             <div className="org-node">
               Sekretaris Desa
@@ -137,7 +138,7 @@ export default async function ProfilPage() {
             <div className="org-row">
               <div className="org-node">
                 Kadus Blaraksari, Sukoharjo, dan Jati
-                <small>Dwijoko Widyanto</small>
+                <small>dwijoko Widyanto</small>
               </div>
               <div className="org-node">
                 Kadus Tulakan dan Pule
@@ -202,7 +203,7 @@ export default async function ProfilPage() {
                 <div>
                   <h3>Alamat Kantor Desa</h3>
                   <p>
-                     Desa Sukoharjo RT 03/ RW 02, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
+                    Jl. Raya Tirtomoyo–Baturetno KM 5, Dusun Sukorejo, Desa Sukoharjo, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
                   </p>
                 </div>
               </div>
