@@ -155,31 +155,29 @@ export default async function ProfilPage() {
 
       {/* DATA KEPENDUDUKAN */}
       <section className="block">
-        <div className="wrap two-col">
-          <div>
-            <p className="eyebrow">Data Kependudukan</p>
-            <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
-            <div id="pop-chart">
-              {dusunList.map((d, idx) => (
-                <div key={idx} className="pop-bar-row">
-                  <div className="pop-bar-label">{d.nama}</div>
-                  <div className="pop-bar-track">
-                    <div
-                      className="pop-bar-fill"
-                      style={{ width: `${(((d.jiwa || 0) / popMax) * 100).toFixed(0)}%` }}
-                    />
-                  </div>
-                  <div className="pop-bar-num">
-                    {d.jiwa} jiwa
-                    {d.kk ? (
-                      <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({d.kk} KK)</span>
-                    ) : (
-                      <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({Math.round((d.jiwa || 0) / 3.4)} KK)</span>
-                    )}
-                  </div>
+        <div className="wrap">
+          <p className="eyebrow">Data Kependudukan</p>
+          <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
+          <div id="pop-chart" className="w-full">
+            {dusunList.map((d, idx) => (
+              <div key={idx} className="pop-bar-row">
+                <div className="pop-bar-label">{d.nama}</div>
+                <div className="pop-bar-track">
+                  <div
+                    className="pop-bar-fill"
+                    style={{ width: `${(((d.jiwa || 0) / popMax) * 100).toFixed(0)}%` }}
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="pop-bar-num whitespace-nowrap">
+                  {d.jiwa} jiwa
+                  {d.kk ? (
+                    <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({d.kk} KK)</span>
+                  ) : (
+                    <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({Math.round((d.jiwa || 0) / 3.4)} KK)</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
