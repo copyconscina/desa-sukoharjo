@@ -789,27 +789,37 @@ export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
 
   if (!isPlaceholderSupabase) {
     try {
-      // 1. Coba baca dari 4 tabel terpisah Supabase terlebih dahulu
-      const { data: ringkasan } = await supabase.from("statistik_ringkasan").select("*").single();
+      // 1. Coba baca dari 4 tabel terpisah Supabase (gunakan limit(1) agar tidak crash PGRST116 saat tabel kosong)
+      const { data: ringkasanRows } = await supabase.from("statistik_ringkasan").select("*").limit(1);
+      const ringkasan = ringkasanRows && ringkasanRows.length > 0 ? ringkasanRows[0] : null;
+
       const { data: dusun } = await supabase.from("statistik_dusun").select("*").order("id", { ascending: true });
       const { data: pendidikan } = await supabase.from("statistik_pendidikan").select("*").order("id", { ascending: true });
       const { data: pekerjaan } = await supabase.from("statistik_pekerjaan").select("*").order("id", { ascending: true });
 
-      if (ringkasan || (dusun && dusun.length > 0)) {
+      // Jika ada data di ringkasan ATAU salah satu dari 3 tabel terpisah:
+      if (ringkasan || (dusun && dusun.length > 0) || (pendidikan && pendidikan.length > 0) || (pekerjaan && pekerjaan.length > 0)) {
         return {
           totalPenduduk: ringkasan?.total_penduduk ?? ringkasan?.totalPenduduk ?? defaultStatistik.totalPenduduk,
           totalKk: ringkasan?.total_kk ?? ringkasan?.totalKk ?? defaultStatistik.totalKk,
           lakiLaki: ringkasan?.laki_laki ?? ringkasan?.lakiLaki ?? defaultStatistik.lakiLaki,
           perempuan: ringkasan?.perempuan ?? ringkasan?.perempuan ?? defaultStatistik.perempuan,
-          dusunList: dusun && dusun.length > 0 ? dusun.map((d: any) => ({ nama: d.nama, rt: d.rt, rw: d.rw, jiwa: d.jiwa })) : defaultStatistik.dusunList,
-          pendidikanList: pendidikan && pendidikan.length > 0 ? pendidikan.map((p: any) => ({ name: p.name, count: p.count })) : defaultStatistik.pendidikanList,
-          pekerjaanList: pekerjaan && pekerjaan.length > 0 ? pekerjaan.map((p: any) => ({ name: p.name, count: p.count, pct: p.pct })) : defaultStatistik.pekerjaanList,
+          dusunList: dusun && dusun.length > 0 
+            ? dusun.map((d: any) => ({ nama: d.nama, rt: d.rt, rw: d.rw, jiwa: d.jiwa, ...(d.kk !== undefined ? { kk: d.kk } : {}) })) 
+            : defaultStatistik.dusunList,
+          pendidikanList: pendidikan && pendidikan.length > 0 
+            ? pendidikan.map((p: any) => ({ name: p.name, count: p.count })) 
+            : defaultStatistik.pendidikanList,
+          pekerjaanList: pekerjaan && pekerjaan.length > 0 
+            ? pekerjaan.map((p: any) => ({ name: p.name, count: p.count, pct: p.pct })) 
+            : defaultStatistik.pekerjaanList,
         };
       }
 
-      // 2. Fallback ke tabel tunggal lama jika 4 tabel terpisah belum ada
-      const { data, error } = await supabase.from("statistik_penduduk").select("*").single();
-      if (!error && data) {
+      // 2. Fallback ke tabel tunggal lama jika 4 tabel terpisah belum diisi sama sekali
+      const { data: lamaRows } = await supabase.from("statistik_penduduk").select("*").limit(1);
+      if (lamaRows && lamaRows.length > 0) {
+        const data = lamaRows[0];
         return {
           ...defaultStatistik,
           ...data,
@@ -823,6 +833,7 @@ export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
     }
   }
 
+  // Jika Supabase tidak aktif atau kosong, gunakan local store jika valid, jika tidak gunakan defaultStatistik
   if (store.statistik_penduduk && store.statistik_penduduk.totalPenduduk) {
     return {
       ...defaultStatistik,
@@ -843,46 +854,69 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
 
   if (!isPlaceholderSupabase) {
     try {
-      // 1. Update ke statistik_ringkasan (tanpa sertakan id di payload update untuk cegah error 428C9)
+      // 1. Update ke statistik_ringkasan (tanpa id di payload untuk mencegah error PostgreSQL 428C9)
       const { data: existingRingkasan } = await supabaseServer.from("statistik_ringkasan").select("id").limit(1);
+      const ringkasanPayload = {
+        total_penduduk: Number(dataInput.totalPenduduk || 0),
+        total_kk: Number(dataInput.totalKk || 0),
+        laki_laki: Number(dataInput.lakiLaki || 0),
+        perempuan: Number(dataInput.perempuan || 0),
+      };
+
       if (existingRingkasan && existingRingkasan.length > 0) {
-        await supabaseServer.from("statistik_ringkasan").update({
-          total_penduduk: dataInput.totalPenduduk,
-          total_kk: dataInput.totalKk,
-          laki_laki: dataInput.lakiLaki,
-          perempuan: dataInput.perempuan,
-        }).eq("id", existingRingkasan[0].id);
+        const { error: errUpdate } = await supabaseServer
+          .from("statistik_ringkasan")
+          .update(ringkasanPayload)
+          .eq("id", existingRingkasan[0].id);
+        if (errUpdate) console.error("Error update statistik_ringkasan:", errUpdate);
       } else {
-        await supabaseServer.from("statistik_ringkasan").insert({
-          total_penduduk: dataInput.totalPenduduk,
-          total_kk: dataInput.totalKk,
-          laki_laki: dataInput.lakiLaki,
-          perempuan: dataInput.perempuan,
-        });
+        const { error: errInsert } = await supabaseServer
+          .from("statistik_ringkasan")
+          .insert(ringkasanPayload);
+        if (errInsert) console.error("Error insert statistik_ringkasan:", errInsert);
       }
 
+      // 2. Update statistik_dusun
       if (dataInput.dusunList && dataInput.dusunList.length > 0) {
-        await supabaseServer.from("statistik_dusun").delete().neq("id", 0);
-        await supabaseServer.from("statistik_dusun").insert(
-          dataInput.dusunList.map((d) => ({ nama: d.nama, rt: d.rt, rw: d.rw, jiwa: d.jiwa }))
+        await supabaseServer.from("statistik_dusun").delete().gt("id", -1);
+        const { error: errDusun } = await supabaseServer.from("statistik_dusun").insert(
+          dataInput.dusunList.map((d) => ({
+            nama: String(d.nama || ""),
+            rt: Number(d.rt || 0),
+            rw: Number(d.rw || 0),
+            jiwa: Number(d.jiwa || 0),
+            ...(d.kk !== undefined ? { kk: Number(d.kk) } : {}),
+          }))
         );
+        if (errDusun) console.error("Error insert statistik_dusun:", errDusun);
       }
 
+      // 3. Update statistik_pendidikan
       if (dataInput.pendidikanList && dataInput.pendidikanList.length > 0) {
-        await supabaseServer.from("statistik_pendidikan").delete().neq("id", 0);
-        await supabaseServer.from("statistik_pendidikan").insert(
-          dataInput.pendidikanList.map((p) => ({ name: p.name, count: p.count }))
+        await supabaseServer.from("statistik_pendidikan").delete().gt("id", -1);
+        const { error: errPendidikan } = await supabaseServer.from("statistik_pendidikan").insert(
+          dataInput.pendidikanList.map((p) => ({
+            name: String(p.name || ""),
+            count: Number(p.count || 0),
+          }))
         );
+        if (errPendidikan) console.error("Error insert statistik_pendidikan:", errPendidikan);
       }
 
+      // 4. Update statistik_pekerjaan
       if (dataInput.pekerjaanList && dataInput.pekerjaanList.length > 0) {
-        await supabaseServer.from("statistik_pekerjaan").delete().neq("id", 0);
-        await supabaseServer.from("statistik_pekerjaan").insert(
-          dataInput.pekerjaanList.map((p) => ({ name: p.name, count: p.count, pct: p.pct }))
+        await supabaseServer.from("statistik_pekerjaan").delete().gt("id", -1);
+        const { error: errPekerjaan } = await supabaseServer.from("statistik_pekerjaan").insert(
+          dataInput.pekerjaanList.map((p) => ({
+            name: String(p.name || ""),
+            count: Number(p.count || 0),
+            pct: Number(p.pct || 0),
+          }))
         );
+        if (errPekerjaan) console.error("Error insert statistik_pekerjaan:", errPekerjaan);
       }
 
-      // 2. Backup ke tabel tunggal lama
+      // 5. Backup ke tabel tunggal lama
       const { data: existingLama } = await supabaseServer.from("statistik_penduduk").select("id").limit(1);
       if (existingLama && existingLama.length > 0) {
         await supabaseServer.from("statistik_penduduk").update(dataInput).eq("id", existingLama[0].id);
