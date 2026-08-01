@@ -101,7 +101,7 @@ export default async function ProfilPage() {
           <div className="org-chart">
             <div className="org-node top">
               Kepala Desa
-              <small>Sunarto.</small>
+              <small>Sunarto</small>
             </div>
             <div className="org-node">
               Sekretaris Desa
@@ -138,7 +138,7 @@ export default async function ProfilPage() {
             <div className="org-row">
               <div className="org-node">
                 Kadus Blaraksari, Sukoharjo, dan Jati
-                <small>dwijoko Widyanto</small>
+                <small>Dwijoko Widyanto</small>
               </div>
               <div className="org-node">
                 Kadus Tulakan dan Pule
@@ -203,7 +203,7 @@ export default async function ProfilPage() {
                 <div>
                   <h3>Alamat Kantor Desa</h3>
                   <p>
-                    Jl. Raya Tirtomoyo–Baturetno KM 5, Dusun Sukorejo, Desa Sukoharjo, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
+                     Desa Sukoharjo RT 03/ RW 02, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
                   </p>
                 </div>
               </div>
