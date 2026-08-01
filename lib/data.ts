@@ -59,7 +59,7 @@ export const popData: PopData[] = [
 
 export const STAT = {
   dusun: 11,
-  population: "4.915",
+  population: "4.815",
   umkm: 54,
 };
 
