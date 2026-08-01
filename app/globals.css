@@ -757,9 +757,8 @@ section.block.tight {
 
 .pop-bar-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  gap: 12px;
 }
 .pop-bar-label {
   width: 170px;
@@ -783,7 +782,7 @@ section.block.tight {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink-soft);
-  width: 70px;
+  width: 150px;
   text-align: right;
   flex: none;
 }
