@@ -57,29 +57,12 @@ function syncListWithLocal<T extends { id?: number }>(
   deletedIds: number[] = []
 ): T[] {
   const deletedSet = new Set(deletedIds || []);
-  const localMap = new Map((localList || []).map((item) => [item.id, item]));
-
-  // Start with supabase items filtering out deleted
   const result: T[] = [];
-  const processedIds = new Set<number>();
 
   for (const item of supabaseList || []) {
     if (!item.id) continue;
-    if (deletedSet.has(item.id)) continue; // Skip deleted items
-
-    if (localMap.has(item.id)) {
-      result.push(localMap.get(item.id)!); // Use edited version from local store
-    } else {
-      result.push(item);
-    }
-    processedIds.add(item.id);
-  }
-
-  // Also include newly added local items not in Supabase
-  for (const item of localList || []) {
-    if (item.id && !processedIds.has(item.id) && !deletedSet.has(item.id)) {
-      result.push(item);
-    }
+    if (deletedSet.has(item.id)) continue;
+    result.push(item);
   }
 
   return result;
@@ -141,9 +124,11 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   if (!isPlaceholderSupabase) {
     try {
       if (item.id) {
-        await supabaseServer.from("umkm").update(payload).eq("id", item.id);
+        const { error } = await supabaseServer.from("umkm").update(payload).eq("id", item.id);
+        if (error) await supabase.from("umkm").update(payload).eq("id", item.id);
       } else {
-        await supabaseServer.from("umkm").insert(payload);
+        const { error } = await supabaseServer.from("umkm").insert(payload);
+        if (error) await supabase.from("umkm").insert(payload);
       }
     } catch (e) {}
   }
@@ -371,9 +356,11 @@ export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): 
   if (!isPlaceholderSupabase) {
     try {
       if (item.id) {
-        await supabaseServer.from("lembaga").update(item).eq("id", item.id);
+        const { error } = await supabaseServer.from("lembaga").update(item).eq("id", item.id);
+        if (error) await supabase.from("lembaga").update(item).eq("id", item.id);
       } else {
-        await supabaseServer.from("lembaga").insert(item);
+        const { error } = await supabaseServer.from("lembaga").insert(item);
+        if (error) await supabase.from("lembaga").insert(item);
       }
     } catch (e) {}
   }
