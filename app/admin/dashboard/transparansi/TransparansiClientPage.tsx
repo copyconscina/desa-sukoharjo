@@ -486,92 +486,274 @@ export default function TransparansiClientPage({
       {activeTab === "statistik" && (
         <Card className="p-6 border border-[color:var(--line)] shadow-sm bg-[color:var(--card)] flex flex-col gap-6">
           <h3 className="text-lg font-heading text-[color:var(--ink)]">Kelola Statistik Kependudukan Publik</h3>
-          <form onSubmit={promptSaveStatistik} className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total Penduduk (Jiwa)</label>
-                <input
-                  type="number"
-                  value={statistik.totalPenduduk}
-                  onChange={(e) => setStatistik({ ...statistik, totalPenduduk: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total KK</label>
-                <input
-                  type="number"
-                  value={statistik.totalKk}
-                  onChange={(e) => setStatistik({ ...statistik, totalKk: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Laki-Laki (Jiwa)</label>
-                <input
-                  type="number"
-                  value={statistik.lakiLaki}
-                  onChange={(e) => setStatistik({ ...statistik, lakiLaki: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Perempuan (Jiwa)</label>
-                <input
-                  type="number"
-                  value={statistik.perempuan}
-                  onChange={(e) => setStatistik({ ...statistik, perempuan: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
-                />
+          <form onSubmit={promptSaveStatistik} className="flex flex-col gap-8">
+            
+            {/* 1. REKAP TOTAL */}
+            <div>
+              <h4 className="font-heading font-semibold text-sm mb-3 text-[color:var(--ink)] border-b pb-2">1. Rekapitulasi Penduduk Utama</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total Penduduk (Jiwa)</label>
+                  <input
+                    type="number"
+                    value={statistik.totalPenduduk}
+                    onChange={(e) => setStatistik({ ...statistik, totalPenduduk: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)] font-bold text-[color:var(--forest)]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Total KK</label>
+                  <input
+                    type="number"
+                    value={statistik.totalKk}
+                    onChange={(e) => setStatistik({ ...statistik, totalKk: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Laki-Laki (Jiwa)</label>
+                  <input
+                    type="number"
+                    value={statistik.lakiLaki}
+                    onChange={(e) => setStatistik({ ...statistik, lakiLaki: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Perempuan (Jiwa)</label>
+                  <input
+                    type="number"
+                    value={statistik.perempuan}
+                    onChange={(e) => setStatistik({ ...statistik, perempuan: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] rounded-lg text-sm bg-[color:var(--parchment)]"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Per Dusun Table */}
+            {/* 2. DEMOGRAFI PER DUSUN */}
             <div>
-              <h4 className="font-heading font-semibold text-sm mb-2 text-[color:var(--ink)]">Demografi per Dusun</h4>
+              <div className="flex justify-between items-center mb-3 border-b pb-2">
+                <h4 className="font-heading font-semibold text-sm text-[color:var(--ink)]">2. Sebaran Demografi per Dusun</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStatistik({
+                      ...statistik,
+                      dusunList: [...(statistik.dusunList || []), { nama: "Dusun Baru", rt: 0, rw: 0, jiwa: 0 }],
+                    });
+                  }}
+                  className="text-xs border-[color:var(--line)]"
+                >
+                  + Tambah Dusun
+                </Button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {statistik.dusunList.map((dusun, idx) => (
+                {(statistik.dusunList || []).map((dusun, idx) => (
                   <div key={idx} className="p-3 border border-[color:var(--line)] rounded-lg bg-[color:var(--parchment)] flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[color:var(--ink)] w-36 truncate">{dusun.nama}</span>
                     <input
-                      type="number"
-                      value={dusun.rt}
+                      type="text"
+                      value={dusun.nama}
                       onChange={(e) => {
                         const newList = [...statistik.dusunList];
-                        newList[idx].rt = parseInt(e.target.value) || 0;
+                        newList[idx].nama = e.target.value;
                         setStatistik({ ...statistik, dusunList: newList });
                       }}
-                      className="w-16 px-2 py-1 border rounded text-xs"
-                      placeholder="RT"
+                      className="w-36 px-2 py-1 border rounded text-xs bg-[color:var(--card)] font-medium truncate"
+                      placeholder="Nama Dusun"
                     />
-                    <input
-                      type="number"
-                      value={dusun.rw}
-                      onChange={(e) => {
-                        const newList = [...statistik.dusunList];
-                        newList[idx].rw = parseInt(e.target.value) || 0;
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-[color:var(--ink-soft)]">RT:</span>
+                      <input
+                        type="number"
+                        value={dusun.rt}
+                        onChange={(e) => {
+                          const newList = [...statistik.dusunList];
+                          newList[idx].rt = parseInt(e.target.value) || 0;
+                          setStatistik({ ...statistik, dusunList: newList });
+                        }}
+                        className="w-12 px-1 py-1 border rounded text-xs text-center"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-[color:var(--ink-soft)]">RW:</span>
+                      <input
+                        type="number"
+                        value={dusun.rw}
+                        onChange={(e) => {
+                          const newList = [...statistik.dusunList];
+                          newList[idx].rw = parseInt(e.target.value) || 0;
+                          setStatistik({ ...statistik, dusunList: newList });
+                        }}
+                        className="w-12 px-1 py-1 border rounded text-xs text-center"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-[color:var(--ink-soft)]">Jiwa:</span>
+                      <input
+                        type="number"
+                        value={dusun.jiwa}
+                        onChange={(e) => {
+                          const newList = [...statistik.dusunList];
+                          newList[idx].jiwa = parseInt(e.target.value) || 0;
+                          setStatistik({ ...statistik, dusunList: newList });
+                        }}
+                        className="w-16 px-1 py-1 border rounded text-xs text-center font-bold text-[color:var(--forest)]"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newList = statistik.dusunList.filter((_, i) => i !== idx);
                         setStatistik({ ...statistik, dusunList: newList });
                       }}
-                      className="w-16 px-2 py-1 border rounded text-xs"
-                      placeholder="RW"
-                    />
-                    <input
-                      type="number"
-                      value={dusun.jiwa}
-                      onChange={(e) => {
-                        const newList = [...statistik.dusunList];
-                        newList[idx].jiwa = parseInt(e.target.value) || 0;
-                        setStatistik({ ...statistik, dusunList: newList });
-                      }}
-                      className="w-20 px-2 py-1 border rounded text-xs"
-                      placeholder="Jiwa"
-                    />
+                      className="text-red-500 hover:text-red-700 text-xs px-1"
+                      title="Hapus Dusun"
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex justify-end">
+            {/* 3. TINGKAT PENDIDIKAN */}
+            <div>
+              <div className="flex justify-between items-center mb-3 border-b pb-2">
+                <h4 className="font-heading font-semibold text-sm text-[color:var(--ink)]">3. Data Tingkat Pendidikan</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStatistik({
+                      ...statistik,
+                      pendidikanList: [...(statistik.pendidikanList || []), { name: "Jenjang Baru", count: 0 }],
+                    });
+                  }}
+                  className="text-xs border-[color:var(--line)]"
+                >
+                  + Tambah Tingkat Pendidikan
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {(statistik.pendidikanList || []).map((item, idx) => (
+                  <div key={idx} className="p-3 border border-[color:var(--line)] rounded-lg bg-[color:var(--parchment)] flex items-center justify-between gap-3">
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => {
+                        const newList = [...statistik.pendidikanList];
+                        newList[idx].name = e.target.value;
+                        setStatistik({ ...statistik, pendidikanList: newList });
+                      }}
+                      className="flex-1 px-2.5 py-1 border rounded text-xs bg-[color:var(--card)] font-medium"
+                      placeholder="Nama Jenjang Pendidikan"
+                    />
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-[color:var(--ink-soft)]">Jiwa:</span>
+                      <input
+                        type="number"
+                        value={item.count}
+                        onChange={(e) => {
+                          const newList = [...statistik.pendidikanList];
+                          newList[idx].count = parseInt(e.target.value) || 0;
+                          setStatistik({ ...statistik, pendidikanList: newList });
+                        }}
+                        className="w-24 px-2 py-1 border rounded text-xs text-right font-mono font-bold text-[color:var(--forest)]"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newList = statistik.pendidikanList.filter((_, i) => i !== idx);
+                        setStatistik({ ...statistik, pendidikanList: newList });
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs px-1"
+                      title="Hapus"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. MATA PENCAHARIAN UTAMA */}
+            <div>
+              <div className="flex justify-between items-center mb-3 border-b pb-2">
+                <h4 className="font-heading font-semibold text-sm text-[color:var(--ink)]">4. Mata Pencaharian Utama</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStatistik({
+                      ...statistik,
+                      pekerjaanList: [...(statistik.pekerjaanList || []), { name: "Pekerjaan Baru", count: 0, pct: 0 }],
+                    });
+                  }}
+                  className="text-xs border-[color:var(--line)]"
+                >
+                  + Tambah Mata Pencaharian
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {(statistik.pekerjaanList || []).map((item, idx) => (
+                  <div key={idx} className="p-3 border border-[color:var(--line)] rounded-lg bg-[color:var(--parchment)] flex items-center justify-between gap-2">
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => {
+                        const newList = [...statistik.pekerjaanList];
+                        newList[idx].name = e.target.value;
+                        setStatistik({ ...statistik, pekerjaanList: newList });
+                      }}
+                      className="w-40 px-2.5 py-1 border rounded text-xs bg-[color:var(--card)] font-medium truncate"
+                      placeholder="Mata Pencaharian"
+                    />
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-[color:var(--ink-soft)]">Jiwa:</span>
+                      <input
+                        type="number"
+                        value={item.count}
+                        onChange={(e) => {
+                          const newList = [...statistik.pekerjaanList];
+                          newList[idx].count = parseInt(e.target.value) || 0;
+                          setStatistik({ ...statistik, pekerjaanList: newList });
+                        }}
+                        className="w-20 px-1.5 py-1 border rounded text-xs text-right font-mono font-bold text-[color:var(--clay)]"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-[color:var(--ink-soft)]">%:</span>
+                      <input
+                        type="number"
+                        value={item.pct}
+                        onChange={(e) => {
+                          const newList = [...statistik.pekerjaanList];
+                          newList[idx].pct = parseFloat(e.target.value) || 0;
+                          setStatistik({ ...statistik, pekerjaanList: newList });
+                        }}
+                        className="w-14 px-1.5 py-1 border rounded text-xs text-center font-mono"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newList = statistik.pekerjaanList.filter((_, i) => i !== idx);
+                        setStatistik({ ...statistik, pekerjaanList: newList });
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs px-1"
+                      title="Hapus"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t">
               <Button type="submit" disabled={isStatistikSaving} className="btn btn-primary bg-[color:var(--forest)] text-white border-none px-6">
                 {isStatistikSaving ? "Menyimpan..." : "Simpan Statistik Kependudukan"}
               </Button>
