@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { popData } from "@/lib/data";
-import { getProfilData, getLembagaList, getStatistikPenduduk } from "@/lib/db";
+import { getProfilData, getLembagaList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,13 +15,8 @@ export const metadata: Metadata = {
 export default async function ProfilPage() {
   const profil = await getProfilData();
   const lembagaList = await getLembagaList();
-  const statistik = await getStatistikPenduduk();
-
   const pemdes = lembagaList.find((l) => l.name.toLowerCase().includes("pemerintah")) || lembagaList[0];
-  const dusunList = statistik.dusunList?.length
-    ? statistik.dusunList
-    : popData.map((p) => ({ nama: p.label, rt: 0, rw: 0, jiwa: p.val }));
-  const popMax = Math.max(...dusunList.map((d) => d.jiwa || 1));
+  const popMax = Math.max(...popData.map((d) => d.val));
 
   return (
     <div className="font-sans">
@@ -155,53 +150,24 @@ export default async function ProfilPage() {
 
       {/* DATA KEPENDUDUKAN */}
       <section className="block">
-        <div className="wrap flex flex-col gap-6">
+        <div className="wrap two-col">
           <div>
-            <p className="eyebrow">Demografi Publik</p>
-            <h2 style={{ margin: "10px 0 16px" }}>Data Kependudukan & Sebaran Dusun</h2>
-          </div>
-
-          {/* SUMMARY CARDS INCL. TOTAL KK */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="card shadow-none border border-[color:var(--line)] p-4 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Total Penduduk</span>
-              <span className="text-2xl font-bold font-heading text-[color:var(--forest)]">{statistik.totalPenduduk.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block">Jiwa</span>
-            </Card>
-            <Card className="card shadow-none border border-[color:var(--line)] p-4 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Kepala Keluarga</span>
-              <span className="text-2xl font-bold font-heading text-[color:var(--padi)]">{statistik.totalKk.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block">KK</span>
-            </Card>
-            <Card className="card shadow-none border border-[color:var(--line)] p-4 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Laki-Laki</span>
-              <span className="text-2xl font-bold font-heading text-[color:var(--clay)]">{statistik.lakiLaki.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block">Jiwa</span>
-            </Card>
-            <Card className="card shadow-none border border-[color:var(--line)] p-4 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Perempuan</span>
-              <span className="text-2xl font-bold font-heading text-[color:var(--sawah)]">{statistik.perempuan.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block">Jiwa</span>
-            </Card>
-          </div>
-
-          {/* DUSUN CHART */}
-          <div id="pop-chart" className="mt-2">
-            {dusunList.map((d, idx) => (
-              <div key={idx} className="pop-bar-row">
-                <div className="pop-bar-label font-medium">{d.nama}</div>
-                <div className="pop-bar-track">
-                  <div
-                    className="pop-bar-fill bg-[color:var(--forest)]"
-                    style={{ width: `${(((d.jiwa || 0) / popMax) * 100).toFixed(0)}%` }}
-                  />
+            <p className="eyebrow">Data Kependudukan</p>
+            <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
+            <div id="pop-chart">
+              {popData.map((d, idx) => (
+                <div key={idx} className="pop-bar-row">
+                  <div className="pop-bar-label">{d.label}</div>
+                  <div className="pop-bar-track">
+                    <div
+                      className="pop-bar-fill"
+                      style={{ width: `${((d.val / popMax) * 100).toFixed(0)}%` }}
+                    />
+                  </div>
+                  <div className="pop-bar-num">{d.val} jiwa</div>
                 </div>
-                <div className="pop-bar-num font-mono font-bold text-[color:var(--forest)]">
-                  {d.jiwa} jiwa
-                  {d.rt ? <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({d.rt} RT / {d.rw} RW)</span> : null}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
