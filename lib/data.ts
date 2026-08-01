@@ -161,7 +161,7 @@ export interface StatistikPenduduk {
   totalKk: number;
   lakiLaki: number;
   perempuan: number;
-  dusunList: { nama: string; rt: number; rw: number; jiwa: number }[];
+  dusunList: { nama: string; rt: number; rw: number; jiwa: number; kk?: number }[];
   pekerjaanList: { name: string; pct: number; count: number }[];
   pendidikanList: { name: string; count: number }[];
 }

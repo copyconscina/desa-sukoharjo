@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { popData } from "@/lib/data";
-import { getProfilData, getLembagaList } from "@/lib/db";
+import { getProfilData, getLembagaList, getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,8 +15,13 @@ export const metadata: Metadata = {
 export default async function ProfilPage() {
   const profil = await getProfilData();
   const lembagaList = await getLembagaList();
+  const statistik = await getStatistikPenduduk();
+
   const pemdes = lembagaList.find((l) => l.name.toLowerCase().includes("pemerintah")) || lembagaList[0];
-  const popMax = Math.max(...popData.map((d) => d.val));
+  const dusunList = statistik.dusunList?.length
+    ? statistik.dusunList
+    : popData.map((p) => ({ nama: p.label, rt: 0, rw: 0, jiwa: p.val, kk: 0 }));
+  const popMax = Math.max(...dusunList.map((d) => d.jiwa || 1));
 
   return (
     <div className="font-sans">
@@ -155,16 +160,23 @@ export default async function ProfilPage() {
             <p className="eyebrow">Data Kependudukan</p>
             <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
             <div id="pop-chart">
-              {popData.map((d, idx) => (
+              {dusunList.map((d, idx) => (
                 <div key={idx} className="pop-bar-row">
-                  <div className="pop-bar-label">{d.label}</div>
+                  <div className="pop-bar-label">{d.nama}</div>
                   <div className="pop-bar-track">
                     <div
                       className="pop-bar-fill"
-                      style={{ width: `${((d.val / popMax) * 100).toFixed(0)}%` }}
+                      style={{ width: `${(((d.jiwa || 0) / popMax) * 100).toFixed(0)}%` }}
                     />
                   </div>
-                  <div className="pop-bar-num">{d.val} jiwa</div>
+                  <div className="pop-bar-num">
+                    {d.jiwa} jiwa
+                    {d.kk ? (
+                      <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({d.kk} KK)</span>
+                    ) : (
+                      <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({Math.round((d.jiwa || 0) / 3.4)} KK)</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
