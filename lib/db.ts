@@ -795,6 +795,25 @@ export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
 
   if (!isPlaceholderSupabase) {
     try {
+      // 1. Coba baca dari 4 tabel terpisah terlebih dahulu
+      const { data: ringkasan } = await supabase.from("statistik_ringkasan").select("*").single();
+      const { data: dusun } = await supabase.from("statistik_dusun").select("*").order("id", { ascending: true });
+      const { data: pendidikan } = await supabase.from("statistik_pendidikan").select("*").order("id", { ascending: true });
+      const { data: pekerjaan } = await supabase.from("statistik_pekerjaan").select("*").order("id", { ascending: true });
+
+      if (ringkasan || (dusun && dusun.length > 0)) {
+        return {
+          totalPenduduk: ringkasan?.total_penduduk ?? ringkasan?.totalPenduduk ?? defaultStatistik.totalPenduduk,
+          totalKk: ringkasan?.total_kk ?? ringkasan?.totalKk ?? defaultStatistik.totalKk,
+          lakiLaki: ringkasan?.laki_laki ?? ringkasan?.lakiLaki ?? defaultStatistik.lakiLaki,
+          perempuan: ringkasan?.perempuan ?? ringkasan?.perempuan ?? defaultStatistik.perempuan,
+          dusunList: dusun && dusun.length > 0 ? dusun.map((d: any) => ({ nama: d.nama, rt: d.rt, rw: d.rw, jiwa: d.jiwa })) : defaultStatistik.dusunList,
+          pendidikanList: pendidikan && pendidikan.length > 0 ? pendidikan.map((p: any) => ({ name: p.name, count: p.count })) : defaultStatistik.pendidikanList,
+          pekerjaanList: pekerjaan && pekerjaan.length > 0 ? pekerjaan.map((p: any) => ({ name: p.name, count: p.count, pct: p.pct })) : defaultStatistik.pekerjaanList,
+        };
+      }
+
+      // 2. Fallback ke tabel tunggal lama
       const { data, error } = await supabase.from("statistik_penduduk").select("*").single();
       if (!error && data) {
         return {
@@ -818,8 +837,41 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
 
   if (!isPlaceholderSupabase) {
     try {
+      // 1. Update ke 4 tabel terpisah di Supabase
+      await supabaseServer.from("statistik_ringkasan").upsert({
+        id: 1,
+        total_penduduk: dataInput.totalPenduduk,
+        total_kk: dataInput.totalKk,
+        laki_laki: dataInput.lakiLaki,
+        perempuan: dataInput.perempuan,
+      });
+
+      if (dataInput.dusunList && dataInput.dusunList.length > 0) {
+        await supabaseServer.from("statistik_dusun").delete().neq("id", 0);
+        await supabaseServer.from("statistik_dusun").insert(
+          dataInput.dusunList.map((d) => ({ nama: d.nama, rt: d.rt, rw: d.rw, jiwa: d.jiwa }))
+        );
+      }
+
+      if (dataInput.pendidikanList && dataInput.pendidikanList.length > 0) {
+        await supabaseServer.from("statistik_pendidikan").delete().neq("id", 0);
+        await supabaseServer.from("statistik_pendidikan").insert(
+          dataInput.pendidikanList.map((p) => ({ name: p.name, count: p.count }))
+        );
+      }
+
+      if (dataInput.pekerjaanList && dataInput.pekerjaanList.length > 0) {
+        await supabaseServer.from("statistik_pekerjaan").delete().neq("id", 0);
+        await supabaseServer.from("statistik_pekerjaan").insert(
+          dataInput.pekerjaanList.map((p) => ({ name: p.name, count: p.count, pct: p.pct }))
+        );
+      }
+
+      // 2. Backup ke tabel tunggal lama
       await supabaseServer.from("statistik_penduduk").upsert({ id: 1, ...dataInput });
-    } catch (e) {}
+    } catch (e) {
+      console.error("Error updating statistik in Supabase:", e);
+    }
   }
   return true;
 }
