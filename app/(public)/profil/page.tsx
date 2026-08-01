@@ -94,7 +94,6 @@ export default async function ProfilPage() {
                 <Badge className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none">
                   {pemdes.members}
                 </Badge>
-                <span className="text-xs font-mono text-[color:var(--clay)] font-semibold">{pemdes.leader}</span>
               </div>
             )}
           </div>
