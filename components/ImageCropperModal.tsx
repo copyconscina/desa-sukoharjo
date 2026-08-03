@@ -28,7 +28,10 @@ export default function ImageCropperModal({
 }: Props) {
   const [aspectRatio, setAspectRatio] = useState<string>(defaultAspectRatio);
   const [imageUrl, setImageUrl] = useState<string>("");
-  
+  const [workingFile, setWorkingFile] = useState<File>(file);
+  const [isConverting, setIsConverting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   // Crop values in percentage (0 - 100)
   const [cropX, setCropX] = useState(10);
   const [cropY, setCropY] = useState(10);
@@ -38,11 +41,71 @@ export default function ImageCropperModal({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load file as object URL
+  // Load file as object URL with dynamic HEIC conversion
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setImageUrl(url);
-    return () => URL.revokeObjectURL(url);
+    let active = true;
+    let currentUrl = "";
+
+    async function processFile() {
+      setIsConverting(true);
+      setLoadError(null);
+
+      try {
+        const isHeic =
+          file.name.toLowerCase().endsWith(".heic") ||
+          file.name.toLowerCase().endsWith(".heif") ||
+          file.type.toLowerCase().includes("heic") ||
+          file.type.toLowerCase().includes("heif");
+
+        if (isHeic) {
+          const heic2anyModule = (await import("heic2any")).default;
+          const convertedBlob = await heic2anyModule({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.85,
+          });
+
+          if (!active) return;
+
+          const singleBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+          const newFileName = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg");
+          const convertedFile = new File([singleBlob], newFileName, {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+
+          setWorkingFile(convertedFile);
+          currentUrl = URL.createObjectURL(convertedFile);
+          setImageUrl(currentUrl);
+        } else {
+          setWorkingFile(file);
+          currentUrl = URL.createObjectURL(file);
+          setImageUrl(currentUrl);
+        }
+      } catch (err: any) {
+        console.warn("Konversi HEIC gagal, mencoba menggunakan file asli:", err);
+        if (active) {
+          setWorkingFile(file);
+          currentUrl = URL.createObjectURL(file);
+          setImageUrl(currentUrl);
+        }
+      } finally {
+        if (active) {
+          setIsConverting(false);
+        }
+      }
+    }
+
+    if (file) {
+      processFile();
+    }
+
+    return () => {
+      active = false;
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+    };
   }, [file]);
 
   // Adjust crop box when aspect ratio changes
@@ -58,7 +121,6 @@ export default function ImageCropperModal({
     if (targetHeight + cropY <= 100) {
       setCropHeight(targetHeight);
     } else {
-      // Scale down width to fit screen height bounds
       const maxPossibleHeight = 100 - cropY;
       const adjustedWidth = maxPossibleHeight * (wRatio / hRatio);
       setCropWidth(adjustedWidth);
@@ -74,18 +136,16 @@ export default function ImageCropperModal({
     if (aspectRatio !== "free") {
       const [wRatio, hRatio] = aspectRatio.split(":").map(Number);
       const targetHeight = val * (hRatio / wRatio);
-      
-      // If exceeds boundary, lock X/Y positions
+
       if (targetHeight + cropY <= 100) {
         setCropHeight(targetHeight);
       } else {
-        const overflow = (targetHeight + cropY) - 100;
+        const overflow = targetHeight + cropY - 100;
         const newY = Math.max(0, cropY - overflow);
         setCropY(newY);
         if (targetHeight + newY <= 100) {
           setCropHeight(targetHeight);
         } else {
-          // Hard cap width
           const maxH = 100 - newY;
           setCropHeight(maxH);
           setCropWidth(maxH * (wRatio / hRatio));
@@ -108,7 +168,7 @@ export default function ImageCropperModal({
     const updatePosition = (clientX: number, clientY: number) => {
       const currentX = ((clientX - rect.left) / rect.width) * 100;
       const currentY = ((clientY - rect.top) / rect.height) * 100;
-      
+
       let newX = currentX - cropWidth / 2;
       let newY = currentY - cropHeight / 2;
 
@@ -169,6 +229,7 @@ export default function ImageCropperModal({
   };
 
   const executeCrop = () => {
+    if (!imageUrl || isConverting) return;
     setIsProcessing(true);
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -176,8 +237,7 @@ export default function ImageCropperModal({
 
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      
-      // Map percentages to actual image dimensions
+
       const x = (cropX / 100) * img.naturalWidth;
       const y = (cropY / 100) * img.naturalHeight;
       const w = (cropWidth / 100) * img.naturalWidth;
@@ -189,17 +249,20 @@ export default function ImageCropperModal({
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const croppedFile = new File([blob], file.name, {
-              type: file.type || "image/jpeg",
-              lastModified: Date.now(),
-            });
-            onCrop(croppedFile);
-          }
-          setIsProcessing(false);
-          onClose();
-        }, file.type || "image/jpeg");
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const croppedFile = new File([blob], workingFile.name, {
+                type: workingFile.type || "image/jpeg",
+                lastModified: Date.now(),
+              });
+              onCrop(croppedFile);
+            }
+            setIsProcessing(false);
+            onClose();
+          },
+          workingFile.type || "image/jpeg"
+        );
       } else {
         setIsProcessing(false);
       }
@@ -207,14 +270,13 @@ export default function ImageCropperModal({
 
     img.onerror = () => {
       setIsProcessing(false);
-      alert("Gagal memproses gambar untuk dicrop.");
+      setLoadError("Gagal memproses gambar untuk dicrop.");
     };
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg bg-[color:var(--card)] border border-[color:var(--line)] rounded-2xl p-0 gap-0 overflow-hidden shadow-2xl">
-        
         {/* Modal Header */}
         <DialogHeader className="p-4 border-b border-[color:var(--line)] bg-[color:var(--parchment)] flex flex-col justify-start">
           <DialogTitle className="font-heading text-base text-[color:var(--forest-deep)] text-left">
@@ -227,45 +289,58 @@ export default function ImageCropperModal({
 
         {/* Modal Body */}
         <div className="p-5 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-          
-          {/* Canvas / Image Preview Container (Strictly Clipped Container) */}
+          {/* Canvas / Image Preview Container */}
           <div className="flex items-center justify-center bg-slate-900/95 rounded-xl border border-[color:var(--line)] min-h-[220px] p-3 overflow-hidden relative">
-            <div 
-              ref={containerRef}
-              className="relative overflow-hidden cursor-move select-none touch-none w-fit h-fit max-w-full max-h-[280px] rounded-lg flex items-center justify-center"
-              style={{ clipPath: "inset(0)", isolation: "isolate" }}
-              onMouseDown={handleDragStart}
-              onTouchStart={handleTouchStart}
-            >
-              {imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img 
-                  src={imageUrl} 
-                  alt="Crop preview source" 
-                  className="max-w-full h-auto max-h-[280px] block pointer-events-none rounded-lg object-contain"
-                />
-              )}
-              
-              {/* Dark semi-transparent overlay with clear cutout */}
-              <div 
-                style={{
-                  position: "absolute",
-                  left: `${cropX}%`,
-                  top: `${cropY}%`,
-                  width: `${cropWidth}%`,
-                  height: `${cropHeight}%`,
-                  border: "2px dashed #ffffff",
-                  boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.65)",
-                  pointerEvents: "none",
-                }}
+            {isConverting ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-3 text-white">
+                <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <p className="text-xs font-sans text-gray-300 font-medium">
+                  Mengonversi foto iPhone (HEIC) ke JPEG...
+                </p>
+              </div>
+            ) : loadError ? (
+              <div className="text-center p-6 text-red-400 text-xs font-sans">
+                {loadError}
+              </div>
+            ) : (
+              <div
+                ref={containerRef}
+                className="relative overflow-hidden cursor-move select-none touch-none w-fit h-fit max-w-full max-h-[280px] rounded-lg flex items-center justify-center"
+                style={{ clipPath: "inset(0)", isolation: "isolate" }}
+                onMouseDown={handleDragStart}
+                onTouchStart={handleTouchStart}
               >
-                {/* Center crosshair */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-30">
-                  <div className="w-4 h-[1px] bg-white" />
-                  <div className="h-4 w-[1px] bg-white absolute" />
+                {imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageUrl}
+                    alt="Crop preview source"
+                    onError={() => setLoadError("Browser tidak dapat menampilkan format foto ini. Silakan gunakan format JPG, PNG, atau WebP.")}
+                    className="max-w-full h-auto max-h-[280px] block pointer-events-none rounded-lg object-contain"
+                  />
+                )}
+
+                {/* Dark semi-transparent overlay with clear cutout */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: `${cropX}%`,
+                    top: `${cropY}%`,
+                    width: `${cropWidth}%`,
+                    height: `${cropHeight}%`,
+                    border: "2px dashed #ffffff",
+                    boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.65)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {/* Center crosshair */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                    <div className="w-4 h-[1px] bg-white" />
+                    <div className="h-4 w-[1px] bg-white absolute" />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Aspect Ratio Selector */}
@@ -286,9 +361,10 @@ export default function ImageCropperModal({
                   type="button"
                   onClick={() => setAspectRatio(item.val)}
                   className={`px-3 py-1 text-xs rounded-full border transition-all cursor-pointer font-medium
-                    ${aspectRatio === item.val
-                      ? "bg-[color:var(--forest)] text-white border-[color:var(--forest)]"
-                      : "bg-[color:var(--parchment)] text-[color:var(--ink-soft)] border-[color:var(--line)] hover:bg-[color:var(--line)]"
+                    ${
+                      aspectRatio === item.val
+                        ? "bg-[color:var(--forest)] text-white border-[color:var(--forest)]"
+                        : "bg-[color:var(--parchment)] text-[color:var(--ink-soft)] border-[color:var(--line)] hover:bg-[color:var(--line)]"
                     }`}
                 >
                   {item.name}
@@ -362,12 +438,11 @@ export default function ImageCropperModal({
                 />
               </div>
             </div>
-            
+
             <p className="text-[10px] text-gray-400 italic text-center mt-1">
               * Tips: Anda juga dapat mengeklik atau mengusap (drag) gambar di atas untuk memindahkan bingkai potong.
             </p>
           </div>
-
         </div>
 
         {/* Modal Footer */}
@@ -376,7 +451,7 @@ export default function ImageCropperModal({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={isProcessing}
+            disabled={isProcessing || isConverting}
             className="h-9 px-4 rounded-full border border-[color:var(--line)] bg-white text-xs font-semibold cursor-pointer"
           >
             Batal
@@ -384,13 +459,16 @@ export default function ImageCropperModal({
           <Button
             type="button"
             onClick={executeCrop}
-            disabled={isProcessing}
+            disabled={isProcessing || isConverting || !!loadError}
             className="h-9 px-4 rounded-full border-none bg-[color:var(--forest)] text-white text-xs font-semibold cursor-pointer"
           >
-            {isProcessing ? "Memotong..." : "Potong & Simpan"}
+            {isConverting
+              ? "Mengonversi HEIC..."
+              : isProcessing
+              ? "Memotong..."
+              : "Potong & Simpan"}
           </Button>
         </DialogFooter>
-
       </DialogContent>
     </Dialog>
   );
