@@ -98,7 +98,7 @@ export async function getUmkmById(id: number): Promise<Umkm | undefined> {
 }
 
 export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promise<Umkm> {
-  const payload = {
+  const sbPayload = {
     name: item.name,
     owner: item.owner,
     category: item.category,
@@ -106,10 +106,9 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
     product: item.product,
     desc: item.desc,
     address: item.address,
-    wa: item.wa || "",
-    phone: item.phone || "",
-    maps_url: item.mapsUrl || item.maps_url || "",
-    mapsUrl: item.mapsUrl || item.maps_url || "",
+    wa: item.wa || null,
+    phone: item.phone || null,
+    maps_url: item.mapsUrl || item.maps_url || null,
     social: item.social || null,
     grad: item.grad || "",
     image: item.image || null,
@@ -120,12 +119,30 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   let resultItem: Umkm;
 
   if (item.id) {
-    resultItem = { ...payload, id: item.id } as Umkm;
+    resultItem = {
+      ...sbPayload,
+      wa: sbPayload.wa || undefined,
+      phone: sbPayload.phone || undefined,
+      mapsUrl: sbPayload.maps_url || undefined,
+      maps_url: sbPayload.maps_url || undefined,
+      social: sbPayload.social || undefined,
+      image: sbPayload.image || undefined,
+      id: item.id,
+    } as Umkm;
     store.umkm = list.map((u) => (u.id === item.id ? resultItem : u));
     store.deletedUmkm = (store.deletedUmkm || []).filter((dId: number) => dId !== item.id);
   } else {
     const newId = list.length > 0 ? Math.max(...list.map((u) => u.id || 0)) + 1 : 1;
-    resultItem = { ...payload, id: newId } as Umkm;
+    resultItem = {
+      ...sbPayload,
+      wa: sbPayload.wa || undefined,
+      phone: sbPayload.phone || undefined,
+      mapsUrl: sbPayload.maps_url || undefined,
+      maps_url: sbPayload.maps_url || undefined,
+      social: sbPayload.social || undefined,
+      image: sbPayload.image || undefined,
+      id: newId,
+    } as Umkm;
     store.umkm = [...list, resultItem];
   }
 
@@ -134,13 +151,21 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   if (!isPlaceholderSupabase) {
     try {
       if (item.id) {
-        const { error } = await supabaseServer.from("umkm").update(payload).eq("id", item.id);
-        if (error) await supabase.from("umkm").update(payload).eq("id", item.id);
+        const { error } = await supabaseServer.from("umkm").update(sbPayload).eq("id", item.id);
+        if (error) {
+          console.error("Supabase update umkm error:", error);
+          await supabase.from("umkm").update(sbPayload).eq("id", item.id);
+        }
       } else {
-        const { error } = await supabaseServer.from("umkm").insert(payload);
-        if (error) await supabase.from("umkm").insert(payload);
+        const { error } = await supabaseServer.from("umkm").insert(sbPayload);
+        if (error) {
+          console.error("Supabase insert umkm error:", error);
+          await supabase.from("umkm").insert(sbPayload);
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Supabase umkm exception:", e);
+    }
   }
 
   return resultItem;
