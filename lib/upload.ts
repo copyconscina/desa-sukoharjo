@@ -7,8 +7,12 @@ export async function uploadSingleFile(file: File): Promise<string> {
   if (!file || file.size === 0) {
     throw new Error("Tidak ada file yang diunggah.");
   }
-  if (!file.type.startsWith("image/")) {
-    throw new Error("File harus berupa gambar (JPG, PNG, WebP, dll).");
+
+  const fileExt = (file.name.split(".").pop() || "").toLowerCase();
+  const isImageByExt = ["jpg", "jpeg", "png", "webp", "jfif", "avif", "heic", "gif", "svg", "bmp", "tif", "tiff"].includes(fileExt);
+
+  if (!file.type.startsWith("image/") && !isImageByExt) {
+    throw new Error("File harus berupa gambar (JPG, JPEG, PNG, WebP, dll).");
   }
   if (file.size > MAX_FILE_SIZE) {
     throw new Error("Ukuran file asli tidak boleh melebihi 15MB.");

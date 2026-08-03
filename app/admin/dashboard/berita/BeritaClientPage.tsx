@@ -230,7 +230,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
                   type="file"
                   id="beritaFileInput"
                   multiple
-                  accept="image/*"
+                  accept="image/*,.jpg,.jpeg,.png,.webp,.jfif,.avif,.heic,.gif"
                   onChange={(e) => {
                     const selected = Array.from(e.target.files || []);
                     if (selected.length > 0) {

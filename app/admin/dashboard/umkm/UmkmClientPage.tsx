@@ -469,7 +469,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                  <input
                   type="file"
                   id="umkmFileInput"
-                  accept="image/*"
+                  accept="image/*,.jpg,.jpeg,.png,.webp,.jfif,.avif,.heic,.gif"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
                       setRawFile(e.target.files[0]);

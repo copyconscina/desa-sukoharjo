@@ -220,7 +220,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                 <input
                   type="file"
                   id="galleryFileInput"
-                  accept="image/*"
+                  accept="image/*,.jpg,.jpeg,.png,.webp,.jfif,.avif,.heic,.gif"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
                       setRawFile(e.target.files[0]);
