@@ -203,6 +203,14 @@ export default async function ProfilPage() {
                   <p>
                     Jl. Raya Tirtomoyo–Baturetno KM 5, Dusun Sukorejo, Desa Sukoharjo, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
                   </p>
+                  <a
+                    href="https://maps.google.com/?q=Kantor+Kepala+Desa+Sukoharjo+Tirtomoyo+Wonogiri"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--forest)] hover:underline mt-2"
+                  >
+                    📍 Buka Petunjuk Arah di Google Maps →
+                  </a>
                 </div>
               </div>
               <div className="contact-item">

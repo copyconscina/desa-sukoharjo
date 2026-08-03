@@ -7,7 +7,10 @@ export interface Umkm {
   product: string;
   desc: string;
   address: string;
-  wa: string;
+  wa?: string;
+  phone?: string;
+  mapsUrl?: string;
+  maps_url?: string;
   social?: string;
   grad: string;
   image?: string;

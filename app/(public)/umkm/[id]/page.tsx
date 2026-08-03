@@ -77,9 +77,18 @@ export default async function UmkmDetailPage({ params }: Props) {
     </svg>
   );
 
+  const icPhone = (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+
   const waText = encodeURIComponent(
     `Halo ${u.name}, saya melihat profil usaha Anda di Website Desa Sukoharjo dan tertarik untuk bertanya lebih lanjut.`
   );
+
+  const cleanWa = u.wa ? u.wa.replace(/[^0-9]/g, "") : "";
+  const mapsLink = u.mapsUrl || u.maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(u.name + " " + u.address)}`;
 
   return (
     <div className="font-sans">
@@ -171,6 +180,18 @@ export default async function UmkmDetailPage({ params }: Props) {
                 </div>
               </div>
 
+              {u.phone ? (
+                <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                  <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
+                    {icPhone}
+                  </div>
+                  <div>
+                    <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>No. Telepon Biasa</div>
+                    <a href={`tel:${u.phone.replace(/[^0-9+]/g, '')}`} className="val" style={{ fontSize: "14.5px", color: "var(--ink)", fontWeight: "600" }}>{u.phone}</a>
+                  </div>
+                </div>
+              ) : null}
+
               {u.social ? (
                 <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                   <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
@@ -184,14 +205,34 @@ export default async function UmkmDetailPage({ params }: Props) {
               ) : null}
             </div>
 
-            <div style={{ marginTop: "30px" }}>
-              <Button asChild className="btn btn-wa border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
+            <div style={{ marginTop: "30px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              {cleanWa ? (
+                <Button asChild className="btn btn-wa border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://wa.me/${cleanWa}?text=${waText}`}
+                  >
+                    {icChat} <span style={{ marginLeft: "8px" }}>Hubungi via WhatsApp</span>
+                  </a>
+                </Button>
+              ) : null}
+
+              {u.phone ? (
+                <Button asChild className="btn btn-ghost border border-[color:var(--line)] text-[color:var(--ink)] w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
+                  <a href={`tel:${u.phone.replace(/[^0-9+]/g, '')}`}>
+                    {icPhone} <span style={{ marginLeft: "8px" }}>Panggil Telepon ({u.phone})</span>
+                  </a>
+                </Button>
+              ) : null}
+
+              <Button asChild className="btn btn-dark border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
-                  href={`https://wa.me/${u.wa}?text=${waText}`}
+                  href={mapsLink}
                 >
-                  {icChat} <span style={{ marginLeft: "8px" }}>Hubungi via WhatsApp</span>
+                  {icPin} <span style={{ marginLeft: "8px" }}>Buka Petunjuk Arah di Google Maps</span>
                 </a>
               </Button>
             </div>

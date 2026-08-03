@@ -39,6 +39,8 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const [desc, setDesc] = useState("");
   const [address, setAddress] = useState("");
   const [wa, setWa] = useState("");
+  const [phone, setPhone] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
   const [social, setSocial] = useState("");
   
   // Image Upload State
@@ -84,7 +86,9 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setProduct(item.product);
     setDesc(item.desc);
     setAddress(item.address);
-    setWa(item.wa);
+    setWa(item.wa || "");
+    setPhone(item.phone || "");
+    setMapsUrl(item.mapsUrl || item.maps_url || "");
     setSocial(item.social || "");
     setFile(null);
     setCurrentImageUrl(item.image);
@@ -113,6 +117,8 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setDesc("");
     setAddress("");
     setWa("");
+    setPhone("");
+    setMapsUrl("");
     setSocial("");
     setFile(null);
     setCurrentImageUrl(undefined);
@@ -136,20 +142,21 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       !activeCategory ||
       !product.trim() ||
       !desc.trim() ||
-      !address.trim() ||
-      !wa.trim()
+      !address.trim()
     ) {
-      setError("Mohon lengkapi semua field yang wajib diisi.");
+      setError("Mohon lengkapi semua field yang wajib diisi (Nama, Pemilik, Kategori, Produk, Alamat, & Deskripsi).");
       return;
     }
 
     let cleanWa = wa.trim().replace(/[^0-9]/g, "");
-    if (cleanWa.startsWith("0")) {
-      cleanWa = "62" + cleanWa.slice(1);
-    }
-    if (!cleanWa.startsWith("62")) {
-      setError("Nomor WhatsApp harus menyertakan kode negara (cth: 6281xxx atau 081xxx).");
-      return;
+    if (cleanWa) {
+      if (cleanWa.startsWith("0")) {
+        cleanWa = "62" + cleanWa.slice(1);
+      }
+      if (!cleanWa.startsWith("62")) {
+        setError("Nomor WhatsApp harus menyertakan kode negara (cth: 081xxx atau 6281xxx).");
+        return;
+      }
     }
 
     setConfirmModal({
@@ -163,7 +170,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const executeSubmit = async () => {
     const activeCategory = category === "Lainnya" ? customCategory.trim() : category;
     let cleanWa = wa.trim().replace(/[^0-9]/g, "");
-    if (cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
+    if (cleanWa && cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
 
     setLoading(true);
 
@@ -193,7 +200,10 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
         product: product.trim(),
         desc: desc.trim(),
         address: address.trim(),
-        wa: cleanWa,
+        wa: cleanWa || undefined,
+        phone: phone.trim() || undefined,
+        mapsUrl: mapsUrl.trim() || undefined,
+        maps_url: mapsUrl.trim() || undefined,
         social: social.trim() || undefined,
         grad: finalGrad,
         image: imageUrl,
@@ -357,35 +367,73 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
-                  No. WhatsApp (Kontak) *
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Contoh: 08123456789"
-                  value={wa}
-                  onChange={(e) => setWa(e.target.value)}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
-                  style={{ height: "40px" }}
-                />
-                <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                  Akan otomatis diarahkan ke chat WhatsApp saat diklik pembeli.
-                </span>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    No. WhatsApp (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Contoh: 08123456789"
+                    value={wa}
+                    onChange={(e) => setWa(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                  <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
+                    Kosongkan jika tidak punya WA.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    No. Telepon Seluler/Biasa (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Contoh: 08123456789 / (0273) 123..."
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                  <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
+                    Untuk panggil telepon biasa.
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
-                  Username Instagram/Sosial Media (Opsional)
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Contoh: @batiktulissukoharjo"
-                  value={social}
-                  onChange={(e) => setSocial(e.target.value)}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
-                  style={{ height: "40px" }}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    Link Google Maps Lokasi (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="https://maps.google.com/?q=..."
+                    value={mapsUrl}
+                    onChange={(e) => setMapsUrl(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                  <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
+                    Tautan redirect Google Maps.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    Instagram/Sosmed (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Contoh: @batiktulissukoharjo"
+                    value={social}
+                    onChange={(e) => setSocial(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                </div>
               </div>
 
               <div>

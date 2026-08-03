@@ -78,7 +78,14 @@ export async function getUmkmList(): Promise<Umkm[]> {
     try {
       const { data, error } = await supabase.from("umkm").select("*").order("id", { ascending: true });
       if (!error && data) {
-        return syncListWithLocal(data as Umkm[], localList, deletedIds);
+        const sbList = data.map((u: any) => ({
+          ...u,
+          wa: u.wa || undefined,
+          phone: u.phone || undefined,
+          mapsUrl: u.maps_url || u.mapsUrl || undefined,
+          maps_url: u.maps_url || u.mapsUrl || undefined,
+        }));
+        return syncListWithLocal(sbList as Umkm[], localList, deletedIds);
       }
     } catch (e) {}
   }
@@ -99,7 +106,10 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
     product: item.product,
     desc: item.desc,
     address: item.address,
-    wa: item.wa,
+    wa: item.wa || "",
+    phone: item.phone || "",
+    maps_url: item.mapsUrl || item.maps_url || "",
+    mapsUrl: item.mapsUrl || item.maps_url || "",
     social: item.social || null,
     grad: item.grad || "",
     image: item.image || null,
