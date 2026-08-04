@@ -216,7 +216,7 @@ export async function deleteBeritaAction(id: number) {
 }
 
 // Galeri Actions
-export async function addGaleriAction(label: string, cat: string, grad: string, image?: string, desc?: string) {
+export async function addGaleriAction(label: string, cat: string, grad: string, image?: string, desc?: string, images?: string) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
@@ -224,13 +224,14 @@ export async function addGaleriAction(label: string, cat: string, grad: string, 
     label,
     cat,
     grad,
-    image,
+    image: images ? images.split(",")[0].trim() : image,
+    images: images || image,
     desc,
   };
 
-  await addGaleri(newItem);
+  const saved = await addGaleri(newItem);
   revalidateAll();
-  return { success: true };
+  return { success: true, item: saved };
 }
 
 export async function deleteGaleriAction(id: number) {

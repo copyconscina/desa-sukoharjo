@@ -337,7 +337,7 @@ export default function TransparansiClientPage({
                 />
               </div>
               <div>
-                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Pembiayaan (SiLPA)</label>
+                <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">Pembiayaan</label>
                 <input
                   type="text"
                   value={ringkasan.pembiayaan}

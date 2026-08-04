@@ -33,6 +33,7 @@ export interface GaleriItem {
   cat: string;
   grad: string;
   image?: string;
+  images?: string;
   desc?: string;
 }
 

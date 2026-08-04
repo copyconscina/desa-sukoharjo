@@ -58,11 +58,26 @@ function syncListWithLocal<T extends { id?: number }>(
 ): T[] {
   const deletedSet = new Set(deletedIds || []);
   const result: T[] = [];
+  const sbIdSet = new Set((supabaseList || []).map((item) => item.id).filter(Boolean));
 
   for (const item of supabaseList || []) {
     if (!item.id) continue;
     if (deletedSet.has(item.id)) continue;
-    result.push(item);
+
+    const localMatch = (localList || []).find((l) => l.id === item.id);
+    if (localMatch) {
+      result.push({ ...localMatch, ...item });
+    } else {
+      result.push(item);
+    }
+  }
+
+  for (const localItem of localList || []) {
+    if (!localItem.id) continue;
+    if (deletedSet.has(localItem.id)) continue;
+    if (!sbIdSet.has(localItem.id)) {
+      result.push(localItem);
+    }
   }
 
   return result;
@@ -308,31 +323,79 @@ export async function getGaleriList(): Promise<GaleriItem[]> {
     try {
       const { data, error } = await supabase.from("galeri").select("*").order("created_at", { ascending: false });
       if (!error && data) {
-        return syncListWithLocal(data as GaleriItem[], localList, deletedIds);
+        const sbList = data.map((g: any) => ({
+          ...g,
+          image: g.images ? g.images.split(",")[0] : g.image,
+          images: g.images || g.image || undefined,
+        })) as GaleriItem[];
+        return syncListWithLocal(sbList, localList, deletedIds);
       }
     } catch (e) {}
   }
-  return localList.filter((g) => !deletedIds.includes(g.id || 0));
+
+  return localList
+    .filter((g) => !deletedIds.includes(g.id || 0))
+    .map((g) => ({
+      ...g,
+      image: g.images ? g.images.split(",")[0] : g.image,
+      images: g.images || g.image || undefined,
+    }));
 }
 
 export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
   const store = readStore();
   const list: GaleriItem[] = store.galeri || [];
   const newId = list.length > 0 ? Math.max(...list.map((g) => g.id || 0)) + 1 : 1;
-  const newItem = { ...item, id: newId };
+
+  const primaryImage = item.images ? item.images.split(",")[0].trim() : item.image;
+  const newItem: GaleriItem = {
+    ...item,
+    id: newId,
+    image: primaryImage,
+    images: item.images || item.image || undefined,
+  };
+
   store.galeri = [newItem, ...list];
   writeStore(store);
 
   if (!isPlaceholderSupabase) {
     try {
-      await supabaseServer.from("galeri").insert({
+      const fullPayload = {
         label: item.label,
         cat: item.cat,
         grad: item.grad || "",
-        image: item.image || null,
+        image: primaryImage || null,
+        images: item.images || item.image || null,
         desc: item.desc || null,
-      });
-    } catch (e) {}
+      };
+      const { data, error } = await supabaseServer.from("galeri").insert(fullPayload).select();
+      if (error) {
+        // Fallback without `images` column if column is not yet added in Supabase table
+        const fallbackPayload = {
+          label: item.label,
+          cat: item.cat,
+          grad: item.grad || "",
+          image: primaryImage || null,
+          desc: item.desc || null,
+        };
+        const { data: fbData } = await supabaseServer.from("galeri").insert(fallbackPayload).select();
+        if (fbData && fbData[0]) {
+          newItem.id = fbData[0].id;
+        }
+      } else if (data && data[0]) {
+        newItem.id = data[0].id;
+      }
+    } catch (e) {
+      try {
+        await supabase.from("galeri").insert({
+          label: item.label,
+          cat: item.cat,
+          grad: item.grad || "",
+          image: primaryImage || null,
+          desc: item.desc || null,
+        });
+      } catch (err2) {}
+    }
   }
 
   return newItem;

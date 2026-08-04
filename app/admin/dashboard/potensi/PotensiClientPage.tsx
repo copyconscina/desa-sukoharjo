@@ -165,12 +165,6 @@ export default function PotensiClientPage({ initialPotentials }: Props) {
                 <h2 className="text-lg font-heading text-[color:var(--forest-deep)]">
                   Ubah Pilar {editingItem.num}
                 </h2>
-                <button
-                  onClick={handleCancel}
-                  className="text-xs text-[color:var(--ink-soft)] hover:text-[color:var(--clay)] transition-colors border-none bg-transparent cursor-pointer"
-                >
-                  Batal
-                </button>
               </div>
 
               <form onSubmit={promptSubmit} className="flex flex-col gap-4">

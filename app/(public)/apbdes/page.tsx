@@ -43,7 +43,7 @@ export default async function APBDesPage() {
             </Card>
 
             <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)]">
-              <span className="text-xs font-mono uppercase text-[color:var(--padi)] font-semibold">Pembiayaan / SILPA</span>
+              <span className="text-xs font-mono uppercase text-[color:var(--padi)] font-semibold">Pembiayaan</span>
               <h2 className="text-3xl font-display text-[color:var(--ink)] mt-1">{apbdesRingkasan.pembiayaan}</h2>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-2">SiLPA Tahun Sebelumnya</span>
             </Card>
