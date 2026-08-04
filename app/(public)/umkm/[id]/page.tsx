@@ -139,7 +139,7 @@ export default async function UmkmDetailPage({ params }: Props) {
                 {u.category}
               </Badge>
             </div>
-            <h2 style={{ marginBottom: "12px" }}>Deskripsi Usaha</h2>
+            <h2 style={{ marginBottom: "12px" }}>{u.tagline || "Deskripsi Usaha"}</h2>
             <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--ink-soft)" }}>
               {u.desc}
             </p>

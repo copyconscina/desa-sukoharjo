@@ -5,6 +5,7 @@ export interface Umkm {
   category: string;
   year: number;
   product: string;
+  tagline?: string;
   desc: string;
   address: string;
   wa?: string;
@@ -109,6 +110,8 @@ export interface Pengaduan {
   tanggal: string;
   status: "Baru" | "Diproses" | "Selesai" | "Ditolak";
   tanggapan?: string;
+  foto?: string;
+  image?: string;
 }
 
 // Transparansi

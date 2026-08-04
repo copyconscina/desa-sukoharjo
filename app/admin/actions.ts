@@ -62,6 +62,68 @@ export async function uploadPdfAction(formData: FormData) {
   return { success: true, url: fileUrl };
 }
 
+// Public Actions for Citizens (No Admin Auth Required)
+export async function uploadPublicFotoAction(formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) {
+    return { success: false, error: "Tidak ada foto yang diunggah." };
+  }
+  try {
+    const url = await uploadSingleFile(file);
+    return { success: true, url };
+  } catch (err: any) {
+    console.error("Gagal upload foto publik:", err);
+    return { success: false, error: err.message || "Gagal mengunggah foto." };
+  }
+}
+
+export async function addBukuTamuPublicAction(name: string, origin: string, message: string) {
+  if (!name.trim() || !origin.trim() || !message.trim()) {
+    return { success: false, error: "Mohon isi semua bidang yang wajib." };
+  }
+  const dateStr = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const saved = await addBukuTamu({
+    name: name.trim(),
+    origin: origin.trim(),
+    message: message.trim(),
+    date: dateStr,
+  });
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
+export async function addPengaduanPublicAction(
+  nama: string,
+  dusun: string,
+  judul: string,
+  isi: string,
+  foto?: string
+) {
+  if (!judul.trim() || !isi.trim()) {
+    return { success: false, error: "Judul dan Rincian Laporan wajib diisi." };
+  }
+  const dateStr = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const saved = await addPengaduan({
+    nama: nama.trim() || "Warga Anonim",
+    dusun: dusun.trim() || "Sukoharjo",
+    judul: judul.trim(),
+    isi: isi.trim(),
+    tanggal: dateStr,
+    foto: foto?.trim() || undefined,
+    image: foto?.trim() || undefined,
+  });
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
 function revalidateAll() {
   revalidatePath("/", "layout");
 }

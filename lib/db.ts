@@ -104,6 +104,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
     category: item.category,
     year: item.year,
     product: item.product,
+    tagline: item.tagline || null,
     desc: item.desc,
     address: item.address,
     wa: item.wa || null,
@@ -121,6 +122,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   if (item.id) {
     resultItem = {
       ...sbPayload,
+      tagline: sbPayload.tagline || undefined,
       wa: sbPayload.wa || undefined,
       phone: sbPayload.phone || undefined,
       mapsUrl: sbPayload.maps_url || undefined,
@@ -135,6 +137,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
     const newId = list.length > 0 ? Math.max(...list.map((u) => u.id || 0)) + 1 : 1;
     resultItem = {
       ...sbPayload,
+      tagline: sbPayload.tagline || undefined,
       wa: sbPayload.wa || undefined,
       phone: sbPayload.phone || undefined,
       mapsUrl: sbPayload.maps_url || undefined,
@@ -245,6 +248,32 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
         images: item.images || null,
       });
     } catch (e) {}
+  }
+
+  // Otomatis masukkan foto lampiran berita ke Galeri Desa
+  if (item.images && item.images.trim().length > 0) {
+    const imageUrls = item.images
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    for (const imgUrl of imageUrls) {
+      try {
+        const existingGaleri: GaleriItem[] = store.galeri || [];
+        const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
+        if (!alreadyInGaleri) {
+          await addGaleri({
+            label: item.title,
+            cat: item.tag || "Kegiatan Desa",
+            grad: "g1",
+            image: imgUrl,
+            desc: `Foto Dokumentasi Berita: ${item.title}`,
+          });
+        }
+      } catch (err) {
+        console.error("Gagal menyalin foto berita ke galeri:", err);
+      }
+    }
   }
 
   return newItem;
@@ -541,8 +570,13 @@ export async function addBukuTamu(item: Omit<BukuTamu, "id">): Promise<BukuTamu>
 
   if (!isPlaceholderSupabase) {
     try {
-      await supabaseServer.from("buku_tamu").insert(item);
-    } catch (e) {}
+      const { error } = await supabaseServer.from("buku_tamu").insert(item);
+      if (error) await supabase.from("buku_tamu").insert(item);
+    } catch (e) {
+      try {
+        await supabase.from("buku_tamu").insert(item);
+      } catch (err2) {}
+    }
   }
 
   return newItem;
@@ -581,18 +615,44 @@ export async function getPengaduanList(): Promise<Pengaduan[]> {
 }
 
 export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tanggapan">): Promise<Pengaduan> {
-  const payload = { ...item, status: "Baru" as const, tanggapan: "" };
+  const sbPayload = {
+    nama: item.nama,
+    dusun: item.dusun,
+    judul: item.judul,
+    isi: item.isi,
+    tanggal: item.tanggal,
+    foto: item.foto || item.image || null,
+    image: item.foto || item.image || null,
+    status: "Baru" as const,
+    tanggapan: "",
+  };
   const store = readStore();
   const list: Pengaduan[] = store.pengaduan || [];
   const newId = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
-  const newItem = { ...payload, id: newId };
+  const newItem: Pengaduan = {
+    id: newId,
+    nama: item.nama,
+    dusun: item.dusun,
+    judul: item.judul,
+    isi: item.isi,
+    tanggal: item.tanggal,
+    foto: item.foto || item.image || undefined,
+    image: item.foto || item.image || undefined,
+    status: "Baru",
+    tanggapan: "",
+  };
   store.pengaduan = [newItem, ...list];
   writeStore(store);
 
   if (!isPlaceholderSupabase) {
     try {
-      await supabaseServer.from("pengaduan").insert(payload);
-    } catch (e) {}
+      const { error } = await supabaseServer.from("pengaduan").insert(sbPayload);
+      if (error) await supabase.from("pengaduan").insert(sbPayload);
+    } catch (e) {
+      try {
+        await supabase.from("pengaduan").insert(sbPayload);
+      } catch (err2) {}
+    }
   }
 
   return newItem;

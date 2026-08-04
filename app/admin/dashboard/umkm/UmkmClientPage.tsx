@@ -36,6 +36,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const [customCategory, setCustomCategory] = useState("");
   const [year, setYear] = useState(new Date().getFullYear());
   const [product, setProduct] = useState("");
+  const [tagline, setTagline] = useState("");
   const [desc, setDesc] = useState("");
   const [address, setAddress] = useState("");
   const [wa, setWa] = useState("");
@@ -84,6 +85,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     
     setYear(item.year);
     setProduct(item.product);
+    setTagline(item.tagline || "");
     setDesc(item.desc);
     setAddress(item.address);
     setWa(item.wa || "");
@@ -114,6 +116,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setCustomCategory("");
     setYear(new Date().getFullYear());
     setProduct("");
+    setTagline("");
     setDesc("");
     setAddress("");
     setWa("");
@@ -198,6 +201,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
         category: activeCategory,
         year: Number(year),
         product: product.trim(),
+        tagline: tagline.trim() || undefined,
         desc: desc.trim(),
         address: address.trim(),
         wa: cleanWa || undefined,
@@ -365,6 +369,23 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                   className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
                   style={{ height: "40px" }}
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                  Tagline / Judul Slogan Usaha (Opsional)
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Contoh: Cita Rasa Tradisional Warisan Leluhur"
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
+                  className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                  style={{ height: "40px" }}
+                />
+                <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
+                  Menggantikan judul 'Deskripsi Usaha' pada halaman profil publik UMKM.
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

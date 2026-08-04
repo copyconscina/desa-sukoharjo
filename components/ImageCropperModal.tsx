@@ -40,6 +40,7 @@ export default function ImageCropperModal({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // Load file as object URL with dynamic HEIC conversion
   useEffect(() => {
@@ -108,50 +109,39 @@ export default function ImageCropperModal({
     };
   }, [file]);
 
-  // Adjust crop box when aspect ratio changes
-  useEffect(() => {
-    if (aspectRatio === "free") {
-      setCropHeight(cropWidth);
-      return;
-    }
+  // Recalculate cropHeight strictly locking to aspect ratio taking DOM element dimensions into account
+  const syncCropHeight = (wPercent: number) => {
+    if (aspectRatio === "free") return;
 
     const [wRatio, hRatio] = aspectRatio.split(":").map(Number);
-    const targetHeight = cropWidth * (hRatio / wRatio);
+    const targetAspect = wRatio / hRatio;
 
-    if (targetHeight + cropY <= 100) {
-      setCropHeight(targetHeight);
+    if (imgRef.current) {
+      const renderW = imgRef.current.clientWidth || 1;
+      const renderH = imgRef.current.clientHeight || 1;
+      const containerAspect = renderW / renderH;
+
+      const targetHPercent = wPercent * (containerAspect / targetAspect);
+      if (targetHPercent + cropY <= 100) {
+        setCropHeight(targetHPercent);
+      } else {
+        const maxH = Math.max(10, 100 - cropY);
+        setCropHeight(maxH);
+        setCropWidth(maxH * (targetAspect / containerAspect));
+      }
     } else {
-      const maxPossibleHeight = 100 - cropY;
-      const adjustedWidth = maxPossibleHeight * (wRatio / hRatio);
-      setCropWidth(adjustedWidth);
-      setCropHeight(maxPossibleHeight);
+      setCropHeight(wPercent * (hRatio / wRatio));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aspectRatio]);
+  };
 
-  // Re-calculate locked aspect ratio heights when width is changed manually
+  useEffect(() => {
+    syncCropHeight(cropWidth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aspectRatio, imageUrl]);
+
   const handleWidthChange = (val: number) => {
     setCropWidth(val);
-
-    if (aspectRatio !== "free") {
-      const [wRatio, hRatio] = aspectRatio.split(":").map(Number);
-      const targetHeight = val * (hRatio / wRatio);
-
-      if (targetHeight + cropY <= 100) {
-        setCropHeight(targetHeight);
-      } else {
-        const overflow = targetHeight + cropY - 100;
-        const newY = Math.max(0, cropY - overflow);
-        setCropY(newY);
-        if (targetHeight + newY <= 100) {
-          setCropHeight(targetHeight);
-        } else {
-          const maxH = 100 - newY;
-          setCropHeight(maxH);
-          setCropWidth(maxH * (wRatio / hRatio));
-        }
-      }
-    }
+    syncCropHeight(val);
   };
 
   const handleHeightChange = (val: number) => {
@@ -236,19 +226,43 @@ export default function ImageCropperModal({
     img.src = imageUrl;
 
     img.onload = () => {
+      const naturalW = img.naturalWidth;
+      const naturalH = img.naturalHeight;
+
+      // Source rectangle in natural image pixels
+      const srcX = (cropX / 100) * naturalW;
+      const srcY = (cropY / 100) * naturalH;
+      const srcW = (cropWidth / 100) * naturalW;
+      const srcH = (cropHeight / 100) * naturalH;
+
+      // Fixed target resolution for perfect aspect ratios
+      let outW = Math.max(1, Math.round(srcW));
+      let outH = Math.max(1, Math.round(srcH));
+
+      if (aspectRatio === "16:9") {
+        outW = 1280;
+        outH = 720;
+      } else if (aspectRatio === "1:1") {
+        outW = 800;
+        outH = 800;
+      } else if (aspectRatio === "4:3") {
+        outW = 1024;
+        outH = 768;
+      } else if (aspectRatio === "3:2") {
+        outW = 1200;
+        outH = 800;
+      }
+
       const canvas = document.createElement("canvas");
-
-      const x = (cropX / 100) * img.naturalWidth;
-      const y = (cropY / 100) * img.naturalHeight;
-      const w = (cropWidth / 100) * img.naturalWidth;
-      const h = (cropHeight / 100) * img.naturalHeight;
-
-      canvas.width = Math.max(1, w);
-      canvas.height = Math.max(1, h);
+      canvas.width = outW;
+      canvas.height = outH;
 
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -261,7 +275,8 @@ export default function ImageCropperModal({
             setIsProcessing(false);
             onClose();
           },
-          workingFile.type || "image/jpeg"
+          workingFile.type || "image/jpeg",
+          0.92
         );
       } else {
         setIsProcessing(false);
@@ -313,8 +328,10 @@ export default function ImageCropperModal({
                 {imageUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
+                    ref={imgRef}
                     src={imageUrl}
                     alt="Crop preview source"
+                    onLoad={() => syncCropHeight(cropWidth)}
                     onError={() => setLoadError("Browser tidak dapat menampilkan format foto ini. Silakan gunakan format JPG, PNG, atau WebP.")}
                     className="max-w-full h-auto max-h-[280px] block pointer-events-none rounded-lg object-contain"
                   />

@@ -281,6 +281,12 @@ export default function LayananClientPage({
                     </div>
                   </div>
                   <p className="text-sm text-[color:var(--ink)] bg-[color:var(--card)] p-3 rounded-lg border border-[color:var(--line)]">{p.isi}</p>
+                  {(p.foto || p.image) && (
+                    <div className="mt-2 relative w-full h-44 rounded-lg overflow-hidden border border-[color:var(--line)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.foto || p.image} alt={p.judul} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   {p.tanggapan && (
                     <div className="text-xs bg-[color:var(--forest)]/10 text-[color:var(--forest-deep)] p-2.5 rounded-lg border border-[color:var(--forest)]/20">
                       <strong>Tanggapan Resmi Desa:</strong> {p.tanggapan}
