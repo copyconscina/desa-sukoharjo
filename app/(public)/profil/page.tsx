@@ -101,7 +101,7 @@ export default async function ProfilPage() {
           <div className="org-chart">
             <div className="org-node top">
               Kepala Desa
-              <small>Sunarto.</small>
+              <small>Sunarto</small>
             </div>
             <div className="org-node">
               Sekretaris Desa
@@ -138,7 +138,7 @@ export default async function ProfilPage() {
             <div className="org-row">
               <div className="org-node">
                 Kadus Blaraksari, Sukoharjo, dan Jati
-                <small>dwijoko Widyanto</small>
+                <small>Dwijoko Widyanto</small>
               </div>
               <div className="org-node">
                 Kadus Tulakan dan Pule
@@ -198,56 +198,18 @@ export default async function ProfilPage() {
                     <circle cx="12" cy="10" r="3" />
                   </svg>
                 </div>
-                <div>
-                  <h3>Alamat Kantor Desa</h3>
-                  <p>
-                    Jl. Raya Tirtomoyo–Baturetno KM 5, Dusun Sukorejo, Desa Sukoharjo, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
-                  </p>
-                  <a
-                    href="https://maps.google.com/?q=Kantor+Kepala+Desa+Sukoharjo+Tirtomoyo+Wonogiri"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--forest)] hover:underline mt-2"
-                  >
-                    📍 Buka Petunjuk Arah di Google Maps →
-                  </a>
-                </div>
               </div>
-              <div className="contact-item">
-                <div className="ic">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                </div>
-                <div>
-                  <h3>Email</h3>
-                  <p>desasukoharjotio11@gmail.go.id</p>
-                </div>
+              <div style={{ height: "100%", minHeight: "340px", borderRadius: "var(--radius)", overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
+                <iframe
+                  src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, minHeight: "340px" }}
+                  allowFullScreen={true}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               </div>
-              <div className="contact-item">
-                <div className="ic">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 8v4l3 3" />
-                    <circle cx="12" cy="12" r="9" />
-                  </svg>
-                </div>
-                <div>
-                  <h3>Jam Layanan</h3>
-                  <p>Senin–Jumat, 08.00–15.00 WIB</p>
-                </div>
-              </div>
-            </div>
-            <div style={{ height: "100%", minHeight: "340px", borderRadius: "var(--radius)", overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-              <iframe
-                src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                width="100%"
-                height="100%"
-                style={{ border: 0, minHeight: "340px" }}
-                allowFullScreen={true}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
             </div>
           </div>
         </div>

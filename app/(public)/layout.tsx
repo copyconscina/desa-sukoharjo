@@ -47,16 +47,17 @@ export default function PublicLayout({
           <div>
             <h4>Kantor Desa</h4>
             <ul>
-              <li>23RP+578, Sukorejo, Sukoharjo</li>
+              <li>23RP+578, Desa Sukoharjo RT 03 RW 02</li>
               <li>Kec. Tirtomoyo, Kab. Wonogiri</li>
               <li>Jawa Tengah 57672</li>
-              <li>Telp: (0821) 38002221</li>
+              <li>Telp: (0812) 25432772 / (0851) 73204364</li>
+              <li>Jam Layanan: Senin–Jumat, 08.00–15.00 WIB</li>
             </ul>
           </div>
         </div>
         <div className="wrap foot-bottom">
-          <span>© 2026 Pemerintah Desa Sukoharjo.</span>
-          <span>KKN Tim II Universitas Diponegoro</span>
+          <span>Pemerintah Desa Sukoharjo</span>
+          <span>2026 KKN Tim II Universitas Diponegoro ©</span>
         </div>
       </footer>
     </>
