@@ -181,19 +181,31 @@ export default async function ProfilPage() {
           </div>
         </div>
       </section>
-
-      {/* KONTAK & LOKASI KANTOR DESA */}
-      <section className="block on-parchment2"
-        <div style={{ height: "100%", minHeight: "340px", borderRadius: "var(--radius)", overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-          <iframe
-                  src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0, minHeight: "340px" }}
-                  allowFullScreen={true}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
+{/* KONTAK & LOKASI KANTOR DESA */}
+      <section className="block on-parchment2">
+        <div className="wrap">
+          <p className="eyebrow">Kontak & Lokasi</p>
+          <h2 style={{ margin: "10px 0 24px" }}>Kantor Desa Sukoharjo</h2>
+          <div
+            style={{
+              height: "100%",
+              minHeight: "340px",
+              borderRadius: "var(--radius)",
+              overflow: "hidden",
+              border: "1px solid var(--line)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+            }}
+          >
+            <iframe
+              src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0, minHeight: "340px" }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
             />
+          </div>
         </div>
       </section>
     </div>

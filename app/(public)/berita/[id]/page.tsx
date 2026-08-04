@@ -141,7 +141,8 @@ export default async function BeritaDetailPage({ params }: Props) {
               style={{ 
                 fontSize: "17px", 
                 lineHeight: "1.8", 
-                whiteSpace: "pre-wrap" 
+                whiteSpace: "pre-wrap",
+                textAlign: "justify" 
               }}
             >
               {b.desc}
