@@ -183,24 +183,9 @@ export default async function ProfilPage() {
       </section>
 
       {/* KONTAK & LOKASI KANTOR DESA */}
-      <section className="block on-parchment2">
-        <div className="wrap">
-          <div className="section-head">
-            <p className="eyebrow">Kontak</p>
-            <h2>Hubungi Kantor Desa Sukoharjo</h2>
-          </div>
-          <div className="contact-grid" style={{ marginTop: "24px" }}>
-            <div>
-              <div className="contact-item">
-                <div className="ic">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                </div>
-              </div>
-              <div style={{ height: "100%", minHeight: "340px", borderRadius: "var(--radius)", overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-                <iframe
+      <section className="block on-parchment2"
+        <div style={{ height: "100%", minHeight: "340px", borderRadius: "var(--radius)", overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
+          <iframe
                   src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   width="100%"
                   height="100%"
@@ -208,10 +193,7 @@ export default async function ProfilPage() {
                   allowFullScreen={true}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-            </div>
-          </div>
+            />
         </div>
       </section>
     </div>
