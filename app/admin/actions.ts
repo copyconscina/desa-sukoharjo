@@ -47,6 +47,7 @@ import {
   resetRateLimit,
 } from "@/lib/auth";
 import { uploadSingleFile, uploadMultipleFiles, uploadPdfFile } from "@/lib/upload";
+import { parseImagesList } from "@/lib/utils";
 import { headers } from "next/headers";
 
 export async function uploadPdfAction(formData: FormData) {
@@ -181,11 +182,8 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
 
   const saved = await addBerita(newBerita);
 
-  if (images && images.trim().length > 0) {
-    const imageUrlList = images
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+  const imageUrlList = parseImagesList(images);
+  if (imageUrlList.length > 0) {
 
     for (const imgUrl of imageUrlList) {
       try {

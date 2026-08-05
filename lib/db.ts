@@ -17,6 +17,7 @@ import {
   ProdukHukum,
   StatistikPenduduk,
 } from "./data";
+import { parseImagesList } from "./utils";
 
 const STORE_PATH = path.join(process.cwd(), "lib", "store.json");
 
@@ -283,12 +284,8 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
   }
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
-  if (item.images && item.images.trim().length > 0) {
-    const imageUrls = item.images
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
+  const imageUrls = parseImagesList(item.images);
+  if (imageUrls.length > 0) {
     for (const imgUrl of imageUrls) {
       try {
         const existingGaleri: GaleriItem[] = store.galeri || [];
