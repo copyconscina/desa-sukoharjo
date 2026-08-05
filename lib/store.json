@@ -57,41 +57,7 @@
       "image": "https://images.unsplash.com/photo-1587049352847-4a222e784d38?q=80&w=800&auto=format&fit=crop"
     }
   ],
-  "berita": [
-    {
-      "id": 1,
-      "tag": "Pemerintahan",
-      "cls": "tag-pemdes",
-      "title": "Musyawarah Desa Pembahasan Rencana Kerja Pemerintah Desa (RKPDes) Tahun 2027",
-      "desc": "Pemerintah Desa Sukoharjo menggelar Musdes bersama BPD, tokoh masyarakat, dan perwakilan perempuan untuk menentukan skala prioritas pembangunan fisik serta pemberdayaan ekonomi warga.",
-      "date": "24 Jul 2026",
-      "images": [
-        "https://images.unsplash.com/photo-1577495508048-b635879837f1?q=80&w=800&auto=format&fit=crop"
-      ]
-    },
-    {
-      "id": 2,
-      "tag": "Pembangunan",
-      "cls": "tag-pembangunan",
-      "title": "Realisasi Pengaspalan Jalan Tani Dusun Ngrancah Sukses Membantu Akses Panen Warga",
-      "desc": "Melalui alokasi APBDes 2026, pembangunan akses jalan tani sepanjang 600 meter kini dapat dilalui kendaraan roda tiga untuk mempercepat pengangkutan hasil pertanian sawah dan perbukitan.",
-      "date": "18 Jul 2026",
-      "images": [
-        "https://images.unsplash.com/photo-1584467735871-8e85353a8413?q=80&w=800&auto=format&fit=crop"
-      ]
-    },
-    {
-      "id": 3,
-      "tag": "Ekonomi",
-      "cls": "tag-ekonomi",
-      "title": "Pelatihan Kemasan Produk & Pemasaran Digital untuk Pelaku UMKM Lokal Sukoharjo",
-      "desc": "Bekerjasama dengan Dinas Perdagangan Wonogiri, Pemdes menggelar lokakarya bagi 30 pengrajin dan produsen makanan olahan desa agar siap menembus pasar e-commerce.",
-      "date": "10 Jul 2026",
-      "images": [
-        "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop"
-      ]
-    }
-  ],
+  "berita": [],
   "galeri": [
     {
       "label": "batu bata",
@@ -417,5 +383,10 @@
         "count": 472
       }
     ]
-  }
+  },
+  "deletedBerita": [
+    1,
+    3,
+    2
+  ]
 }

@@ -103,7 +103,9 @@ export async function getUmkmList(): Promise<Umkm[]> {
         }));
         return syncListWithLocal(sbList as Umkm[], localList, deletedIds);
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("getBeritaList supabase exception:", e);
+    }
   }
   return localList.filter((u) => !deletedIds.includes(u.id));
 }
@@ -283,7 +285,9 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
         published_at: new Date().toISOString(),
         images: item.images || null,
       });
-    } catch (e) {}
+    } catch (e) {
+      console.error("addBerita supabase exception:", e);
+    }
   }
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
@@ -366,7 +370,9 @@ export async function updateBerita(id: number, item: Omit<Berita, "id" | "date">
           images: item.images || null,
         })
         .eq("id", id);
-    } catch (e) {}
+    } catch (e) {
+      console.error("updateBerita supabase exception:", e);
+    }
   }
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa

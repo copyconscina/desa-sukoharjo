@@ -29,35 +29,35 @@ export default async function APBDesPage() {
       <section className="block">
         <div className="wrap flex flex-col gap-8">
           {/* STRIP RINGKASAN APBDES */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between h-full">
-              <div>
+          <div className="flex flex-wrap justify-center gap-6 w-full">
+            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between w-fit shrink-0">
+              <div className="min-w-0">
                 <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Total Pendapatan Desa</span>
-                <h2 className="text-2xl sm:text-[1.4rem] md:text-[1.25rem] lg:text-[1.65rem] xl:text-[2.1rem] font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
+                <h2 className="text-[clamp(1.25rem,2vw,1.75rem)] leading-tight font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
                   {apbdesRingkasan.pendapatan}
                 </h2>
               </div>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed">Dana Desa, ADD, Bagi Hasil Pajak & PADes</span>
             </Card>
 
-            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between h-full">
-              <div>
+            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between w-fit shrink-0">
+              <div className="min-w-0">
                 <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Total Belanja Desa</span>
-                <h2 className="text-2xl sm:text-[1.4rem] md:text-[1.25rem] lg:text-[1.65rem] xl:text-[2.1rem] font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
+                <h2 className="text-[clamp(1.25rem,2vw,1.75rem)] leading-tight font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
                   {apbdesRingkasan.belanja}
                 </h2>
               </div>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed">Pembangunan, Pemerintahan & Pemberdayaan</span>
             </Card>
 
-            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between h-full">
-              <div>
+            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between w-fit shrink-0">
+              <div className="min-w-0">
                 <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Pembiayaan</span>
-                <h2 className="text-2xl sm:text-[1.4rem] md:text-[1.25rem] lg:text-[1.65rem] xl:text-[2.1rem] font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
+                <h2 className="text-[clamp(1.25rem,2vw,1.75rem)] leading-tight font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
                   {apbdesRingkasan.pembiayaan}
                 </h2>
               </div>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed">SiLPA Tahun Sebelumnya</span>
+              <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed"></span>
             </Card>
           </div>
 
