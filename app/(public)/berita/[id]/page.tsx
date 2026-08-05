@@ -6,6 +6,7 @@ import { getBeritaList, getBeritaById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import MediaCarousel from "@/components/MediaCarousel";
 import { parseImagesList } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -103,47 +104,14 @@ export default async function BeritaDetailPage({ params }: Props) {
               <span>Dipublikasikan pada {b.date}</span>
             </div>
             
-            {imageList.length === 1 && (
-              <div className="mb-8 rounded-xl overflow-hidden border border-[color:var(--line)] h-[350px] md:h-[420px] relative shadow-sm">
-                <Image
-                  src={imageList[0]}
-                  alt={b.title}
-                  fill
-                  unoptimized
-                  sizes="(max-width: 768px) 100vw, 800px"
-                  className="object-cover"
-                />
-              </div>
-            )}
-
-            {imageList.length > 1 && (
-              <div className="mb-8 flex flex-col gap-3">
-                <div className="rounded-xl overflow-hidden border border-[color:var(--line)] h-[300px] md:h-[380px] relative shadow-sm">
-                  <Image
-                    src={imageList[0]}
-                    alt={b.title}
-                    fill
-                    unoptimized
-                    sizes="(max-width: 768px) 100vw, 800px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {imageList.slice(1).map((imgUrl, i) => (
-                    <div key={i} className="rounded-lg overflow-hidden border border-[color:var(--line)] aspect-video relative shadow-sm">
-                      <Image
-                        src={imgUrl}
-                        alt={`${b.title} gallery ${i + 1}`}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 768px) 50vw, 250px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="mb-8">
+              <MediaCarousel
+                imagesData={b.images}
+                title={b.title}
+                badge={b.tag}
+                aspectRatio="h-[300px] sm:h-[420px]"
+              />
+            </div>
             
             <article 
               className="prose max-w-none text-[color:var(--ink)]"

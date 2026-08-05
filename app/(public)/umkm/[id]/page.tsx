@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { getUmkmList, getUmkmById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import MediaCarousel from "@/components/MediaCarousel";
 
 export const dynamic = "force-dynamic";
 
@@ -107,105 +107,85 @@ export default async function UmkmDetailPage({ params }: Props) {
       <section className="block">
         <div className="wrap two-col">
           <div>
-            <div
-              className="relative w-full h-[240px] rounded-[var(--radius)] overflow-hidden mb-6"
-              style={!u.image ? { background: u.grad } : undefined}
-            >
-              {u.image && (
-                <Image
-                  src={u.image}
-                  alt={u.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  className="object-cover"
-                />
-              )}
-              <Badge
-                className="border-none z-10"
-                style={{
-                  position: "absolute",
-                  top: "16px",
-                  left: "16px",
-                  background: "rgba(33, 47, 28, 0.75)",
-                  color: "#fff",
-                  fontFamily: "var(--font-mono)",
-                  textTransform: "uppercase",
-                  fontSize: "10px",
-                  padding: "6px 12px",
-                  borderRadius: "100px",
-                  letterSpacing: ".05em",
-                }}
-              >
-                {u.category}
-              </Badge>
+            <div className="mb-6">
+              <MediaCarousel
+                imagesData={u.images}
+                coverImage={u.image}
+                title={u.name}
+                badge={u.category}
+                grad={u.grad}
+                aspectRatio="h-[280px] sm:h-[360px]"
+              />
             </div>
-            <h2 style={{ marginBottom: "12px" }}>{u.tagline || "Deskripsi Usaha"}</h2>
+            {u.tagline && <h2 style={{ marginBottom: "12px" }}>{u.tagline}</h2>}
             <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--ink-soft)" }}>
               {u.desc}
             </p>
           </div>
 
-          <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "30px", borderRadius: "var(--radius)" }}>
-            <h3 style={{ borderBottom: "1px solid var(--line)", paddingBottom: "12px", marginBottom: "16px" }}>
+          <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "14px 18px", borderRadius: "var(--radius)" }}>
+            <h3 style={{ borderBottom: "1px solid var(--line)", paddingBottom: "4px", marginBottom: "8px", fontSize: "16px" }}>
               Informasi Usaha
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                   {icTag}
                 </div>
                 <div>
-                  <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Produk Unggulan</div>
-                  <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)", fontWeight: "600" }}>{u.product}</div>
+                  <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Produk Unggulan</div>
+                  <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)", fontWeight: "600" }}>{u.product}</div>
                 </div>
               </div>
 
-              <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                   {icPin}
                 </div>
                 <div>
-                  <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Alamat</div>
-                  <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)", lineHeight: "1.5" }}>{u.address}</div>
+                  <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Alamat</div>
+                  <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)", lineHeight: "1.4" }}>{u.address}</div>
                 </div>
               </div>
 
-              <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                   {icCal}
                 </div>
                 <div>
-                  <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Tahun Berdiri</div>
-                  <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)" }}>{u.year}</div>
+                  <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Tahun Berdiri</div>
+                  <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)" }}>{u.year}</div>
                 </div>
               </div>
 
               {u.phone ? (
-                <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                   <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                     {icPhone}
                   </div>
                   <div>
-                    <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>No. Telepon Biasa</div>
-                    <a href={`tel:${u.phone.replace(/[^0-9+]/g, '')}`} className="val" style={{ fontSize: "14.5px", color: "var(--ink)", fontWeight: "600" }}>{u.phone}</a>
+                    <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>No. Telepon Seluler/Biasa</div>
+                    <a href={`tel:${u.phone.replace(/[^0-9+]/g, '')}`} className="val" style={{ fontSize: "13.5px", color: "var(--ink)", fontWeight: "600" }}>
+                      {u.phone}
+                    </a>
                   </div>
                 </div>
               ) : null}
 
               {u.social ? (
-                <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                   <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                     {icShare}
                   </div>
                   <div>
-                    <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Media Sosial</div>
-                    <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)" }}>{u.social}</div>
+                    <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Media Sosial</div>
+                    <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)" }}>{u.social}</div>
                   </div>
                 </div>
               ) : null}
             </div>
 
-            <div style={{ marginTop: "30px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
               {cleanWa ? (
                 <Button asChild className="btn btn-wa border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
                   <a

@@ -30,23 +30,23 @@ export default async function StatistikPage() {
           {/* REKAP UTAMA */}
           <div className="grid cols-4 gap-4">
             <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Total Penduduk</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--forest)]">{stat.totalPenduduk.toLocaleString("id-ID")}</span>
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Total Penduduk</span>
+              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.totalPenduduk.toLocaleString("id-ID")}</span>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-1">Jiwa</span>
             </Card>
             <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Kepala Keluarga</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--padi)]">{stat.totalKk.toLocaleString("id-ID")}</span>
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Kepala Keluarga</span>
+              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.totalKk.toLocaleString("id-ID")}</span>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-1">KK</span>
             </Card>
             <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Laki-Laki</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--clay)]">{stat.lakiLaki.toLocaleString("id-ID")}</span>
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Laki-Laki</span>
+              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.lakiLaki.toLocaleString("id-ID")}</span>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-1">Jiwa</span>
             </Card>
             <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1">Perempuan</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--sawah)]">{stat.perempuan.toLocaleString("id-ID")}</span>
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Perempuan</span>
+              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.perempuan.toLocaleString("id-ID")}</span>
               <span className="text-xs text-[color:var(--ink-soft)] block mt-1">Jiwa</span>
             </Card>
           </div>
@@ -62,7 +62,7 @@ export default async function StatistikPage() {
                     <span className="text-xs font-mono text-[color:var(--ink-soft)]">{dusun.rt} RT · {dusun.rw} RW</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold font-heading text-[color:var(--forest)]">{dusun.jiwa}</span>
+                    <span className="text-xl font-bold font-heading text-[color:var(--forest-deep)]">{dusun.jiwa}</span>
                     <span className="text-xs text-[color:var(--ink-soft)] block">Jiwa</span>
                   </div>
                 </div>
@@ -80,7 +80,7 @@ export default async function StatistikPage() {
                   <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-[color:var(--parchment)] border border-[color:var(--line)]">
                     <span className="text-sm font-medium text-[color:var(--ink)]">{item.name}</span>
                     <div className="text-right">
-                      <span className="font-mono text-sm font-bold text-[color:var(--forest)]">{item.count.toLocaleString("id-ID")} Jiwa</span>
+                      <span className="font-mono text-sm font-bold text-[color:var(--forest-deep)]">{item.count.toLocaleString("id-ID")} Jiwa</span>
                     </div>
                   </div>
                 ))}
@@ -95,7 +95,7 @@ export default async function StatistikPage() {
                   <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-[color:var(--parchment)] border border-[color:var(--line)]">
                     <span className="text-sm font-medium text-[color:var(--ink)]">{item.name}</span>
                     <div className="text-right">
-                      <span className="font-mono text-sm font-bold text-[color:var(--clay)]">{item.count.toLocaleString("id-ID")} Jiwa</span>
+                      <span className="font-mono text-sm font-bold text-[color:var(--forest-deep)]">{item.count.toLocaleString("id-ID")} Jiwa</span>
                       <span className="text-xs font-mono text-[color:var(--ink-soft)] block">{item.pct}%</span>
                     </div>
                   </div>

@@ -15,6 +15,7 @@ export interface Umkm {
   social?: string;
   grad: string;
   image?: string;
+  images?: string;
 }
 
 export interface Berita {

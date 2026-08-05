@@ -221,27 +221,27 @@ export default function PengaduanClient({ initialList }: Props) {
             list.map((aduan) => {
               const fotoUrl = aduan.foto || aduan.image;
               return (
-                <Card key={aduan.id} className="card shadow-none border border-[color:var(--line)] p-5 bg-[color:var(--card)]">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge className={`border-none ${aduan.status === 'Selesai' ? 'bg-[color:var(--forest)]' : aduan.status === 'Diproses' ? 'bg-amber-600' : 'bg-[color:var(--clay)]'} text-white`}>
+                <Card key={aduan.id} className="card shadow-none border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col" style={{ padding: "12px 16px", gap: "4px" }}>
+                  <div className="flex justify-between items-center gap-2 m-0 p-0">
+                    <Badge className={`border-none text-[10px] px-2 py-0.5 ${aduan.status === 'Selesai' ? 'bg-[color:var(--forest)]' : aduan.status === 'Diproses' ? 'bg-amber-600' : 'bg-[color:var(--clay)]'} text-white`}>
                       {aduan.status}
                     </Badge>
-                    <span className="text-xs font-mono text-[color:var(--ink-soft)]">{aduan.tanggal}</span>
+                    <span className="text-[11px] font-mono text-[color:var(--ink-soft)]">{aduan.tanggal}</span>
                   </div>
-                  <h4 className="font-semibold text-[color:var(--ink)] text-base mt-1">{aduan.judul}</h4>
-                  <p className="text-xs font-mono text-[color:var(--ink-soft)] mb-2">
+                  <h4 className="font-semibold text-[color:var(--ink)] text-sm md:text-base leading-snug m-0 p-0 mt-0.5">{aduan.judul}</h4>
+                  <p className="text-[11px] font-mono text-[color:var(--ink-soft)] m-0 p-0">
                     Pelapor: {aduan.nama} · Dusun: {aduan.dusun}
                   </p>
-                  <p className="text-sm text-[color:var(--ink-soft)] leading-relaxed">{aduan.isi}</p>
+                  <p className="text-xs md:text-sm text-[color:var(--ink-soft)] leading-relaxed m-0 p-0 mt-1">{aduan.isi}</p>
                   
                   {fotoUrl && (
-                    <div className="mt-3 relative w-full h-48 rounded-xl overflow-hidden border border-[color:var(--line)]">
+                    <div className="mt-2 relative w-full h-36 rounded-lg overflow-hidden border border-[color:var(--line)]">
                       <Image src={fotoUrl} alt={aduan.judul} fill className="object-cover" />
                     </div>
                   )}
 
                   {aduan.tanggapan && (
-                    <div className="mt-3 text-xs bg-[color:var(--forest)]/10 text-[color:var(--forest-deep)] p-2.5 rounded-lg border border-[color:var(--forest)]/20">
+                    <div className="mt-2 text-xs bg-[color:var(--forest)]/10 text-[color:var(--forest-deep)] p-2 rounded-lg border border-[color:var(--forest)]/20">
                       <strong>Tanggapan Resmi Desa:</strong> {aduan.tanggapan}
                     </div>
                   )}

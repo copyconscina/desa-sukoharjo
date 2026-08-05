@@ -131,15 +131,15 @@ export default function BukuTamuClient({ initialList }: Props) {
             </Card>
           ) : (
             list.map((item) => (
-              <Card key={item.id} className="card shadow-none border border-[color:var(--line)] p-5 bg-[color:var(--card)]">
-                <div className="flex justify-between items-start mb-2">
+              <Card key={item.id} className="card shadow-none border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col" style={{ padding: "12px 16px", gap: "4px" }}>
+                <div className="flex justify-between items-start gap-2 m-0 p-0">
                   <div>
-                    <h4 className="font-semibold text-[color:var(--ink)] text-base">{item.name}</h4>
-                    <span className="text-xs font-mono text-[color:var(--clay)]">{item.origin}</span>
+                    <h4 className="font-semibold text-[color:var(--ink)] text-sm md:text-base leading-snug m-0 p-0">{item.name}</h4>
+                    <span className="text-[11px] font-mono text-[color:var(--clay)] block m-0 p-0 mt-0.5">{item.origin}</span>
                   </div>
-                  <span className="text-xs font-mono text-[color:var(--ink-soft)]">{item.date}</span>
+                  <span className="text-[11px] font-mono text-[color:var(--ink-soft)] flex-shrink-0">{item.date}</span>
                 </div>
-                <p className="text-sm text-[color:var(--ink-soft)] italic">&ldquo;{item.message}&rdquo;</p>
+                <p className="text-xs md:text-sm text-[color:var(--ink-soft)] italic leading-relaxed m-0 p-0 mt-1">&ldquo;{item.message}&rdquo;</p>
               </Card>
             ))
           )}

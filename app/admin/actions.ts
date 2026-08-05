@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addBerita,
+  updateBerita,
   deleteBerita,
   addGaleri,
   deleteGaleri,
@@ -184,7 +185,6 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
 
   const imageUrlList = parseImagesList(images);
   if (imageUrlList.length > 0) {
-
     for (const imgUrl of imageUrlList) {
       try {
         await addGaleri({
@@ -200,6 +200,23 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
     }
   }
 
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
+export async function updateBeritaAction(id: number, tag: string, title: string, desc: string, images?: string) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  const updatedBerita: Omit<Berita, "id" | "date"> & { date?: string } = {
+    tag,
+    cls: tag.toLowerCase() === "pengumuman" ? "pengumuman" : tag.toLowerCase() === "pembangunan" ? "pembangunan" : "",
+    title,
+    desc,
+    images,
+  };
+
+  const saved = await updateBerita(id, updatedBerita);
   revalidateAll();
   return { success: true, item: saved };
 }

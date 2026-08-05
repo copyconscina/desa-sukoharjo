@@ -129,6 +129,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
     social: item.social || null,
     grad: item.grad || "",
     image: item.image || null,
+    images: item.images || null,
   };
 
   const store = readStore();
@@ -145,6 +146,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
       maps_url: sbPayload.maps_url || undefined,
       social: sbPayload.social || undefined,
       image: sbPayload.image || undefined,
+      images: sbPayload.images || undefined,
       id: item.id,
     } as Umkm;
     store.umkm = list.map((u) => (u.id === item.id ? resultItem : u));
@@ -160,6 +162,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
       maps_url: sbPayload.maps_url || undefined,
       social: sbPayload.social || undefined,
       image: sbPayload.image || undefined,
+      images: sbPayload.images || undefined,
       id: newId,
     } as Umkm;
     store.umkm = [...list, resultItem];
@@ -321,6 +324,72 @@ export async function deleteBeritaById(id: number): Promise<boolean> {
     } catch (e) {}
   }
   return true;
+}
+
+export async function updateBerita(id: number, item: Omit<Berita, "id" | "date"> & { date?: string }): Promise<Berita> {
+  const store = readStore();
+  const list: Berita[] = store.berita || [];
+  const existing = list.find((b) => b.id === id);
+  const updatedItem: Berita = {
+    id,
+    tag: item.tag,
+    cls: item.cls || "",
+    title: item.title,
+    desc: item.desc,
+    date: item.date || existing?.date || new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
+    images: item.images,
+  };
+
+  store.berita = list.map((b) => (b.id === id ? updatedItem : b));
+  writeStore(store);
+
+  if (!isPlaceholderSupabase) {
+    try {
+      await supabaseServer
+        .from("berita")
+        .update({
+          tag: item.tag.toLowerCase(),
+          cls: item.cls || "",
+          title: item.title,
+          desc: item.desc,
+          images: item.images || null,
+        })
+        .eq("id", id);
+
+      await supabase
+        .from("berita")
+        .update({
+          tag: item.tag.toLowerCase(),
+          cls: item.cls || "",
+          title: item.title,
+          desc: item.desc,
+          images: item.images || null,
+        })
+        .eq("id", id);
+    } catch (e) {}
+  }
+
+  // Otomatis masukkan foto lampiran berita ke Galeri Desa
+  const imageUrls = parseImagesList(item.images);
+  if (imageUrls.length > 0) {
+    for (const imgUrl of imageUrls) {
+      try {
+        const existingGaleri: GaleriItem[] = store.galeri || [];
+        const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
+        if (!alreadyInGaleri) {
+          await addGaleri({
+            label: item.title,
+            cat: item.tag || "Kegiatan Desa",
+            grad: "g1",
+            image: imgUrl,
+            desc: `Foto Dokumentasi Berita: ${item.title}`,
+          });
+        }
+      } catch (err) {}
+    }
+  }
+
+  return updatedItem;
 }
 
 export async function deleteBerita(id: number): Promise<boolean> {

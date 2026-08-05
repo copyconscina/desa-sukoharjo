@@ -31,31 +31,36 @@ export default async function ProdukHukumPage() {
         <div className="wrap">
           <div className="flex flex-col gap-4">
             {dokumenList.map((doc) => (
-              <Card key={doc.id} className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-[color:var(--clay)] text-white border-none text-xs">
+              <Card key={doc.id} className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge className="bg-[color:var(--clay)] text-white border-none text-[11px] px-2.5 py-0.5">
                       {doc.kategori}
                     </Badge>
                     <span className="font-mono text-xs text-[color:var(--ink-soft)]">{doc.nomor}</span>
                   </div>
-                  <h3 className="font-heading text-lg text-[color:var(--ink)] mt-1">{doc.judul}</h3>
+                  <h3 className="font-heading text-base md:text-lg text-[color:var(--ink)] mt-1 break-words leading-snug">
+                    {doc.judul}
+                  </h3>
                   <span className="font-mono text-xs text-[color:var(--ink-soft)]">Ditetapkan: {doc.tanggal}</span>
                 </div>
-                {doc.fileUrl ? (
-                  <a
-                    href={doc.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-dark border-none text-xs px-4 py-2 flex items-center gap-2 self-start md:self-auto inline-flex"
-                  >
-                    <span>📄 Unduh Dokumen PDF</span>
-                  </a>
-                ) : (
-                  <Button disabled variant="outline" className="opacity-50 text-xs px-4 py-2 self-start md:self-auto">
-                    <span>📄 File PDF Belum Tersedia</span>
-                  </Button>
-                )}
+
+                <div className="shrink-0 self-stretch sm:self-center flex items-center justify-end">
+                  {doc.fileUrl ? (
+                    <a
+                      href={doc.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-[185px] h-[40px] rounded-full bg-[color:var(--forest-deep)] hover:bg-[color:var(--forest)] text-white text-xs font-medium flex items-center justify-center gap-2 shadow-sm transition-colors border-none shrink-0 no-underline"
+                    >
+                      <span>📄 Unduh Dokumen PDF</span>
+                    </a>
+                  ) : (
+                    <div className="w-[185px] h-[40px] rounded-full bg-[color:var(--parchment-2)] border border-[color:var(--line)] text-[color:var(--ink-soft)] text-xs font-medium flex items-center justify-center gap-2 shrink-0 opacity-60 cursor-not-allowed">
+                      <span>📄 PDF Belum Tersedia</span>
+                    </div>
+                  )}
+                </div>
               </Card>
             ))}
           </div>

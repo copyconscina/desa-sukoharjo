@@ -2,12 +2,14 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Umkm } from "@/lib/data";
 import { saveUmkmAction, deleteUmkmAction, uploadImageAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -15,11 +17,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ImageCropperModal from "@/components/ImageCropperModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import { parseImagesList } from "@/lib/utils";
 
 interface Props {
   initialUmkm: Umkm[];
+}
+
+interface DraftFileItem {
+  id: string;
+  file: File;
+  previewUrl: string;
 }
 
 const CATEGORIES = ["Kuliner", "Fashion & Batik", "Kerajinan", "Pertanian", "Peternakan", "Jasa", "Lainnya"];
@@ -44,11 +52,9 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const [mapsUrl, setMapsUrl] = useState("");
   const [social, setSocial] = useState("");
   
-  // Image Upload State
-  const [file, setFile] = useState<File | null>(null);
-  const [rawFile, setRawFile] = useState<File | null>(null);
-  const [isCropOpen, setIsCropOpen] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | undefined>(undefined);
+  // Multi-Image Upload State
+  const [existingUrls, setExistingUrls] = useState<string[]>([]);
+  const [draftFiles, setDraftFiles] = useState<DraftFileItem[]>([]);
   const [currentGrad, setCurrentGrad] = useState<string | undefined>(undefined);
 
   const [loading, setLoading] = useState(false);
@@ -92,8 +98,11 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setPhone(item.phone || "");
     setMapsUrl(item.mapsUrl || item.maps_url || "");
     setSocial(item.social || "");
-    setFile(null);
-    setCurrentImageUrl(item.image);
+    
+    const parsedImages = parseImagesList(item.images);
+    const urls = parsedImages.length > 0 ? parsedImages : item.image ? [item.image] : [];
+    setExistingUrls(urls);
+    setDraftFiles([]);
     setCurrentGrad(item.grad);
 
     setError(null);
@@ -123,13 +132,55 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setPhone("");
     setMapsUrl("");
     setSocial("");
-    setFile(null);
-    setCurrentImageUrl(undefined);
+    setExistingUrls([]);
+    setDraftFiles([]);
     setCurrentGrad(undefined);
 
-    // Reset file input element manually
-    const fileInput = document.getElementById("umkmFileInput") as HTMLInputElement;
+    const fileInput = document.getElementById("umkmMultipleFileInput") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const selectedFiles = Array.from(e.target.files);
+    
+    const newDrafts: DraftFileItem[] = selectedFiles.map((file) => ({
+      id: Math.random().toString(36).substring(2, 9),
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setDraftFiles((prev) => [...prev, ...newDrafts]);
+  };
+
+  const moveExistingUrl = (index: number, direction: "left" | "right") => {
+    const targetIdx = direction === "left" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= existingUrls.length) return;
+
+    const newArr = [...existingUrls];
+    const temp = newArr[index];
+    newArr[index] = newArr[targetIdx];
+    newArr[targetIdx] = temp;
+    setExistingUrls(newArr);
+  };
+
+  const removeExistingUrl = (index: number) => {
+    setExistingUrls(existingUrls.filter((_, i) => i !== index));
+  };
+
+  const moveDraftFile = (index: number, direction: "left" | "right") => {
+    const targetIdx = direction === "left" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= draftFiles.length) return;
+
+    const newArr = [...draftFiles];
+    const temp = newArr[index];
+    newArr[index] = newArr[targetIdx];
+    newArr[targetIdx] = temp;
+    setDraftFiles(newArr);
+  };
+
+  const removeDraftFile = (id: string) => {
+    setDraftFiles(draftFiles.filter((df) => df.id !== id));
   };
 
   const promptSubmit = (e: React.FormEvent) => {
@@ -178,22 +229,26 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setLoading(true);
 
     try {
-      let imageUrl = currentImageUrl;
-      let finalGrad = currentGrad || "linear-gradient(135deg,#8b4226,#b0623d)";
+      const uploadedUrls: string[] = [];
 
-      if (file) {
+      for (const draft of draftFiles) {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", draft.file);
         
         const uploadRes = await uploadImageAction(formData);
         if (!uploadRes.success || !uploadRes.url) {
-          setError(uploadRes.error || "Gagal mengunggah foto cover.");
+          setError(uploadRes.error || `Gagal mengunggah foto ${draft.file.name}`);
           setLoading(false);
           return;
         }
-        imageUrl = uploadRes.url;
-        finalGrad = "";
+        uploadedUrls.push(uploadRes.url);
       }
+
+      const allUrls = [...existingUrls, ...uploadedUrls];
+      const imageUrlsStr = allUrls.join(",");
+      const coverUrl = allUrls[0] || null;
+      let finalGrad = currentGrad || "linear-gradient(135deg,#8b4226,#b0623d)";
+      if (coverUrl) finalGrad = "";
 
       const payload = {
         name: name.trim(),
@@ -210,7 +265,8 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
         maps_url: mapsUrl.trim() || undefined,
         social: social.trim() || undefined,
         grad: finalGrad,
-        image: imageUrl,
+        image: coverUrl || undefined,
+        images: imageUrlsStr || undefined,
       };
 
       const res = await saveUmkmAction(editingId ? { ...payload, id: editingId } : payload);
@@ -259,8 +315,6 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       },
     });
   };
-
-  const previewUrl = file ? URL.createObjectURL(file) : currentImageUrl;
 
   return (
     <div className="flex flex-col gap-6 font-sans">
@@ -401,9 +455,6 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                     className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
                     style={{ height: "40px" }}
                   />
-                  <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                    Kosongkan jika tidak punya WA.
-                  </span>
                 </div>
 
                 <div>
@@ -412,15 +463,12 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                   </label>
                   <Input
                     type="text"
-                    placeholder="Contoh: 08123456789 / (0273) 123..."
+                    placeholder="Contoh: 08123456789"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
                     style={{ height: "40px" }}
                   />
-                  <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                    Untuk panggil telepon biasa.
-                  </span>
                 </div>
               </div>
 
@@ -437,9 +485,6 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                     className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
                     style={{ height: "40px" }}
                   />
-                  <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                    Tautan redirect Google Maps.
-                  </span>
                 </div>
 
                 <div>
@@ -483,20 +528,17 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                 />
               </div>
 
+              {/* MULTI-FILE UPLOAD INPUT */}
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-2">
-                  Upload Foto Cover Usaha {editingId ? "(Opsional)" : ""}
+                  Pilih & Unggah Foto Usaha (Bisa Lebih Dari 1)
                 </label>
-                 <input
+                <input
                   type="file"
-                  id="umkmFileInput"
+                  id="umkmMultipleFileInput"
+                  multiple
                   accept="image/*,.jpg,.jpeg,.png,.webp,.jfif,.avif,.heic,.gif"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setRawFile(e.target.files[0]);
-                      setIsCropOpen(true);
-                    }
-                  }}
+                  onChange={handleFileSelect}
                   className="w-full text-xs text-[color:var(--ink-soft)]
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border file:border-[color:var(--line)]
@@ -504,20 +546,125 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                     file:bg-[color:var(--parchment)] file:text-[color:var(--forest)]
                     hover:file:bg-[color:var(--line)] cursor-pointer"
                 />
+                <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
+                  Dapat memilih beberapa foto sekaligus. Foto urutan pertama otomatis menjadi thumbnail cover.
+                </span>
               </div>
 
-              {/* Cover Preview */}
-              {previewUrl && (
-                <div className="mt-2">
-                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-2">
-                    Preview Tampilan Cover
-                  </label>
-                  <div
-                    className="h-28 rounded-xl border border-[color:var(--line)] overflow-hidden bg-cover bg-center relative"
-                    style={{ backgroundImage: `url(${previewUrl})` }}
-                  >
-                    <div className="absolute inset-0 bg-black/10" />
+              {/* LIST OF PHOTOS & REORDER CONTROLS */}
+              {(existingUrls.length > 0 || draftFiles.length > 0) && (
+                <div className="flex flex-col gap-2 border border-[color:var(--line)] p-3 rounded-xl bg-[color:var(--parchment-2)]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-bold">
+                      Daftar Foto UMKM ({existingUrls.length + draftFiles.length})
+                    </span>
+                    <span className="text-[10px] text-[color:var(--ink-soft)]">
+                      Gunakan tombol panah untuk mengatur urutan
+                    </span>
                   </div>
+
+                  {/* Existing Saved URLs */}
+                  {existingUrls.map((url, idx) => (
+                    <div key={`existing-${idx}`} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--line)]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-10 h-10 rounded overflow-hidden relative border border-white/20 flex-shrink-0">
+                          <Image src={url} alt={`Foto ${idx + 1}`} fill unoptimized className="object-cover" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-medium text-[color:var(--ink)] truncate">Foto Tersimpan #{idx + 1}</span>
+                          {idx === 0 && (
+                            <span className="text-[10px] text-amber-700 font-semibold">★ Thumbnail Cover</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={idx === 0}
+                          onClick={() => moveExistingUrl(idx, "left")}
+                          className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                          title="Geser Kiri / Ke Atas"
+                        >
+                          ◀
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={idx === existingUrls.length - 1 && draftFiles.length === 0}
+                          onClick={() => moveExistingUrl(idx, "right")}
+                          className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                          title="Geser Kanan / Ke Bawah"
+                        >
+                          ▶
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => removeExistingUrl(idx)}
+                          className="h-7 w-7 p-0 text-xs text-red-600 hover:text-red-700"
+                          title="Hapus Foto"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Draft Files to be Uploaded */}
+                  {draftFiles.map((df, idx) => {
+                    const globalIdx = existingUrls.length + idx;
+                    return (
+                      <div key={df.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-emerald-50/60 border border-emerald-200">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-10 h-10 rounded overflow-hidden relative border border-white/20 flex-shrink-0">
+                            <Image src={df.previewUrl} alt={`Foto Baru ${idx + 1}`} fill unoptimized className="object-cover" />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-medium text-[color:var(--ink)] truncate">{df.file.name}</span>
+                            {globalIdx === 0 ? (
+                              <span className="text-[10px] text-amber-700 font-semibold">★ Thumbnail Cover (Baru)</span>
+                            ) : (
+                              <span className="text-[10px] text-emerald-700">Baru (Akan Diunggah)</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={idx === 0 && existingUrls.length === 0}
+                            onClick={() => moveDraftFile(idx, "left")}
+                            className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                            title="Geser Kiri"
+                          >
+                            ◀
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={idx === draftFiles.length - 1}
+                            onClick={() => moveDraftFile(idx, "right")}
+                            className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                            title="Geser Kanan"
+                          >
+                            ▶
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => removeDraftFile(df.id)}
+                            className="h-7 w-7 p-0 text-xs text-red-600 hover:text-red-700"
+                            title="Batal Unggah"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -569,75 +716,76 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
               </div>
             ) : (
               <div className="flex flex-col gap-3 max-h-[900px] overflow-y-auto pr-1">
-                {umkmList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--parchment-2)] flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      {/* Cover Thumbnail Preview */}
-                      <div
-                        className="w-12 h-12 rounded-lg flex-shrink-0 border border-white/20"
-                        style={
-                          item.image
-                            ? { backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center" }
-                            : { background: item.grad }
-                        }
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-semibold text-[color:var(--clay)] bg-[color:var(--clay)]/5 border border-[color:var(--clay)]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          {item.category}
-                        </span>
-                        <h3 className="font-heading text-sm text-[color:var(--ink)] mt-1 truncate">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-[color:var(--ink-soft)] mt-0.5 truncate">
-                          Pemilik: {item.owner} · Produk: {item.product}
-                        </p>
+                {umkmList.map((item) => {
+                  const itemImages = parseImagesList(item.images);
+                  const coverImage = itemImages[0] || item.image;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--parchment-2)] flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        {/* Cover Thumbnail Preview */}
+                        <div
+                          className="w-12 h-12 rounded-lg flex-shrink-0 border border-white/20 relative overflow-hidden"
+                          style={
+                            coverImage
+                              ? { backgroundImage: `url(${coverImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+                              : { background: item.grad }
+                          }
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-[color:var(--clay)] bg-[color:var(--clay)]/5 border border-[color:var(--clay)]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              {item.category}
+                            </span>
+                            {itemImages.length > 1 && (
+                              <span className="text-[10px] font-mono text-[color:var(--ink-soft)]">
+                                📷 {itemImages.length} foto
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-heading text-sm text-[color:var(--ink)] mt-1 truncate">
+                            {item.name}
+                          </h3>
+                          <p className="text-xs text-[color:var(--ink-soft)] mt-0.5 truncate">
+                            Pemilik: {item.owner} · Produk: {item.product}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          onClick={() => handleEdit(item)}
+                          variant="outline"
+                          className="p-2 hover:bg-white text-xs h-8 w-8 rounded-lg border border-[color:var(--line)] bg-transparent cursor-pointer flex items-center justify-center"
+                          title="Edit Profil"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </Button>
+                        <button
+                          onClick={() => handleDelete(item.id, item.name)}
+                          className="p-2 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center h-8 w-8"
+                          title="Hapus Profil"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        onClick={() => handleEdit(item)}
-                        variant="outline"
-                        className="p-2 hover:bg-white text-xs h-8 w-8 rounded-lg border border-[color:var(--line)] bg-transparent cursor-pointer flex items-center justify-center"
-                        title="Edit Profil"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </Button>
-                      <button
-                        onClick={() => handleDelete(item.id, item.name)}
-                        className="p-2 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center h-8 w-8"
-                        title="Hapus Profil"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
         </div>
       </div>
-      {rawFile && (
-        <ImageCropperModal
-          file={rawFile}
-          isOpen={isCropOpen}
-          onClose={() => setIsCropOpen(false)}
-          defaultAspectRatio="1:1"
-          onCrop={(cropped) => {
-            setFile(cropped);
-          }}
-        />
-      )}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}
