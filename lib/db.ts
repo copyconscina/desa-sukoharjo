@@ -67,7 +67,7 @@ function syncListWithLocal<T extends { id?: number }>(
 
     const localMatch = (localList || []).find((l) => l.id === item.id);
     if (localMatch) {
-      result.push({ ...localMatch, ...item });
+      result.push({ ...item, ...localMatch });
     } else {
       result.push(item);
     }
