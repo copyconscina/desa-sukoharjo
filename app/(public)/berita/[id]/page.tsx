@@ -6,6 +6,7 @@ import { getBeritaList, getBeritaById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { parseImagesList } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -36,13 +37,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BeritaDetailPage({ params }: Props) {
   const { id } = await params;
-  const b = await getBeritaById(parseInt(id));
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) {
+    notFound();
+  }
+
+  const b = await getBeritaById(numId);
 
   if (!b) {
     notFound();
   }
 
-  const imageList = b.images ? b.images.split(",") : [];
+  const imageList = parseImagesList(b.images);
 
   const icCal = (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
@@ -103,6 +109,7 @@ export default async function BeritaDetailPage({ params }: Props) {
                   src={imageList[0]}
                   alt={b.title}
                   fill
+                  unoptimized
                   sizes="(max-width: 768px) 100vw, 800px"
                   className="object-cover"
                 />
@@ -116,6 +123,7 @@ export default async function BeritaDetailPage({ params }: Props) {
                     src={imageList[0]}
                     alt={b.title}
                     fill
+                    unoptimized
                     sizes="(max-width: 768px) 100vw, 800px"
                     className="object-cover"
                   />
@@ -127,6 +135,7 @@ export default async function BeritaDetailPage({ params }: Props) {
                         src={imgUrl}
                         alt={`${b.title} gallery ${i + 1}`}
                         fill
+                        unoptimized
                         sizes="(max-width: 768px) 50vw, 250px"
                         className="object-cover"
                       />

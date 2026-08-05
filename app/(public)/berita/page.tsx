@@ -4,6 +4,7 @@ import Image from "next/image";
 import { getBeritaList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { parseImagesList } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -36,7 +37,8 @@ export default async function BeritaPage() {
         <div className="wrap">
           <div className="grid cols-3">
             {beritaData.map((b, idx) => {
-              const firstImage = b.images ? b.images.split(",")[0] : null;
+              const imageList = parseImagesList(b.images);
+              const firstImage = imageList[0] || null;
               return (
                 <Link href={`/berita/${b.id}`} target="_blank" key={idx} style={{ textDecoration: "none", color: "inherit" }} className="h-full block">
                   <Card 
@@ -49,6 +51,7 @@ export default async function BeritaPage() {
                           src={firstImage}
                           alt={b.title}
                           fill
+                          unoptimized
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover"
                         />

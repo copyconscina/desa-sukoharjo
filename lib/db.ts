@@ -214,15 +214,31 @@ export async function getBeritaList(): Promise<Berita[]> {
     try {
       const { data, error } = await supabase.from("berita").select("*").order("published_at", { ascending: false });
       if (!error && data) {
-        const sbList = data.map((b: any) => ({
-          id: b.id,
-          tag: b.tag ? b.tag.charAt(0).toUpperCase() + b.tag.slice(1) : "",
-          cls: b.cls || "",
-          title: b.title,
-          desc: b.desc || "",
-          date: new Date(b.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
-          images: b.images || null,
-        })) as Berita[];
+        const sbList = data.map((b: any) => {
+          let dateStr = "";
+          try {
+            if (b.published_at) {
+              const d = new Date(b.published_at);
+              if (!isNaN(d.getTime())) {
+                dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+              }
+            }
+          } catch (e) {}
+
+          if (!dateStr) {
+            dateStr = b.date || new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+          }
+
+          return {
+            id: b.id,
+            tag: b.tag ? b.tag.charAt(0).toUpperCase() + b.tag.slice(1) : "Umum",
+            cls: b.cls || "",
+            title: b.title || "",
+            desc: b.desc || "",
+            date: dateStr,
+            images: b.images || null,
+          };
+        }) as Berita[];
         return syncListWithLocal(sbList, localList, deletedIds);
       }
     } catch (e) {}
@@ -231,8 +247,9 @@ export async function getBeritaList(): Promise<Berita[]> {
 }
 
 export async function getBeritaById(id: number): Promise<Berita | undefined> {
+  if (isNaN(id)) return undefined;
   const list = await getBeritaList();
-  return list.find((b) => b.id === id) || list[0];
+  return list.find((b) => b.id === id);
 }
 
 export async function addBerita(item: Omit<Berita, "date"> & { date?: string }): Promise<Berita> {
