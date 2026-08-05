@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { parseImagesList } from "@/lib/utils";
 import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
@@ -398,11 +399,8 @@ export default function GaleriClientPage({ initialGallery }: Props) {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[700px] overflow-y-auto pr-1">
                 {gallery.map((item) => {
-                  const imageList = item.images
-                    ? item.images.split(",").map((s) => s.trim()).filter(Boolean)
-                    : item.image
-                    ? [item.image]
-                    : [];
+                  const parsed = parseImagesList(item.images);
+                  const imageList = parsed.length > 0 ? parsed : (item.image ? [item.image] : []);
                   const coverImage = imageList[0] || item.image;
 
                   return (

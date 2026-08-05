@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import ImageCropperModal from "@/components/ImageCropperModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import { parseImagesList } from "@/lib/utils";
 
 interface Props {
   initialNews: Berita[];
@@ -329,9 +330,9 @@ export default function BeritaClientPage({ initialNews }: Props) {
                       </p>
 
                       {/* Display thumbnail strips */}
-                      {item.images && (
+                      {parseImagesList(item.images).length > 0 && (
                         <div className="flex gap-1.5 mt-2 overflow-x-auto pb-1">
-                          {item.images.split(",").map((imgUrl, i) => (
+                          {parseImagesList(item.images).map((imgUrl, i) => (
                             <div 
                               key={i} 
                               className="w-10 h-10 rounded-lg border border-white/20 bg-cover bg-center flex-shrink-0 shadow-sm"

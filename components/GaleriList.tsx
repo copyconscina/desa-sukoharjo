@@ -6,6 +6,8 @@ import { GaleriItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import { parseImagesList } from "@/lib/utils";
+
 interface Props {
   initialGaleriData: GaleriItem[];
 }
@@ -33,8 +35,8 @@ export default function GaleriList({ initialGaleriData }: Props) {
 
   // Get array of image URLs for selected item
   const selectedImages: string[] = selectedItem
-    ? selectedItem.images
-      ? selectedItem.images.split(",").map((s) => s.trim()).filter(Boolean)
+    ? parseImagesList(selectedItem.images).length > 0
+      ? parseImagesList(selectedItem.images)
       : selectedItem.image
       ? [selectedItem.image]
       : []
@@ -113,11 +115,8 @@ export default function GaleriList({ initialGaleriData }: Props) {
 
       <div className="gal-grid mt-6" id="galGrid">
         {filteredGaleri.map((g, idx) => {
-          const itemImages = g.images
-            ? g.images.split(",").map((s) => s.trim()).filter(Boolean)
-            : g.image
-            ? [g.image]
-            : [];
+          const parsed = parseImagesList(g.images);
+          const itemImages = parsed.length > 0 ? parsed : (g.image ? [g.image] : []);
           const coverImg = itemImages[0] || g.image;
 
           return (
