@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import WonogiriLogo from "@/components/SukoharjoLogo";
+import SukoharjoLogo from "@/components/SukoharjoLogo";
 
 export default function PublicLayout({
   children,
@@ -15,7 +15,7 @@ export default function PublicLayout({
         <div className="wrap footer-grid">
           <div>
             <div className="brand" style={{ marginBottom: "12px" }}>
-              <WonogiriLogo className="brand-mark" />
+              <SukoharjoLogo className="brand-mark" />
               <span className="brand-text" style={{ color: "#fcfcf8" }}>
                 Desa Sukoharjo
               </span>
