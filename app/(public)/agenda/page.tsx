@@ -3,7 +3,8 @@ import { getAgendaList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Agenda Kegiatan — Desa Sukoharjo",

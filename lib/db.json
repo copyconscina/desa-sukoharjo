@@ -152,42 +152,42 @@
   "galeriData": [
     {
       "label": "Panen Raya Sukorejo",
-      "cat": "Kegiatan",
+      "cat": "Potensi & Alam",
       "grad": "linear-gradient(135deg,#39542f,#8ba368)"
     },
     {
       "label": "Produksi Batik Tulis",
-      "cat": "UMKM",
+      "cat": "Kesenian & Budaya",
       "grad": "linear-gradient(135deg,#8b4226,#d8a83a)"
     },
     {
       "label": "Sawah Berundak Sukoharjo",
-      "cat": "Potensi",
+      "cat": "Potensi & Alam",
       "grad": "linear-gradient(135deg,#212f1c,#4d6b40)"
     },
     {
       "label": "Anyaman Bambu Pak Darmo",
-      "cat": "UMKM",
+      "cat": "UMKM & Ekonomi",
       "grad": "linear-gradient(135deg,#b0623d,#eec96e)"
     },
     {
       "label": "Kerja Bakti Dusun Ngrancah",
-      "cat": "Kegiatan",
+      "cat": "Sosial & Bansos",
       "grad": "linear-gradient(135deg,#4d6b40,#c3d19f)"
     },
     {
       "label": "Kebun Mete Warga",
-      "cat": "Potensi",
+      "cat": "Potensi & Alam",
       "grad": "linear-gradient(135deg,#8ba368,#39542f)"
     },
     {
       "label": "Kambing Etawa Berkah Tani",
-      "cat": "UMKM",
+      "cat": "UMKM & Ekonomi",
       "grad": "linear-gradient(135deg,#212f1c,#8b4226)"
     },
     {
       "label": "Musyawarah Desa",
-      "cat": "Kegiatan",
+      "cat": "Kegiatan Desa",
       "grad": "linear-gradient(135deg,#d8a83a,#8b4226)"
     }
   ],

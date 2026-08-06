@@ -3,7 +3,8 @@ import { getApbdesRingkasan, getApbdesBidangList } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Transparansi Keuangan (APBDes) — Desa Sukoharjo",
@@ -28,23 +29,35 @@ export default async function APBDesPage() {
       <section className="block">
         <div className="wrap flex flex-col gap-8">
           {/* STRIP RINGKASAN APBDES */}
-          <div className="grid cols-3 gap-6">
-            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)]">
-              <span className="text-xs font-mono uppercase text-[color:var(--forest)] font-semibold">Total Pendapatan Desa</span>
-              <h2 className="text-3xl font-display text-[color:var(--forest)] mt-1">{apbdesRingkasan.pendapatan}</h2>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-2">Dana Desa, ADD, Bagi Hasil Pajak & PADes</span>
+          <div className="flex flex-wrap justify-center gap-6 w-full">
+            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between w-fit shrink-0">
+              <div className="min-w-0">
+                <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Total Pendapatan Desa</span>
+                <h2 className="text-[clamp(1.25rem,2vw,1.75rem)] leading-tight font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
+                  {apbdesRingkasan.pendapatan}
+                </h2>
+              </div>
+              <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed">Dana Desa, ADD, Bagi Hasil Pajak & PADes</span>
             </Card>
 
-            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)]">
-              <span className="text-xs font-mono uppercase text-[color:var(--clay)] font-semibold">Total Belanja Desa</span>
-              <h2 className="text-3xl font-display text-[color:var(--clay)] mt-1">{apbdesRingkasan.belanja}</h2>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-2">Pembangunan, Pemerintahan & Pemberdayaan</span>
+            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between w-fit shrink-0">
+              <div className="min-w-0">
+                <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Total Belanja Desa</span>
+                <h2 className="text-[clamp(1.25rem,2vw,1.75rem)] leading-tight font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
+                  {apbdesRingkasan.belanja}
+                </h2>
+              </div>
+              <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed">Pembangunan, Pemerintahan & Pemberdayaan</span>
             </Card>
 
-            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)]">
-              <span className="text-xs font-mono uppercase text-[color:var(--padi)] font-semibold">Pembiayaan / SILPA</span>
-              <h2 className="text-3xl font-display text-[color:var(--ink)] mt-1">{apbdesRingkasan.pembiayaan}</h2>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-2">SiLPA Tahun Sebelumnya</span>
+            <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--parchment-2)] flex flex-col justify-between w-fit shrink-0">
+              <div className="min-w-0">
+                <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Pembiayaan</span>
+                <h2 className="text-[clamp(1.25rem,2vw,1.75rem)] leading-tight font-bold font-display text-[color:var(--forest-deep)] mt-3 mb-1 tracking-tight whitespace-nowrap">
+                  {apbdesRingkasan.pembiayaan}
+                </h2>
+              </div>
+              <span className="text-xs text-[color:var(--ink-soft)] block mt-2 leading-relaxed"></span>
             </Card>
           </div>
 

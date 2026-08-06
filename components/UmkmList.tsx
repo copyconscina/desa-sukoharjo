@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { parseImagesList } from "@/lib/utils";
 
 interface Props {
   initialUmkmData: Umkm[];
@@ -67,33 +68,49 @@ export default function UmkmList({ initialUmkmData }: Props) {
 
       <div className="grid cols-4" id="umkmGrid">
         {filteredUmkm.length > 0 ? (
-          filteredUmkm.map((u) => (
-            <Link href={`/umkm/${u.id}`} key={u.id} className="umkm-card no-underline">
-              <Card className="umkm-card border border-[color:var(--line)] shadow-none flex flex-col h-full overflow-hidden rounded-[var(--radius)]">
-                <div className="cover relative w-full h-44 overflow-hidden" style={!u.image ? { background: u.grad } : undefined}>
-                  {u.image && (
-                    <Image
-                      src={u.image}
-                      alt={u.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                      className="object-cover"
-                    />
-                  )}
-                  <Badge className="cat-badge border-none z-10 bg-[#212f1c]/75 text-white">{u.category}</Badge>
-                </div>
-                <div className="body">
-                  <h3 className="font-heading">{u.name}</h3>
-                  <div className="owner">
-                    {u.owner} · sejak {u.year}
+          filteredUmkm.map((u) => {
+            const images = parseImagesList(u.images);
+            const cover = images[0] || u.image;
+
+            return (
+              <Link href={`/umkm/${u.id}`} key={u.id} className="umkm-card no-underline group">
+                <Card className="umkm-card border border-[color:var(--line)] shadow-none flex flex-col h-full overflow-hidden rounded-[var(--radius)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-md p-0 pt-0 py-0">
+                  <div
+                    className="cover relative w-full h-48 sm:h-52 bg-slate-950/10 overflow-hidden"
+                    style={!cover ? { background: u.grad } : undefined}
+                  >
+                    {cover && (
+                      <Image
+                        src={cover}
+                        alt={u.name}
+                        fill
+                        unoptimized
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                      />
+                    )}
+                    <Badge className="cat-badge border-none z-10 bg-[#212f1c]/75 text-white">{u.category}</Badge>
+                    {images.length > 1 && (
+                      <Badge className="absolute bottom-3 right-3 z-10 bg-black/75 text-white text-[10px] font-mono border border-white/20">
+                        📷 {images.length} Foto
+                      </Badge>
+                    )}
                   </div>
-                  <div className="product">
-                    <b>Produk:</b> {u.product}
+                  <div className="body flex flex-col justify-between flex-1 p-5">
+                    <div>
+                      <h3 className="font-heading text-lg text-[color:var(--ink)] leading-snug">{u.name}</h3>
+                      <div className="owner text-xs text-[color:var(--ink-soft)] mt-1">
+                        {u.owner} · sejak {u.year}
+                      </div>
+                    </div>
+                    <div className="product text-xs text-[color:var(--ink-soft)] mt-3 pt-3 border-t border-[color:var(--line)]">
+                      <b className="text-[color:var(--forest-deep)] font-semibold">Produk:</b> {u.product}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </Link>
-          ))
+                </Card>
+              </Link>
+            );
+          })
         ) : (
           <div className="empty-state col-span-full">
             Tidak ada UMKM yang cocok dengan pencarian atau filter ini.

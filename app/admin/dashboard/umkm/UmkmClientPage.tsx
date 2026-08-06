@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Umkm } from "@/lib/data";
 import { saveUmkmAction, deleteUmkmAction, uploadImageAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,15 +17,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ImageCropperModal from "@/components/ImageCropperModal";
+import ConfirmModal from "@/components/ConfirmModal";
+import { parseImagesList } from "@/lib/utils";
 
 interface Props {
   initialUmkm: Umkm[];
 }
 
+interface DraftFileItem {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
 const CATEGORIES = ["Kuliner", "Fashion & Batik", "Kerajinan", "Pertanian", "Peternakan", "Jasa", "Lainnya"];
 
 export default function UmkmClientPage({ initialUmkm }: Props) {
+  const router = useRouter();
   const [umkmList, setUmkmList] = useState<Umkm[]>(initialUmkm);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -33,21 +44,35 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const [customCategory, setCustomCategory] = useState("");
   const [year, setYear] = useState(new Date().getFullYear());
   const [product, setProduct] = useState("");
+  const [tagline, setTagline] = useState("");
   const [desc, setDesc] = useState("");
   const [address, setAddress] = useState("");
   const [wa, setWa] = useState("");
+  const [phone, setPhone] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
   const [social, setSocial] = useState("");
   
-  // Image Upload State
-  const [file, setFile] = useState<File | null>(null);
-  const [rawFile, setRawFile] = useState<File | null>(null);
-  const [isCropOpen, setIsCropOpen] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | undefined>(undefined);
+  // Multi-Image Upload State
+  const [existingUrls, setExistingUrls] = useState<string[]>([]);
+  const [draftFiles, setDraftFiles] = useState<DraftFileItem[]>([]);
   const [currentGrad, setCurrentGrad] = useState<string | undefined>(undefined);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -66,12 +91,18 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     
     setYear(item.year);
     setProduct(item.product);
+    setTagline(item.tagline || "");
     setDesc(item.desc);
     setAddress(item.address);
-    setWa(item.wa);
+    setWa(item.wa || "");
+    setPhone(item.phone || "");
+    setMapsUrl(item.mapsUrl || item.maps_url || "");
     setSocial(item.social || "");
-    setFile(null);
-    setCurrentImageUrl(item.image);
+    
+    const parsedImages = parseImagesList(item.images);
+    const urls = parsedImages.length > 0 ? parsedImages : item.image ? [item.image] : [];
+    setExistingUrls(urls);
+    setDraftFiles([]);
     setCurrentGrad(item.grad);
 
     setError(null);
@@ -94,20 +125,65 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
     setCustomCategory("");
     setYear(new Date().getFullYear());
     setProduct("");
+    setTagline("");
     setDesc("");
     setAddress("");
     setWa("");
+    setPhone("");
+    setMapsUrl("");
     setSocial("");
-    setFile(null);
-    setCurrentImageUrl(undefined);
+    setExistingUrls([]);
+    setDraftFiles([]);
     setCurrentGrad(undefined);
 
-    // Reset file input element manually
-    const fileInput = document.getElementById("umkmFileInput") as HTMLInputElement;
+    const fileInput = document.getElementById("umkmMultipleFileInput") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const selectedFiles = Array.from(e.target.files);
+    
+    const newDrafts: DraftFileItem[] = selectedFiles.map((file) => ({
+      id: Math.random().toString(36).substring(2, 9),
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setDraftFiles((prev) => [...prev, ...newDrafts]);
+  };
+
+  const moveExistingUrl = (index: number, direction: "left" | "right") => {
+    const targetIdx = direction === "left" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= existingUrls.length) return;
+
+    const newArr = [...existingUrls];
+    const temp = newArr[index];
+    newArr[index] = newArr[targetIdx];
+    newArr[targetIdx] = temp;
+    setExistingUrls(newArr);
+  };
+
+  const removeExistingUrl = (index: number) => {
+    setExistingUrls(existingUrls.filter((_, i) => i !== index));
+  };
+
+  const moveDraftFile = (index: number, direction: "left" | "right") => {
+    const targetIdx = direction === "left" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= draftFiles.length) return;
+
+    const newArr = [...draftFiles];
+    const temp = newArr[index];
+    newArr[index] = newArr[targetIdx];
+    newArr[targetIdx] = temp;
+    setDraftFiles(newArr);
+  };
+
+  const removeDraftFile = (id: string) => {
+    setDraftFiles(draftFiles.filter((df) => df.id !== id));
+  };
+
+  const promptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -120,43 +196,59 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       !activeCategory ||
       !product.trim() ||
       !desc.trim() ||
-      !address.trim() ||
-      !wa.trim()
+      !address.trim()
     ) {
-      setError("Mohon lengkapi semua field yang wajib diisi.");
+      setError("Mohon lengkapi semua field yang wajib diisi (Nama, Pemilik, Kategori, Produk, Alamat, & Deskripsi).");
       return;
     }
 
-    // Clean WA format: remove leading +, spaces, dashes, etc.
     let cleanWa = wa.trim().replace(/[^0-9]/g, "");
-    if (cleanWa.startsWith("0")) {
-      cleanWa = "62" + cleanWa.slice(1);
+    if (cleanWa) {
+      if (cleanWa.startsWith("0")) {
+        cleanWa = "62" + cleanWa.slice(1);
+      }
+      if (!cleanWa.startsWith("62")) {
+        setError("Nomor WhatsApp harus menyertakan kode negara (cth: 081xxx atau 6281xxx).");
+        return;
+      }
     }
-    if (!cleanWa.startsWith("62")) {
-      setError("Nomor WhatsApp harus menyertakan kode negara (cth: 6281xxx atau 081xxx).");
-      return;
-    }
+
+    setConfirmModal({
+      isOpen: true,
+      title: editingId ? "Konfirmasi Perbarui UMKM" : "Konfirmasi UMKM Baru",
+      message: `Apakah Anda yakin ingin menyimpan data UMKM "${name.trim()}"?`,
+      onConfirm: executeSubmit,
+    });
+  };
+
+  const executeSubmit = async () => {
+    const activeCategory = category === "Lainnya" ? customCategory.trim() : category;
+    let cleanWa = wa.trim().replace(/[^0-9]/g, "");
+    if (cleanWa && cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
 
     setLoading(true);
 
     try {
-      let imageUrl = currentImageUrl;
-      let finalGrad = currentGrad || "linear-gradient(135deg,#8b4226,#b0623d)"; // fallback gradient
+      const uploadedUrls: string[] = [];
 
-      // 1. Upload new cover image if file is selected
-      if (file) {
+      for (const draft of draftFiles) {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", draft.file);
         
         const uploadRes = await uploadImageAction(formData);
         if (!uploadRes.success || !uploadRes.url) {
-          setError(uploadRes.error || "Gagal mengunggah foto cover.");
+          setError(uploadRes.error || `Gagal mengunggah foto ${draft.file.name}`);
           setLoading(false);
           return;
         }
-        imageUrl = uploadRes.url;
-        finalGrad = ""; // Clear default gradient if we use image cover
+        uploadedUrls.push(uploadRes.url);
       }
+
+      const allUrls = [...existingUrls, ...uploadedUrls];
+      const imageUrlsStr = allUrls.join(",");
+      const coverUrl = allUrls[0] || null;
+      let finalGrad = currentGrad || "linear-gradient(135deg,#8b4226,#b0623d)";
+      if (coverUrl) finalGrad = "";
 
       const payload = {
         name: name.trim(),
@@ -164,15 +256,19 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
         category: activeCategory,
         year: Number(year),
         product: product.trim(),
+        tagline: tagline.trim() || undefined,
         desc: desc.trim(),
         address: address.trim(),
-        wa: cleanWa,
+        wa: cleanWa || undefined,
+        phone: phone.trim() || undefined,
+        mapsUrl: mapsUrl.trim() || undefined,
+        maps_url: mapsUrl.trim() || undefined,
         social: social.trim() || undefined,
         grad: finalGrad,
-        image: imageUrl,
+        image: coverUrl || undefined,
+        images: imageUrlsStr || undefined,
       };
 
-      // 2. Save UMKM data
       const res = await saveUmkmAction(editingId ? { ...payload, id: editingId } : payload);
       if (res.success && res.item) {
         if (editingId) {
@@ -184,39 +280,41 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
           setSuccess(`Pelaku UMKM "${name.trim()}" berhasil didaftarkan!`);
         }
         resetForm();
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        router.refresh();
       }
     } catch (err) {
       console.error(err);
-      setError("Gagal menyimpan data UMKM.");
+      setError((err as Error).message || "Gagal menyimpan data UMKM.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: number, targetName: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus profil UMKM "${targetName}"? Tindakan ini tidak bisa dibatalkan.`)) {
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const res = await deleteUmkmAction(id);
-      if (res.success) {
-        setUmkmList(umkmList.filter((u) => u.id !== id));
-        setSuccess("Profil UMKM berhasil dihapus dari database!");
-        if (editingId === id) {
-          handleCancelEdit();
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus UMKM",
+      message: `Apakah Anda yakin ingin menghapus profil UMKM "${targetName}"? Tindakan ini tidak bisa dibatalkan.`,
+      onConfirm: async () => {
+        setError(null);
+        setSuccess(null);
+        try {
+          const res = await deleteUmkmAction(id);
+          if (res.success) {
+            setUmkmList(umkmList.filter((u) => u.id !== id));
+            setSuccess("Profil UMKM berhasil dihapus!");
+            if (editingId === id) handleCancelEdit();
+            setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+            router.refresh();
+          }
+        } catch (err) {
+          console.error(err);
+          setError((err as Error).message || "Gagal menghapus profil UMKM.");
         }
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Gagal menghapus profil UMKM.");
-    }
+      },
+    });
   };
-
-  const previewUrl = file ? URL.createObjectURL(file) : currentImageUrl;
 
   return (
     <div className="flex flex-col gap-6 font-sans">
@@ -238,7 +336,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
               {editingId ? "Ubah Profil UMKM" : "Daftarkan UMKM Baru"}
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={promptSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
                   Nama Usaha *
@@ -329,33 +427,79 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
 
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
-                  No. WhatsApp (Kontak) *
+                  Tagline / Judul Slogan Usaha (Opsional)
                 </label>
                 <Input
                   type="text"
-                  placeholder="Contoh: 08123456789"
-                  value={wa}
-                  onChange={(e) => setWa(e.target.value)}
+                  placeholder="Contoh: Cita Rasa Tradisional Warisan Leluhur"
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
                   className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
                   style={{ height: "40px" }}
                 />
                 <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                  Akan otomatis diarahkan ke chat WhatsApp saat diklik pembeli.
+                  Menggantikan judul 'Deskripsi Usaha' pada halaman profil publik UMKM.
                 </span>
               </div>
 
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
-                  Username Instagram/Sosial Media (Opsional)
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Contoh: @batiktulissukoharjo"
-                  value={social}
-                  onChange={(e) => setSocial(e.target.value)}
-                  className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
-                  style={{ height: "40px" }}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    No. WhatsApp (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Contoh: 08123456789"
+                    value={wa}
+                    onChange={(e) => setWa(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    No. Telepon Seluler/Biasa (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Contoh: 08123456789"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    Link Google Maps Lokasi (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="https://maps.google.com/?q=..."
+                    value={mapsUrl}
+                    onChange={(e) => setMapsUrl(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                    Instagram/Sosmed (Opsional)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Contoh: @batiktulissukoharjo"
+                    value={social}
+                    onChange={(e) => setSocial(e.target.value)}
+                    className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl"
+                    style={{ height: "40px" }}
+                  />
+                </div>
               </div>
 
               <div>
@@ -384,20 +528,17 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                 />
               </div>
 
+              {/* MULTI-FILE UPLOAD INPUT */}
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-2">
-                  Upload Foto Cover Usaha {editingId ? "(Opsional)" : ""}
+                  Pilih & Unggah Foto Usaha (Bisa Lebih Dari 1)
                 </label>
-                 <input
+                <input
                   type="file"
-                  id="umkmFileInput"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setRawFile(e.target.files[0]);
-                      setIsCropOpen(true);
-                    }
-                  }}
+                  id="umkmMultipleFileInput"
+                  multiple
+                  accept="image/*,.jpg,.jpeg,.png,.webp,.jfif,.avif,.heic,.gif"
+                  onChange={handleFileSelect}
                   className="w-full text-xs text-[color:var(--ink-soft)]
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border file:border-[color:var(--line)]
@@ -405,20 +546,125 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
                     file:bg-[color:var(--parchment)] file:text-[color:var(--forest)]
                     hover:file:bg-[color:var(--line)] cursor-pointer"
                 />
+                <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
+                  Dapat memilih beberapa foto sekaligus. Foto urutan pertama otomatis menjadi thumbnail cover.
+                </span>
               </div>
 
-              {/* Cover Preview */}
-              {previewUrl && (
-                <div className="mt-2">
-                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-2">
-                    Preview Tampilan Cover
-                  </label>
-                  <div
-                    className="h-28 rounded-xl border border-[color:var(--line)] overflow-hidden bg-cover bg-center relative"
-                    style={{ backgroundImage: `url(${previewUrl})` }}
-                  >
-                    <div className="absolute inset-0 bg-black/10" />
+              {/* LIST OF PHOTOS & REORDER CONTROLS */}
+              {(existingUrls.length > 0 || draftFiles.length > 0) && (
+                <div className="flex flex-col gap-2 border border-[color:var(--line)] p-3 rounded-xl bg-[color:var(--parchment-2)]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-bold">
+                      Daftar Foto UMKM ({existingUrls.length + draftFiles.length})
+                    </span>
+                    <span className="text-[10px] text-[color:var(--ink-soft)]">
+                      Gunakan tombol panah untuk mengatur urutan
+                    </span>
                   </div>
+
+                  {/* Existing Saved URLs */}
+                  {existingUrls.map((url, idx) => (
+                    <div key={`existing-${idx}`} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--line)]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-10 h-10 rounded overflow-hidden relative border border-white/20 flex-shrink-0">
+                          <Image src={url} alt={`Foto ${idx + 1}`} fill unoptimized className="object-cover" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-medium text-[color:var(--ink)] truncate">Foto Tersimpan #{idx + 1}</span>
+                          {idx === 0 && (
+                            <span className="text-[10px] text-amber-700 font-semibold">★ Thumbnail Cover</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={idx === 0}
+                          onClick={() => moveExistingUrl(idx, "left")}
+                          className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                          title="Geser Kiri / Ke Atas"
+                        >
+                          ◀
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={idx === existingUrls.length - 1 && draftFiles.length === 0}
+                          onClick={() => moveExistingUrl(idx, "right")}
+                          className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                          title="Geser Kanan / Ke Bawah"
+                        >
+                          ▶
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => removeExistingUrl(idx)}
+                          className="h-7 w-7 p-0 text-xs text-red-600 hover:text-red-700"
+                          title="Hapus Foto"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Draft Files to be Uploaded */}
+                  {draftFiles.map((df, idx) => {
+                    const globalIdx = existingUrls.length + idx;
+                    return (
+                      <div key={df.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-emerald-50/60 border border-emerald-200">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-10 h-10 rounded overflow-hidden relative border border-white/20 flex-shrink-0">
+                            <Image src={df.previewUrl} alt={`Foto Baru ${idx + 1}`} fill unoptimized className="object-cover" />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-medium text-[color:var(--ink)] truncate">{df.file.name}</span>
+                            {globalIdx === 0 ? (
+                              <span className="text-[10px] text-amber-700 font-semibold">★ Thumbnail Cover (Baru)</span>
+                            ) : (
+                              <span className="text-[10px] text-emerald-700">Baru (Akan Diunggah)</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={idx === 0 && existingUrls.length === 0}
+                            onClick={() => moveDraftFile(idx, "left")}
+                            className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                            title="Geser Kiri"
+                          >
+                            ◀
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={idx === draftFiles.length - 1}
+                            onClick={() => moveDraftFile(idx, "right")}
+                            className="h-7 w-7 p-0 text-xs text-[color:var(--ink)]"
+                            title="Geser Kanan"
+                          >
+                            ▶
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => removeDraftFile(df.id)}
+                            className="h-7 w-7 p-0 text-xs text-red-600 hover:text-red-700"
+                            title="Batal Unggah"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -470,75 +716,84 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
               </div>
             ) : (
               <div className="flex flex-col gap-3 max-h-[900px] overflow-y-auto pr-1">
-                {umkmList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--parchment-2)] flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      {/* Cover Thumbnail Preview */}
-                      <div
-                        className="w-12 h-12 rounded-lg flex-shrink-0 border border-white/20"
-                        style={
-                          item.image
-                            ? { backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center" }
-                            : { background: item.grad }
-                        }
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-semibold text-[color:var(--clay)] bg-[color:var(--clay)]/5 border border-[color:var(--clay)]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          {item.category}
-                        </span>
-                        <h3 className="font-heading text-sm text-[color:var(--ink)] mt-1 truncate">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-[color:var(--ink-soft)] mt-0.5 truncate">
-                          Pemilik: {item.owner} · Produk: {item.product}
-                        </p>
+                {umkmList.map((item) => {
+                  const itemImages = parseImagesList(item.images);
+                  const coverImage = itemImages[0] || item.image;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--parchment-2)] flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        {/* Cover Thumbnail Preview */}
+                        <div
+                          className="w-12 h-12 rounded-lg flex-shrink-0 border border-white/20 relative overflow-hidden"
+                          style={
+                            coverImage
+                              ? { backgroundImage: `url(${coverImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+                              : { background: item.grad }
+                          }
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-[color:var(--clay)] bg-[color:var(--clay)]/5 border border-[color:var(--clay)]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              {item.category}
+                            </span>
+                            {itemImages.length > 1 && (
+                              <span className="text-[10px] font-mono text-[color:var(--ink-soft)]">
+                                📷 {itemImages.length} foto
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-heading text-sm text-[color:var(--ink)] mt-1 truncate">
+                            {item.name}
+                          </h3>
+                          <p className="text-xs text-[color:var(--ink-soft)] mt-0.5 truncate">
+                            Pemilik: {item.owner} · Produk: {item.product}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          onClick={() => handleEdit(item)}
+                          variant="outline"
+                          className="p-2 hover:bg-white text-xs h-8 w-8 rounded-lg border border-[color:var(--line)] bg-transparent cursor-pointer flex items-center justify-center"
+                          title="Edit Profil"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </Button>
+                        <button
+                          onClick={() => handleDelete(item.id, item.name)}
+                          className="p-2 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center h-8 w-8"
+                          title="Hapus Profil"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        onClick={() => handleEdit(item)}
-                        variant="outline"
-                        className="p-2 hover:bg-white text-xs h-8 w-8 rounded-lg border border-[color:var(--line)] bg-transparent cursor-pointer flex items-center justify-center"
-                        title="Edit Profil"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </Button>
-                      <button
-                        onClick={() => handleDelete(item.id, item.name)}
-                        className="p-2 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center h-8 w-8"
-                        title="Hapus Profil"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
         </div>
       </div>
-      {rawFile && (
-        <ImageCropperModal
-          file={rawFile}
-          isOpen={isCropOpen}
-          onClose={() => setIsCropOpen(false)}
-          defaultAspectRatio="1:1"
-          onCrop={(cropped) => {
-            setFile(cropped);
-          }}
-        />
-      )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={loading}
+      />
     </div>
   );
 }

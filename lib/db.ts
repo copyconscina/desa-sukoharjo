@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { supabase, isPlaceholderSupabase } from "@/utils/supabase/static";
 import { supabaseServer } from "@/utils/supabase/admin";
 import {
@@ -9,309 +11,471 @@ import {
   ProfilDesa,
   Agenda,
   BukuTamu,
-  PermohonanSurat,
   Pengaduan,
   ApbdesRingkasan,
   ApbdesBidang,
   ProdukHukum,
-  PpidItem,
-  BansosItem,
+  StatistikPenduduk,
 } from "./data";
-import dbJson from "./db.json";
+import { parseImagesList } from "./utils";
 
-// UMKM DB Operations
+const STORE_PATH = path.join(process.cwd(), "lib", "store.json");
+
+declare global {
+  var __DESA_STORE__: any;
+}
+
+function readStore(): any {
+  if (!globalThis.__DESA_STORE__) {
+    try {
+      if (fs.existsSync(STORE_PATH)) {
+        const raw = fs.readFileSync(STORE_PATH, "utf-8");
+        globalThis.__DESA_STORE__ = JSON.parse(raw);
+      }
+    } catch (err) {
+      console.error("Error reading store.json:", err);
+    }
+    if (!globalThis.__DESA_STORE__) {
+      globalThis.__DESA_STORE__ = {};
+    }
+  }
+  return globalThis.__DESA_STORE__;
+}
+
+function writeStore(data: any) {
+  globalThis.__DESA_STORE__ = data;
+  try {
+    fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2), "utf-8");
+  } catch (err) {
+    // Read-only filesystem safe fallback
+  }
+}
+
+// Helper to filter and merge Supabase list with local edits & deletes
+function syncListWithLocal<T extends { id?: number }>(
+  supabaseList: T[],
+  localList: T[],
+  deletedIds: number[] = []
+): T[] {
+  const deletedSet = new Set(deletedIds || []);
+  const result: T[] = [];
+  const sbIdSet = new Set((supabaseList || []).map((item) => item.id).filter(Boolean));
+
+  for (const item of supabaseList || []) {
+    if (!item.id) continue;
+    if (deletedSet.has(item.id)) continue;
+
+    const localMatch = (localList || []).find((l) => l.id === item.id);
+    if (localMatch) {
+      result.push({ ...item, ...localMatch });
+    } else {
+      result.push(item);
+    }
+  }
+
+  for (const localItem of localList || []) {
+    if (!localItem.id) continue;
+    if (deletedSet.has(localItem.id)) continue;
+    if (!sbIdSet.has(localItem.id)) {
+      result.push(localItem);
+    }
+  }
+
+  return result;
+}
+
+// ==================== UMKM ====================
 export async function getUmkmList(): Promise<Umkm[]> {
-  if (isPlaceholderSupabase) {
-    return dbJson.umkmData as Umkm[];
+  const store = readStore();
+  const localList: Umkm[] = store.umkm || [];
+  const deletedIds: number[] = store.deletedUmkm || [];
+
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data, error } = await supabase.from("umkm").select("*").order("id", { ascending: true });
+      if (!error && data) {
+        const sbList = data.map((u: any) => ({
+          ...u,
+          wa: u.wa || undefined,
+          phone: u.phone || undefined,
+          mapsUrl: u.maps_url || u.mapsUrl || undefined,
+          maps_url: u.maps_url || u.mapsUrl || undefined,
+        }));
+        // When Supabase is configured it is the source of truth.  Do not merge
+        // the build-time fallback store here: on serverless deployments that
+        // file cannot be persisted and would otherwise overwrite fresh rows.
+        return sbList as Umkm[];
+      }
+    } catch (e) {
+      console.error("getBeritaList supabase exception:", e);
+    }
   }
-  const { data, error } = await supabase
-    .from("umkm")
-    .select("*")
-    .order("id", { ascending: true });
-    
-  if (error) {
-    console.warn("Using fallback UMKM list due to connection error:", error.message);
-    return dbJson.umkmData as Umkm[];
-  }
-  return data as Umkm[];
+  return localList.filter((u) => !deletedIds.includes(u.id));
 }
 
 export async function getUmkmById(id: number): Promise<Umkm | undefined> {
-  if (isPlaceholderSupabase) {
-    return (dbJson.umkmData.find((u) => u.id === id) || dbJson.umkmData[0]) as Umkm;
-  }
-  const { data, error } = await supabase
-    .from("umkm")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    console.warn(`Using fallback UMKM for id ${id}`);
-    return dbJson.umkmData.find((u) => u.id === id) as Umkm | undefined;
-  }
-  return data as Umkm;
+  const list = await getUmkmList();
+  return list.find((u) => u.id === id) || list[0];
 }
 
 export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promise<Umkm> {
-  const payload = {
+  const sbPayload = {
     name: item.name,
     owner: item.owner,
     category: item.category,
     year: item.year,
     product: item.product,
+    tagline: item.tagline || null,
     desc: item.desc,
     address: item.address,
-    wa: item.wa,
+    wa: item.wa || null,
+    phone: item.phone || null,
+    maps_url: item.mapsUrl || item.maps_url || null,
     social: item.social || null,
     grad: item.grad || "",
     image: item.image || null,
+    images: item.images || null,
   };
 
-  if (item.id) {
-    const { data, error } = await supabaseServer
-      .from("umkm")
-      .update(payload)
-      .eq("id", item.id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data as Umkm;
+  const store = readStore();
+  const list: Umkm[] = store.umkm || [];
+  let resultItem: Umkm;
+
+  if (item.id != null) {
+    resultItem = {
+      ...sbPayload,
+      tagline: sbPayload.tagline || undefined,
+      wa: sbPayload.wa || undefined,
+      phone: sbPayload.phone || undefined,
+      mapsUrl: sbPayload.maps_url || undefined,
+      maps_url: sbPayload.maps_url || undefined,
+      social: sbPayload.social || undefined,
+      image: sbPayload.image || undefined,
+      images: sbPayload.images || undefined,
+      id: item.id,
+    } as Umkm;
+    store.umkm = list.map((u) => (u.id === item.id ? resultItem : u));
+    store.deletedUmkm = (store.deletedUmkm || []).filter((dId: number) => dId !== item.id);
   } else {
-    const { data, error } = await supabaseServer
-      .from("umkm")
-      .insert(payload)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data as Umkm;
+    const newId = list.length > 0 ? Math.max(...list.map((u) => u.id || 0)) + 1 : 1;
+    resultItem = {
+      ...sbPayload,
+      tagline: sbPayload.tagline || undefined,
+      wa: sbPayload.wa || undefined,
+      phone: sbPayload.phone || undefined,
+      mapsUrl: sbPayload.maps_url || undefined,
+      maps_url: sbPayload.maps_url || undefined,
+      social: sbPayload.social || undefined,
+      image: sbPayload.image || undefined,
+      images: sbPayload.images || undefined,
+      id: newId,
+    } as Umkm;
+    store.umkm = [...list, resultItem];
   }
+
+  if (!isPlaceholderSupabase) {
+    const query = item.id != null
+      ? supabaseServer.from("umkm").update(sbPayload).eq("id", item.id)
+      : supabaseServer.from("umkm").insert(sbPayload);
+    const { data, error } = await query.select().single();
+    if (error) throw new Error(`Gagal menyimpan UMKM: ${error.message}`);
+    resultItem.id = data.id;
+  }
+
+  writeStore(store);
+  return resultItem;
 }
 
 export async function deleteUmkm(id: number): Promise<boolean> {
-  const { error } = await supabaseServer
-    .from("umkm")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(`Error deleting UMKM ${id}:`, error);
-    return false;
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("umkm").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus UMKM: ${error.message}`);
   }
+
+  const store = readStore();
+  store.umkm = (store.umkm || []).filter((u: Umkm) => u.id !== id);
+  store.deletedUmkm = [...(store.deletedUmkm || []), id];
+  writeStore(store);
   return true;
 }
 
-// Berita DB Operations
+// ==================== BERITA ====================
 export async function getBeritaList(): Promise<Berita[]> {
-  if (isPlaceholderSupabase) {
-    return dbJson.beritaData.map((b, idx) => ({
-      id: idx + 1,
-      tag: b.tag,
-      cls: b.cls || "",
-      title: b.title,
-      desc: b.desc || "",
-      date: b.date,
-      images: undefined,
-    })) as Berita[];
+  const store = readStore();
+  const localList: Berita[] = store.berita || [];
+  const deletedIds: number[] = store.deletedBerita || [];
+
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data, error } = await supabase.from("berita").select("*").order("published_at", { ascending: false });
+      if (!error && data) {
+        const sbList = data.map((b: any) => {
+          let dateStr = "";
+          try {
+            if (b.published_at) {
+              const d = new Date(b.published_at);
+              if (!isNaN(d.getTime())) {
+                dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+              }
+            }
+          } catch (e) {}
+
+          if (!dateStr) {
+            dateStr = b.date || new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+          }
+
+          return {
+            id: b.id,
+            tag: b.tag ? b.tag.charAt(0).toUpperCase() + b.tag.slice(1) : "Umum",
+            cls: b.cls || "",
+            title: b.title || "",
+            desc: b.desc || "",
+            date: dateStr,
+            images: b.images || null,
+          };
+        }) as Berita[];
+        return sbList;
+      }
+    } catch (e) {}
   }
-
-  const { data, error } = await supabase
-    .from("berita")
-    .select("*")
-    .order("published_at", { ascending: false });
-
-  if (error) {
-    console.warn("Using fallback Berita list due to connection error:", error.message);
-    return dbJson.beritaData.map((b, idx) => ({
-      id: idx + 1,
-      tag: b.tag,
-      cls: b.cls || "",
-      title: b.title,
-      desc: b.desc || "",
-      date: b.date,
-      images: undefined,
-    })) as Berita[];
-  }
-
-  return data.map((b: any) => ({
-    id: b.id,
-    tag: b.tag ? b.tag.charAt(0).toUpperCase() + b.tag.slice(1) : "",
-    cls: b.cls || "",
-    title: b.title,
-    desc: b.desc || "",
-    date: new Date(b.published_at).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }),
-    images: b.images || null,
-  })) as Berita[];
+  return localList.filter((b) => !deletedIds.includes(b.id || 0));
 }
 
 export async function getBeritaById(id: number): Promise<Berita | undefined> {
-  if (isPlaceholderSupabase) {
-    const list = dbJson.beritaData.map((b, idx) => ({
-      id: idx + 1,
-      tag: b.tag,
-      cls: b.cls || "",
-      title: b.title,
-      desc: b.desc || "",
-      date: b.date,
-      images: undefined,
-    }));
-    return list.find((b) => b.id === id) || list[0];
-  }
-
-  const { data, error } = await supabase
-    .from("berita")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    console.warn(`Using fallback Berita for id ${id}`);
-    return undefined;
-  }
-
-  return {
-    id: data.id,
-    tag: data.tag ? data.tag.charAt(0).toUpperCase() + data.tag.slice(1) : "",
-    cls: data.cls || "",
-    title: data.title,
-    desc: data.desc || "",
-    date: new Date(data.published_at).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }),
-    images: data.images || undefined,
-  } as Berita;
+  if (isNaN(id)) return undefined;
+  const list = await getBeritaList();
+  return list.find((b) => b.id === id);
 }
 
 export async function addBerita(item: Omit<Berita, "date"> & { date?: string }): Promise<Berita> {
-  const { data, error } = await supabaseServer
-    .from("berita")
-    .insert({
+  const store = readStore();
+  const list: Berita[] = store.berita || [];
+  const newId = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
+  const newItem: Berita = {
+    id: newId,
+    tag: item.tag,
+    cls: item.cls || "",
+    title: item.title,
+    desc: item.desc,
+    date: item.date || new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
+    images: item.images,
+  };
+
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer.from("berita").insert({
       tag: item.tag.toLowerCase(),
       cls: item.cls || "",
       title: item.title,
       desc: item.desc,
       published_at: new Date().toISOString(),
       images: item.images || null,
-    })
-    .select()
-    .single();
+    }).select().single();
+    if (error) throw new Error(`Gagal menambahkan berita: ${error.message}`);
+    newItem.id = data.id;
+  }
 
-  if (error) throw error;
-  
-  return {
-    id: data.id,
-    tag: data.tag ? data.tag.charAt(0).toUpperCase() + data.tag.slice(1) : "",
-    cls: data.cls || "",
-    title: data.title,
-    desc: data.desc || "",
-    date: new Date(data.published_at).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }),
-    images: data.images || undefined,
-  };
+  store.berita = [newItem, ...list];
+  writeStore(store);
+
+  // Otomatis masukkan foto lampiran berita ke Galeri Desa
+  const imageUrls = parseImagesList(item.images);
+  if (imageUrls.length > 0) {
+    for (const imgUrl of imageUrls) {
+      const existingGaleri: GaleriItem[] = store.galeri || [];
+      const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
+      if (!alreadyInGaleri) {
+        await addGaleri({
+          label: item.title,
+          cat: item.tag || "Kegiatan Desa",
+          grad: "g1",
+          image: imgUrl,
+          desc: `Foto Dokumentasi Berita: ${item.title}`,
+        });
+      }
+    }
+  }
+
+  return newItem;
 }
 
 export async function deleteBeritaById(id: number): Promise<boolean> {
-  const { error } = await supabaseServer
-    .from("berita")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(`Error deleting Berita with id ${id}:`, error);
-    return false;
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("berita").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus berita: ${error.message}`);
   }
+
+  const store = readStore();
+  store.berita = (store.berita || []).filter((b: Berita) => b.id !== id);
+  store.deletedBerita = [...(store.deletedBerita || []), id];
+  writeStore(store);
   return true;
+}
+
+export async function updateBerita(id: number, item: Omit<Berita, "id" | "date"> & { date?: string }): Promise<Berita> {
+  const store = readStore();
+  const list: Berita[] = store.berita || [];
+  const existing = list.find((b) => b.id === id);
+  const updatedItem: Berita = {
+    id,
+    tag: item.tag,
+    cls: item.cls || "",
+    title: item.title,
+    desc: item.desc,
+    date: item.date || existing?.date || new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
+    images: item.images,
+  };
+
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer
+      .from("berita")
+      .update({
+        tag: item.tag.toLowerCase(),
+        cls: item.cls || "",
+        title: item.title,
+        desc: item.desc,
+        images: item.images || null,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(`Gagal memperbarui berita: ${error.message}`);
+    updatedItem.id = data.id;
+  }
+
+  store.berita = list.map((b) => (b.id === id ? updatedItem : b));
+  writeStore(store);
+
+  // Otomatis masukkan foto lampiran berita ke Galeri Desa
+  const imageUrls = parseImagesList(item.images);
+  if (imageUrls.length > 0) {
+    for (const imgUrl of imageUrls) {
+      const existingGaleri: GaleriItem[] = store.galeri || [];
+      const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
+      if (!alreadyInGaleri) {
+        await addGaleri({
+          label: item.title,
+          cat: item.tag || "Kegiatan Desa",
+          grad: "g1",
+          image: imgUrl,
+          desc: `Foto Dokumentasi Berita: ${item.title}`,
+        });
+      }
+    }
+  }
+
+  return updatedItem;
 }
 
 export async function deleteBerita(id: number): Promise<boolean> {
   return deleteBeritaById(id);
 }
 
-
-// Galeri DB Operations
+// ==================== GALERI ====================
 export async function getGaleriList(): Promise<GaleriItem[]> {
-  if (isPlaceholderSupabase) {
-    return dbJson.galeriData.map((g, idx) => ({
-      id: idx + 1,
-      label: g.label,
-      cat: g.cat,
-      grad: g.grad || "",
-      image: undefined,
-      desc: "",
-    })) as GaleriItem[];
+  const store = readStore();
+  const localList: GaleriItem[] = store.galeri || [];
+  const deletedIds: number[] = store.deletedGaleri || [];
+
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data, error } = await supabase.from("galeri").select("*").order("created_at", { ascending: false });
+      if (!error && data) {
+        const sbList = data.map((g: any) => ({
+          ...g,
+          image: g.images ? g.images.split(",")[0] : g.image,
+          images: g.images || g.image || undefined,
+        })) as GaleriItem[];
+        return sbList;
+      }
+    } catch (e) {}
   }
 
-  const { data, error } = await supabase
-    .from("galeri")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.warn("Using fallback Galeri list due to connection error:", error.message);
-    return dbJson.galeriData.map((g, idx) => ({
-      id: idx + 1,
-      label: g.label,
-      cat: g.cat,
-      grad: g.grad || "",
-      image: undefined,
-      desc: "",
-    })) as GaleriItem[];
-  }
-  return data.map((g: any) => ({
-    id: g.id,
-    label: g.label,
-    cat: g.cat,
-    grad: g.grad || "",
-    image: g.image || null,
-    desc: g.desc || "",
-  })) as GaleriItem[];
+  return localList
+    .filter((g) => !deletedIds.includes(g.id || 0))
+    .map((g) => ({
+      ...g,
+      image: g.images ? g.images.split(",")[0] : g.image,
+      images: g.images || g.image || undefined,
+    }));
 }
 
 export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
-  const { data, error } = await supabaseServer
-    .from("galeri")
-    .insert({
+  const store = readStore();
+  const list: GaleriItem[] = store.galeri || [];
+  const newId = list.length > 0 ? Math.max(...list.map((g) => g.id || 0)) + 1 : 1;
+
+  const primaryImage = item.images ? item.images.split(",")[0].trim() : item.image;
+  const newItem: GaleriItem = {
+    ...item,
+    id: newId,
+    image: primaryImage,
+    images: item.images || item.image || undefined,
+  };
+
+  if (!isPlaceholderSupabase) {
+    const payload = {
       label: item.label,
       cat: item.cat,
       grad: item.grad || "",
-      image: item.image || null,
+      image: primaryImage || null,
+      images: item.images || item.image || null,
       desc: item.desc || null,
-    })
-    .select()
-    .single();
+    };
+    const { data, error } = await supabaseServer.from("galeri").insert(payload).select().single();
+    if (error) throw new Error(`Gagal menambahkan galeri: ${error.message}`);
+    newItem.id = data.id;
+  }
 
-  if (error) throw error;
-  return {
-    id: data.id,
-    label: data.label,
-    cat: data.cat,
-    grad: data.grad || "",
-    image: data.image || null,
-    desc: data.desc || "",
-  } as GaleriItem;
+  store.galeri = [newItem, ...list];
+  writeStore(store);
+  return newItem;
+}
+
+export async function updateGaleri(id: number, item: Omit<GaleriItem, "id">): Promise<GaleriItem> {
+  const primaryImage = item.images ? item.images.split(",")[0].trim() : item.image;
+  const updatedItem: GaleriItem = {
+    ...item,
+    id,
+    image: primaryImage,
+    images: item.images || item.image || undefined,
+  };
+
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer
+      .from("galeri")
+      .update({
+        label: item.label,
+        cat: item.cat,
+        grad: item.grad || "",
+        image: primaryImage || null,
+        images: item.images || item.image || null,
+        desc: item.desc || null,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(`Gagal memperbarui galeri: ${error.message}`);
+    updatedItem.id = data.id;
+  }
+
+  const store = readStore();
+  store.galeri = (store.galeri || []).map((galleryItem: GaleriItem) =>
+    galleryItem.id === id ? updatedItem : galleryItem
+  );
+  writeStore(store);
+  return updatedItem;
 }
 
 export async function deleteGaleriById(id: number): Promise<boolean> {
-  const { error } = await supabaseServer
-    .from("galeri")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(`Error deleting Galeri with id ${id}:`, error);
-    return false;
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("galeri").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus galeri: ${error.message}`);
   }
+
+  const store = readStore();
+  store.galeri = (store.galeri || []).filter((g: GaleriItem) => g.id !== id);
+  store.deletedGaleri = [...(store.deletedGaleri || []), id];
+  writeStore(store);
   return true;
 }
 
@@ -319,477 +483,668 @@ export async function deleteGaleri(id: number): Promise<boolean> {
   return deleteGaleriById(id);
 }
 
-// Potensi DB Operations
+// ==================== POTENSI ====================
 export async function getPotensiList(): Promise<Potensi[]> {
-  if (isPlaceholderSupabase) {
-    return dbJson.potensiData as Potensi[];
-  }
+  const store = readStore();
+  const localList: Potensi[] = store.potensi || [];
 
-  const { data, error } = await supabase
-    .from("potensi")
-    .select("*")
-    .order("num", { ascending: true });
-
-  if (error) {
-    console.warn("Using fallback Potensi list due to connection error:", error.message);
-    return dbJson.potensiData as Potensi[];
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data, error } = await supabase.from("potensi").select("*").order("num", { ascending: true });
+      if (!error && data && data.length > 0) return data as Potensi[];
+    } catch (e) {}
   }
-  return data as Potensi[];
+  return localList;
 }
 
 export async function updatePotensi(num: string, title: string, desc: string): Promise<boolean> {
-  const { error } = await supabaseServer
-    .from("potensi")
-    .update({ title, desc, updated_at: new Date().toISOString() })
-    .eq("num", num);
-
-  if (error) {
-    console.error(`Error updating Potensi ${num}:`, error);
-    return false;
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer
+      .from("potensi")
+      .update({ title, desc, updated_at: new Date().toISOString() })
+      .eq("num", num)
+      .select("id")
+      .single();
+    if (error) throw new Error(`Gagal memperbarui potensi: ${error.message}`);
+    if (!data) throw new Error("Gagal memperbarui potensi: data tidak ditemukan.");
   }
+
+  const store = readStore();
+  store.potensi = (store.potensi || []).map((p: Potensi) => (p.num === num ? { ...p, title, desc } : p));
+  writeStore(store);
   return true;
 }
 
-// In-Memory Data Stores for Fallback / Local Mode
-let memoryLembaga: Lembaga[] = [
-  { id: 1, name: "Pemerintah Desa Sukoharjo", leader: "Kepala Desa: Bpk. Sunarto", desc: "Unsur penyelenggara pemerintahan desa yang bertugas memimpin pelaksanaan urusan pemerintahan, pembangunan, dan kemasyarakatan.", members: "14 Perangkat Desa & Staf", icon: "🏛️" },
-  { id: 2, name: "Badan Permusyawaratan Desa (BPD)", leader: "Ketua: Bpk. Drs. Mulyono", desc: "Lembaga perwujudan demokrasi dalam penyelenggaraan pemerintahan desa yang mengawasi kinerja Kades dan menyalurkan aspirasi warga.", members: "9 Anggota BPD", icon: "📜" },
-  { id: 3, name: "Pemberdayaan Kesejahteraan Keluarga (PKK)", leader: "Ketua: Ibu Suparmi", desc: "Lembaga kemasyarakatan sebagai mitra kerja pemerintah desa dalam membina dan memberdayakan keluarga sejahtera.", members: "35 Pengurus & Kader Pokja", icon: "🌸" },
-  { id: 4, name: "Karang Taruna Sukoharjo Mandiri", leader: "Ketua: Mas Rizky Febrian", desc: "Wadah pengembangan generasi muda desa di bidang olahraga, kebudayaan, sosial, dan kewirausahaan pemuda.", members: "45 Pemuda & Pemudi Dusun", icon: "⚽" },
-  { id: 5, name: "Lembaga Pemberdayaan Masyarakat Desa (LPMD)", leader: "Ketua: Bpk. Suroto", desc: "Wadah yang dibentuk atas prakarsa masyarakat sebagai mitra pemerintah desa dalam menampung dan menyalurkan aspirasi pembangunan.", members: "11 Pengurus LPMD", icon: "🤝" },
-  { id: 6, name: "Pengurus RT & RW se-Desa Sukoharjo", leader: "Koordinator: Bpk. Wagiman", desc: "Lembaga kemasyarakatan terdepan yang membantu pelayanan administratif dan menjaga keharmonisan antar warga dusun.", members: "11 RW & 38 RT", icon: "🏡" },
-];
-
-let memoryProfil: ProfilDesa = {
-  visi: "Nyawiji sesarengan mbangun Desa Sukoharjo menjadi maju, inovatif, dan bermartabat.",
-  misi: [
-    "Memperkuat tata kelola pemerintah yang bersih, demokratis, dan transparan, meliputi manajemen keuangan dan manajemen pelayanan pada masyarakat.",
-    "Pemerataan pembangunan yang berkeadilan.",
-    "Meningkatkan sumber daya manusia yang unggul dan berkualitas.",
-    "Mendorong kemandirian ekonomi kerakyatan yang berbasis pada sektor pertanian, peternakan, dan industri rumah tangga.",
-    "Meningkatkan inovasi desa dengan pemberdayaan masyarakat.",
-    "Meningkatkan kualitas kehidupan beragama, serta melestarikan adat istiadat dan budaya pada masyarakat."
-  ]
-};
-
-let memoryAgenda: Agenda[] = [
-  { id: 1, title: "Musyawarah Desa (Musdes) Rencana Pembangunan 2027", desc: "Pembahasan prioritas pembangunan sarana infrastruktur jalan tani dan pemberdayaan ekonomi UMKM desa.", location: "Balai Desa Sukoharjo", date: "15 Juli 2026", time: "09:00 WIB", category: "Pemerintahan" },
-  { id: 2, title: "Pelatihan Packaging & Pemasaran Digital UMKM", desc: "Pelatihan pembuatan kemasan produk dan pendaftaran sertifikasi halal untuk pelaku UMKM lokal.", location: "Pendopo Desa Sukoharjo", date: "22 Juli 2026", time: "13:00 WIB", category: "Ekonomi" },
-  { id: 3, title: "Gotong Royong & Pembersihan Akses Wisata", desc: "Kerja bakti pembersihan jalur perbukitan dan lingkungan dusun bersama Karang Taruna.", location: "Dusun Ngrancah & Sukorejo", date: "28 Juli 2026", time: "07:00 WIB", category: "Kemasyarakatan" },
-];
-
-let memoryBukuTamu: BukuTamu[] = [
-  { id: 1, name: "Bpk. Bambang Wijaya", origin: "Semarang", message: "Aplikasi website desanya sangat bagus dan informatif!", date: "20 Juli 2026" },
-  { id: 2, name: "Ibu Rina Susanti", origin: "Solo", message: "Mohon info jadwal layanan pembuatan SKU di Balai Desa.", date: "21 Juli 2026" }
-];
-
-let memoryPermohonanSurat: PermohonanSurat[] = [
-  { id: 1, nama: "Joko Santoso", nik: "3312091408890001", jenisSurat: "Surat Keterangan Usaha (SKU)", keperluan: "Pengajuan KUR Bank BRI", telepon: "081234567890", tanggal: "22 Juli 2026", status: "Diproses", catatan: "Dokumen Persyaratan Lengkap" },
-  { id: 2, nama: "Siti Rahma", nik: "3312095203950002", jenisSurat: "Surat Keterangan Tidak Mampu (SKTM)", keperluan: "Beasiswa Kuliah Anak", telepon: "082198765432", tanggal: "23 Juli 2026", status: "Menunggu" }
-];
-
-let memoryPengaduan: Pengaduan[] = [
-  { id: 1, nama: "Sugeng Mulyono", dusun: "Sukorejo", judul: "Penerangan Jalan Dusun Bonagung Mati", isi: "Lampu PJU dekat pertigaan RT 02 Bonagung padam sejak 3 hari lalu.", tanggal: "21 Juli 2026", status: "Diproses", tanggapan: "Tim teknis perangkat desa akan mengecek lokasi hari ini." }
-];
-
-let memoryApbdesRingkasan: ApbdesRingkasan = {
-  pendapatan: "Rp 1.485.000.000",
-  belanja: "Rp 1.450.000.000",
-  pembiayaan: "Rp 35.000.000",
-  tahun: 2026,
-};
-
-let memoryApbdesBidang: ApbdesBidang[] = [
-  { id: 1, name: "Bidang Pembangunan Desa", anggaran: "Rp 680.000.000", realisasi: "Rp 450.000.000", pct: "66.2%", desc: "Pengaspalan jalan tani dusun, perbaikan drainase sawah, dan penerangan jalan umum." },
-  { id: 2, name: "Bidang Penyelenggaraan Pemerintahan", anggaran: "Rp 390.000.000", realisasi: "Rp 310.000.000", pct: "79.4%", desc: "Siltap & tunjangan Kades/perangkat, operasional kantor desa, dan tata kelola sistem digital." },
-  { id: 3, name: "Bidang Pembinaan Kemasyarakatan", anggaran: "Rp 180.000.000", realisasi: "Rp 145.000.000", pct: "80.5%", desc: "Dukungan kegiatan Karang Taruna, PKK, posyandu balita/lansia, dan festival budaya lokal." },
-  { id: 4, name: "Bidang Pemberdayaan Masyarakat (UMKM)", anggaran: "Rp 150.000.000", realisasi: "Rp 110.000.000", pct: "73.3%", desc: "Penyertaan modal BUMDes, pelatihan kemasan UMKM, dan bantuan bibit ternak kambing etawa." },
-  { id: 5, name: "Bidang Penanggulangan Bencana & Darurat", anggaran: "Rp 50.000.000", realisasi: "Rp 15.000.000", pct: "30.0%", desc: "Dana siaga bencana alam tanah longsor dan bantuan darurat sosial warga." }
-];
-
-let memoryProdukHukum: ProdukHukum[] = [
-  { id: 1, nomor: "Perdes No. 03 Tahun 2026", judul: "Peraturan Desa tentang Rencana Kerja Pemerintah Desa (RKPDes) 2026", kategori: "Peraturan Desa", tanggal: "10 Januari 2026" },
-  { id: 2, nomor: "SK Kades No. 12 Tahun 2026", judul: "Keputusan Kepala Desa tentang Pengangkatan Pengurus BUMDes Sukoharjo", kategori: "SK Kepala Desa", tanggal: "05 Februari 2026" }
-];
-
-let memoryPpid: PpidItem[] = [
-  { id: 1, judul: "Laporan Realisasi APBDes Sukoharjo TA 2025", kategori: "Berkala", format: "PDF", ukuran: "1.2 MB", tanggal: "15 Jan 2026" },
-  { id: 2, judul: "SOP Pelayanan Permohonan Surat Mandiri Warga", kategori: "Setiap Saat", format: "PDF", ukuran: "450 KB", tanggal: "01 Mar 2026" }
-];
-
-let memoryBansos: BansosItem[] = [
-  { id: 1, name: "Bantuan Langsung Tunai (BLT Dana Desa)", source: "Dana Desa Sukoharjo", kpmCount: 45, nominal: "Rp 300.000 / Bulan", status: "Tersalurkan Tahap II", desc: "Sasaran keluarga miskin ekstrem yang tidak menerima program bantuan sosial PKH/BPNT." },
-  { id: 2, name: "Program Keluarga Harapan (PKH)", source: "Kemensos RI", kpmCount: 120, nominal: "Bervariasi per Komponen", status: "Aktif Penyaluran", desc: "Bantuan bersyarat untuk keluarga memiliki anak sekolah, balita, ibu hamil, dan lansia." },
-  { id: 3, name: "Bantuan Sembako (BPNT)", source: "Kemensos RI", kpmCount: 185, nominal: "Rp 200.000 / Bulan", status: "Aktif Penyaluran", desc: "Bantuan Pangan Non-Tunai dalam bentuk e-warong sembako." }
-];
-
-// --- LEMBAGA & PROFIL ---
+// ==================== LEMBAGA ====================
 export async function getLembagaList(): Promise<Lembaga[]> {
+  const store = readStore();
+  const localList: Lembaga[] = store.lembaga || [];
+  const deletedIds: number[] = store.deletedLembaga || [];
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("lembaga").select("*").order("id", { ascending: true });
-    if (!error && data) return data as Lembaga[];
+    try {
+      const { data, error } = await supabase.from("lembaga").select("*").order("id", { ascending: true });
+      if (!error && data) {
+        return data as Lembaga[];
+      }
+    } catch (e) {}
   }
-  return memoryLembaga;
+  return localList.filter((l) => !deletedIds.includes(l.id));
 }
 
 export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): Promise<Lembaga> {
+  let resultItem: Lembaga = { ...item } as Lembaga;
+
   if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("lembaga").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as Lembaga;
+    const { id: itemId, ...payload } = item;
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("lembaga").update(payload).eq("id", itemId).select("id").single();
+      if (error) throw new Error(`Gagal memperbarui lembaga: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui lembaga: data tidak ditemukan.");
+      resultItem.id = itemId;
     } else {
-      const { data, error } = await supabaseServer.from("lembaga").insert(item).select().single();
-      if (!error && data) return data as Lembaga;
+      const { data, error } = await supabaseServer.from("lembaga").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan lembaga: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
     }
   }
-  if (item.id) {
-    memoryLembaga = memoryLembaga.map((l) => (l.id === item.id ? { ...l, ...item } : l));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryLembaga.length > 0 ? Math.max(...memoryLembaga.map((l) => l.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryLembaga.push(newItem);
-    return newItem;
+
+  const store = readStore();
+  const list: Lembaga[] = store.lembaga || [];
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((l) => l.id || 0)) + 1 : 1;
   }
+
+  if (item.id) {
+    store.lembaga = list.map((l) => (l.id === item.id ? resultItem : l));
+    store.deletedLembaga = (store.deletedLembaga || []).filter((dId: number) => dId !== item.id);
+  } else {
+    store.lembaga = [...list, resultItem];
+  }
+  writeStore(store);
+
+  return resultItem;
 }
 
 export async function deleteLembaga(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("lembaga").delete().eq("id", id);
+    const { error } = await supabaseServer.from("lembaga").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus lembaga: ${error.message}`);
   }
-  memoryLembaga = memoryLembaga.filter((l) => l.id !== id);
+
+  const store = readStore();
+  store.lembaga = (store.lembaga || []).filter((l: Lembaga) => l.id !== id);
+  store.deletedLembaga = [...(store.deletedLembaga || []), id];
+  writeStore(store);
   return true;
 }
 
-export async function getProfilData(): Promise<ProfilDesa> {
+// ==================== PROFIL DESA ====================
+export async function getProfilDesa(): Promise<ProfilDesa> {
+  const store = readStore();
   if (!isPlaceholderSupabase) {
-    const { data } = await supabase.from("profil").select("*").single();
-    if (data) return data as ProfilDesa;
+    try {
+      const { data, error } = await supabase.from("profil").select("*").single();
+      if (!error && data) return { visi: data.visi, misi: data.misi };
+    } catch (e) {}
   }
-  return memoryProfil;
+  return store.profil || { visi: "", misi: [] };
 }
 
-export async function updateProfilVisiMisi(visi: string, misi: string[]): Promise<boolean> {
+export async function saveProfilDesa(profil: ProfilDesa): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("profil").upsert({ id: 1, visi, misi });
+    const { error } = await supabaseServer.from("profil").upsert({ id: 1, visi: profil.visi, misi: profil.misi });
+    if (error) throw new Error(`Gagal menyimpan profil desa: ${error.message}`);
   }
-  memoryProfil = { visi, misi };
+
+  const store = readStore();
+  store.profil = profil;
+  writeStore(store);
   return true;
 }
 
-// --- AGENDA ---
+export const getProfilData = getProfilDesa;
+export const updateProfilVisiMisi = saveProfilDesa;
+
+// ==================== AGENDA ====================
 export async function getAgendaList(): Promise<Agenda[]> {
+  const store = readStore();
+  const localList: Agenda[] = store.agenda || [];
+  const deletedIds: number[] = store.deletedAgenda || [];
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("agenda").select("*").order("id", { ascending: false });
-    if (!error && data) return data as Agenda[];
+    try {
+      const { data, error } = await supabase.from("agenda").select("*").order("id", { ascending: false });
+      if (!error && data) {
+        return data as Agenda[];
+      }
+    } catch (e) {}
   }
-  return memoryAgenda;
+  return localList.filter((a) => !deletedIds.includes(a.id));
 }
 
 export async function saveAgenda(item: Omit<Agenda, "id"> & { id?: number }): Promise<Agenda> {
+  let resultItem: Agenda = { ...item } as Agenda;
+
   if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("agenda").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as Agenda;
+    const { id: itemId, ...payload } = item;
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("agenda").update(payload).eq("id", itemId).select("id").single();
+      if (error) throw new Error(`Gagal memperbarui agenda: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui agenda: data tidak ditemukan.");
+      resultItem.id = itemId;
     } else {
-      const { data, error } = await supabaseServer.from("agenda").insert(item).select().single();
-      if (!error && data) return data as Agenda;
+      const { data, error } = await supabaseServer.from("agenda").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan agenda: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
     }
   }
-  if (item.id) {
-    memoryAgenda = memoryAgenda.map((a) => (a.id === item.id ? { ...a, ...item } : a));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryAgenda.length > 0 ? Math.max(...memoryAgenda.map((a) => a.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryAgenda.unshift(newItem);
-    return newItem;
+
+  const store = readStore();
+  const list: Agenda[] = store.agenda || [];
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((a) => a.id || 0)) + 1 : 1;
   }
+
+  if (item.id) {
+    store.agenda = list.map((a) => (a.id === item.id ? resultItem : a));
+    store.deletedAgenda = (store.deletedAgenda || []).filter((dId: number) => dId !== item.id);
+  } else {
+    store.agenda = [resultItem, ...list];
+  }
+  writeStore(store);
+
+  return resultItem;
 }
 
 export async function deleteAgenda(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("agenda").delete().eq("id", id);
+    const { error } = await supabaseServer.from("agenda").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus agenda: ${error.message}`);
   }
-  memoryAgenda = memoryAgenda.filter((a) => a.id !== id);
+
+  const store = readStore();
+  store.agenda = (store.agenda || []).filter((a: Agenda) => a.id !== id);
+  store.deletedAgenda = [...(store.deletedAgenda || []), id];
+  writeStore(store);
   return true;
 }
 
-// --- BUKU TAMU ---
+// ==================== BUKU TAMU ====================
 export async function getBukuTamuList(): Promise<BukuTamu[]> {
+  const store = readStore();
+  const localList: BukuTamu[] = store.buku_tamu || [];
+  const deletedIds: number[] = store.deletedBukuTamu || [];
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("buku_tamu").select("*").order("id", { ascending: false });
-    if (!error && data) return data as BukuTamu[];
+    try {
+      const { data, error } = await supabase.from("buku_tamu").select("*").order("id", { ascending: false });
+      if (!error && data) {
+        return data as BukuTamu[];
+      }
+    } catch (e) {}
   }
-  return memoryBukuTamu;
+  return localList.filter((b) => !deletedIds.includes(b.id));
 }
 
 export async function addBukuTamu(item: Omit<BukuTamu, "id">): Promise<BukuTamu> {
+  let newItem: BukuTamu = { ...item, id: 0 };
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("buku_tamu").insert(item).select().single();
-    if (!error && data) return data as BukuTamu;
+    const { data, error } = await supabaseServer.from("buku_tamu").insert(item).select().single();
+    if (error) throw new Error(`Gagal menambahkan buku tamu: ${error.message}`);
+    if (data?.id) newItem.id = data.id;
   }
-  const newId = memoryBukuTamu.length > 0 ? Math.max(...memoryBukuTamu.map((b) => b.id)) + 1 : 1;
-  const newItem = { ...item, id: newId };
-  memoryBukuTamu.unshift(newItem);
+
+  const store = readStore();
+  const list: BukuTamu[] = store.buku_tamu || [];
+  if (!newItem.id) {
+    newItem.id = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
+  }
+
+  store.buku_tamu = [newItem, ...list];
+  writeStore(store);
+
   return newItem;
 }
 
 export async function deleteBukuTamu(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("buku_tamu").delete().eq("id", id);
+    const { error } = await supabaseServer.from("buku_tamu").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus buku tamu: ${error.message}`);
   }
-  memoryBukuTamu = memoryBukuTamu.filter((b) => b.id !== id);
+
+  const store = readStore();
+  store.buku_tamu = (store.buku_tamu || []).filter((b: BukuTamu) => b.id !== id);
+  store.deletedBukuTamu = [...(store.deletedBukuTamu || []), id];
+  writeStore(store);
   return true;
 }
 
-// --- PERMOHONAN SURAT ---
-export async function getPermohonanSuratList(): Promise<PermohonanSurat[]> {
-  if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("permohonan_surat").select("*").order("id", { ascending: false });
-    if (!error && data) return data as PermohonanSurat[];
-  }
-  return memoryPermohonanSurat;
-}
-
-export async function addPermohonanSurat(item: Omit<PermohonanSurat, "id" | "status" | "tanggal">): Promise<PermohonanSurat> {
-  const payload: Omit<PermohonanSurat, "id"> = {
-    ...item,
-    tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-    status: "Menunggu",
-  };
-  if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("permohonan_surat").insert(payload).select().single();
-    if (!error && data) return data as PermohonanSurat;
-  }
-  const newId = memoryPermohonanSurat.length > 0 ? Math.max(...memoryPermohonanSurat.map((s) => s.id)) + 1 : 1;
-  const newItem = { ...payload, id: newId };
-  memoryPermohonanSurat.unshift(newItem);
-  return newItem;
-}
-
-export async function updateStatusSurat(id: number, status: PermohonanSurat["status"], catatan?: string): Promise<boolean> {
-  if (!isPlaceholderSupabase) {
-    await supabaseServer.from("permohonan_surat").update({ status, catatan }).eq("id", id);
-  }
-  memoryPermohonanSurat = memoryPermohonanSurat.map((s) => (s.id === id ? { ...s, status, catatan } : s));
-  return true;
-}
-
-export async function deletePermohonanSurat(id: number): Promise<boolean> {
-  if (!isPlaceholderSupabase) {
-    await supabaseServer.from("permohonan_surat").delete().eq("id", id);
-  }
-  memoryPermohonanSurat = memoryPermohonanSurat.filter((s) => s.id !== id);
-  return true;
-}
-
-// --- PENGADUAN WARGA ---
+// ==================== PENGADUAN ====================
 export async function getPengaduanList(): Promise<Pengaduan[]> {
+  const store = readStore();
+  const localList: Pengaduan[] = store.pengaduan || [];
+  const deletedIds: number[] = store.deletedPengaduan || [];
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("pengaduan").select("*").order("id", { ascending: false });
-    if (!error && data) return data as Pengaduan[];
+    try {
+      const { data, error } = await supabase.from("pengaduan").select("*").order("id", { ascending: false });
+      if (!error && data) {
+        return data as Pengaduan[];
+      }
+    } catch (e) {}
   }
-  return memoryPengaduan;
+  return localList.filter((p) => !deletedIds.includes(p.id));
 }
 
-export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tanggal">): Promise<Pengaduan> {
-  const payload: Omit<Pengaduan, "id"> = {
-    ...item,
-    tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-    status: "Baru",
+export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tanggapan">): Promise<Pengaduan> {
+  const sbPayload = {
+    nama: item.nama,
+    dusun: item.dusun,
+    judul: item.judul,
+    isi: item.isi,
+    tanggal: item.tanggal,
+    foto: item.foto || item.image || null,
+    image: item.foto || item.image || null,
+    status: "Baru" as const,
+    tanggapan: "",
   };
+
+  let newItem: Pengaduan = {
+    id: 0,
+    nama: item.nama,
+    dusun: item.dusun,
+    judul: item.judul,
+    isi: item.isi,
+    tanggal: item.tanggal,
+    foto: item.foto || item.image || undefined,
+    image: item.foto || item.image || undefined,
+    status: "Baru",
+    tanggapan: "",
+  };
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("pengaduan").insert(payload).select().single();
-    if (!error && data) return data as Pengaduan;
+    const { data, error } = await supabaseServer.from("pengaduan").insert(sbPayload).select().single();
+    if (error) throw new Error(`Gagal mengirim pengaduan: ${error.message}`);
+    if (data?.id) newItem.id = data.id;
   }
-  const newId = memoryPengaduan.length > 0 ? Math.max(...memoryPengaduan.map((p) => p.id)) + 1 : 1;
-  const newItem = { ...payload, id: newId };
-  memoryPengaduan.unshift(newItem);
+
+  const store = readStore();
+  const list: Pengaduan[] = store.pengaduan || [];
+  if (!newItem.id) {
+    newItem.id = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
+  }
+
+  store.pengaduan = [newItem, ...list];
+  writeStore(store);
+
   return newItem;
 }
 
 export async function updateStatusPengaduan(id: number, status: Pengaduan["status"], tanggapan?: string): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("pengaduan").update({ status, tanggapan }).eq("id", id);
+    const { data, error } = await supabaseServer.from("pengaduan").update({ status, tanggapan }).eq("id", id).select("id").single();
+    if (error) throw new Error(`Gagal memperbarui status pengaduan: ${error.message}`);
+    if (!data) throw new Error("Gagal memperbarui status pengaduan: data tidak ditemukan.");
   }
-  memoryPengaduan = memoryPengaduan.map((p) => (p.id === id ? { ...p, status, tanggapan } : p));
+
+  const store = readStore();
+  store.pengaduan = (store.pengaduan || []).map((p: Pengaduan) => (p.id === id ? { ...p, status, tanggapan } : p));
+  writeStore(store);
   return true;
 }
 
 export async function deletePengaduan(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("pengaduan").delete().eq("id", id);
+    const { error } = await supabaseServer.from("pengaduan").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus pengaduan: ${error.message}`);
   }
-  memoryPengaduan = memoryPengaduan.filter((p) => p.id !== id);
+
+  const store = readStore();
+  store.pengaduan = (store.pengaduan || []).filter((p: Pengaduan) => p.id !== id);
+  store.deletedPengaduan = [...(store.deletedPengaduan || []), id];
+  writeStore(store);
   return true;
 }
 
-// --- APBDES & KEUANGAN ---
+// ==================== APBDES ====================
 export async function getApbdesRingkasan(): Promise<ApbdesRingkasan> {
+  const store = readStore();
   if (!isPlaceholderSupabase) {
-    const { data } = await supabase.from("apbdes_ringkasan").select("*").single();
-    if (data) return data as ApbdesRingkasan;
+    try {
+      const { data, error } = await supabase.from("apbdes_ringkasan").select("*").single();
+      if (!error && data) return data as ApbdesRingkasan;
+    } catch (e) {}
   }
-  return memoryApbdesRingkasan;
+  return store.apbdes_ringkasan || { pendapatan: "0", belanja: "0", pembiayaan: "0", tahun: 2026 };
 }
 
-export async function updateApbdesRingkasan(dataInput: ApbdesRingkasan): Promise<boolean> {
+export async function updateApbdesRingkasan(ringkasan: ApbdesRingkasan): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("apbdes_ringkasan").upsert({ id: 1, ...dataInput });
+    const { error } = await supabaseServer.from("apbdes_ringkasan").upsert({ id: 1, ...ringkasan });
+    if (error) throw new Error(`Gagal memperbarui ringkasan APBDES: ${error.message}`);
   }
-  memoryApbdesRingkasan = dataInput;
+
+  const store = readStore();
+  store.apbdes_ringkasan = ringkasan;
+  writeStore(store);
   return true;
 }
 
 export async function getApbdesBidangList(): Promise<ApbdesBidang[]> {
+  const store = readStore();
+  const localList: ApbdesBidang[] = store.apbdes_bidang || [];
+  const deletedIds: number[] = store.deletedApbdesBidang || [];
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("apbdes_bidang").select("*").order("id", { ascending: true });
-    if (!error && data) return data as ApbdesBidang[];
+    try {
+      const { data, error } = await supabase.from("apbdes_bidang").select("*").order("id", { ascending: true });
+      if (!error && data) {
+        return data as ApbdesBidang[];
+      }
+    } catch (e) {}
   }
-  return memoryApbdesBidang;
+  return localList.filter((b) => !deletedIds.includes(b.id));
 }
 
 export async function saveApbdesBidang(item: Omit<ApbdesBidang, "id"> & { id?: number }): Promise<ApbdesBidang> {
+  let resultItem: ApbdesBidang = { ...item } as ApbdesBidang;
+
   if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("apbdes_bidang").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as ApbdesBidang;
+    const { id: itemId, ...payload } = item;
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("apbdes_bidang").update(payload).eq("id", itemId).select("id").single();
+      if (error) throw new Error(`Gagal memperbarui bidang APBDES: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui bidang APBDES: data tidak ditemukan.");
+      resultItem.id = itemId;
     } else {
-      const { data, error } = await supabaseServer.from("apbdes_bidang").insert(item).select().single();
-      if (!error && data) return data as ApbdesBidang;
+      const { data, error } = await supabaseServer.from("apbdes_bidang").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan bidang APBDES: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
     }
   }
-  if (item.id) {
-    memoryApbdesBidang = memoryApbdesBidang.map((b) => (b.id === item.id ? { ...b, ...item } : b));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryApbdesBidang.length > 0 ? Math.max(...memoryApbdesBidang.map((b) => b.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryApbdesBidang.push(newItem);
-    return newItem;
+
+  const store = readStore();
+  const list: ApbdesBidang[] = store.apbdes_bidang || [];
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
   }
+
+  if (item.id) {
+    store.apbdes_bidang = list.map((b) => (b.id === item.id ? resultItem : b));
+    store.deletedApbdesBidang = (store.deletedApbdesBidang || []).filter((dId: number) => dId !== item.id);
+  } else {
+    store.apbdes_bidang = [...list, resultItem];
+  }
+  writeStore(store);
+
+  return resultItem;
 }
 
 export async function deleteApbdesBidang(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("apbdes_bidang").delete().eq("id", id);
+    const { error } = await supabaseServer.from("apbdes_bidang").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus bidang APBDES: ${error.message}`);
   }
-  memoryApbdesBidang = memoryApbdesBidang.filter((b) => b.id !== id);
+
+  const store = readStore();
+  store.apbdes_bidang = (store.apbdes_bidang || []).filter((b: ApbdesBidang) => b.id !== id);
+  store.deletedApbdesBidang = [...(store.deletedApbdesBidang || []), id];
+  writeStore(store);
   return true;
 }
 
-// --- PRODUK HUKUM DESA ---
+// ==================== PRODUK HUKUM ====================
 export async function getProdukHukumList(): Promise<ProdukHukum[]> {
+  const store = readStore();
+  const localList: ProdukHukum[] = store.produk_hukum || [];
+  const deletedIds: number[] = store.deletedProdukHukum || [];
+
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("produk_hukum").select("*").order("id", { ascending: false });
-    if (!error && data) return data as ProdukHukum[];
+    try {
+      const { data, error } = await supabase.from("produk_hukum").select("*").order("id", { ascending: false });
+      if (!error && data) {
+        return data as ProdukHukum[];
+      }
+    } catch (e) {}
   }
-  return memoryProdukHukum;
+  return localList.filter((p) => !deletedIds.includes(p.id));
 }
 
 export async function saveProdukHukum(item: Omit<ProdukHukum, "id"> & { id?: number }): Promise<ProdukHukum> {
+  let resultItem: ProdukHukum = { ...item } as ProdukHukum;
+
   if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("produk_hukum").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as ProdukHukum;
+    const { id: itemId, ...payload } = item;
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("produk_hukum").update(payload).eq("id", itemId).select("id").single();
+      if (error) throw new Error(`Gagal memperbarui produk hukum: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui produk hukum: data tidak ditemukan.");
+      resultItem.id = itemId;
     } else {
-      const { data, error } = await supabaseServer.from("produk_hukum").insert(item).select().single();
-      if (!error && data) return data as ProdukHukum;
+      const { data, error } = await supabaseServer.from("produk_hukum").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan produk hukum: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
     }
   }
-  if (item.id) {
-    memoryProdukHukum = memoryProdukHukum.map((p) => (p.id === item.id ? { ...p, ...item } : p));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryProdukHukum.length > 0 ? Math.max(...memoryProdukHukum.map((p) => p.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryProdukHukum.unshift(newItem);
-    return newItem;
+
+  const store = readStore();
+  const list: ProdukHukum[] = store.produk_hukum || [];
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
   }
+
+  if (item.id) {
+    store.produk_hukum = list.map((p) => (p.id === item.id ? resultItem : p));
+    store.deletedProdukHukum = (store.deletedProdukHukum || []).filter((dId: number) => dId !== item.id);
+  } else {
+    store.produk_hukum = [resultItem, ...list];
+  }
+  writeStore(store);
+
+  return resultItem;
 }
 
 export async function deleteProdukHukum(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("produk_hukum").delete().eq("id", id);
+    const { error } = await supabaseServer.from("produk_hukum").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus produk hukum: ${error.message}`);
   }
-  memoryProdukHukum = memoryProdukHukum.filter((p) => p.id !== id);
+
+  const store = readStore();
+  store.produk_hukum = (store.produk_hukum || []).filter((p: ProdukHukum) => p.id !== id);
+  store.deletedProdukHukum = [...(store.deletedProdukHukum || []), id];
+  writeStore(store);
   return true;
 }
 
-// --- PPID INFORMASI PUBLIK ---
-export async function getPpidList(): Promise<PpidItem[]> {
-  if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("ppid").select("*").order("id", { ascending: false });
-    if (!error && data) return data as PpidItem[];
-  }
-  return memoryPpid;
-}
+// ==================== STATISTIK KEPENDUDUKAN ====================
+export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
+  const store = readStore();
+  const defaultStatistik: StatistikPenduduk = {
+    totalPenduduk: 4815,
+    totalKk: 1753,
+    lakiLaki: 2532,
+    perempuan: 2383,
+    dusunList: [
+      { nama: "Dusun Blaraksari", rt: 2, rw: 1, jiwa: 168 },
+      { nama: "Dusun Sukoharjo", rt: 4, rw: 1, jiwa: 351 },
+      { nama: "Dusun Tulakan", rt: 2, rw: 1, jiwa: 410 },
+      { nama: "Dusun Jati", rt: 2, rw: 1, jiwa: 210 },
+      { nama: "Dusun Pule", rt: 2, rw: 1, jiwa: 364 },
+      { nama: "Dusun Dadapan", rt: 6, rw: 1, jiwa: 901 },
+      { nama: "Dusun Bonagung", rt: 2, rw: 1, jiwa: 279 },
+      { nama: "Dusun Dalan Gede", rt: 2, rw: 1, jiwa: 358 },
+      { nama: "Dusun Sendangsari", rt: 2, rw: 1, jiwa: 420 },
+      { nama: "Dusun Ngroto", rt: 4, rw: 1, jiwa: 739 },
+      { nama: "Dusun Ngandong", rt: 4, rw: 1, jiwa: 717 },
+    ],
+    pendidikanList: [
+      { name: "Tidak / Belum Sekolah", count: 575 },
+      { name: "SD / Sederajat", count: 351 },
+      { name: "Tamat SD / Sederajat", count: 2248 },
+      { name: "SLTP / Sederajat", count: 956 },
+      { name: "SLTA / SMK / Sederajat", count: 679 },
+      { name: "Diploma / Sarjana (D3/S1/S2)", count: 106 },
+    ],
+    pekerjaanList: [
+      { name: "Pelajar / Mahasiswa", count: 248, pct: 25.5 },
+      { name: "Petani / Pekebun", count: 206, pct: 21.2 },
+      { name: "Wiraswasta / UMKM", count: 187, pct: 19.2 },
+      { name: "Karyawan Swasta", count: 62, pct: 6.4 },
+      { name: "Lainnya", count: 57, pct: 5.9 },
+      { name: "PNS", count: 27, pct: 2.8 },
+      { name: "Belum / Tidak Bekerja", count: 89, pct: 9.2 },
+    ],
+  };
 
-export async function savePpid(item: Omit<PpidItem, "id"> & { id?: number }): Promise<PpidItem> {
   if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("ppid").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as PpidItem;
-    } else {
-      const { data, error } = await supabaseServer.from("ppid").insert(item).select().single();
-      if (!error && data) return data as PpidItem;
+    try {
+      // 1. Coba baca dari 4 tabel terpisah Supabase (gunakan limit(1) agar tidak crash PGRST116 saat tabel kosong)
+      const { data: ringkasanRows } = await supabase.from("statistik_ringkasan").select("*").limit(1);
+      const ringkasan = ringkasanRows && ringkasanRows.length > 0 ? ringkasanRows[0] : null;
+
+      const { data: dusun } = await supabase.from("statistik_dusun").select("*").order("id", { ascending: true });
+      const { data: pendidikan } = await supabase.from("statistik_pendidikan").select("*").order("id", { ascending: true });
+      const { data: pekerjaan } = await supabase.from("statistik_pekerjaan").select("*").order("id", { ascending: true });
+
+      // Jika ada data di ringkasan ATAU salah satu dari 3 tabel terpisah:
+      if (ringkasan || (dusun && dusun.length > 0) || (pendidikan && pendidikan.length > 0) || (pekerjaan && pekerjaan.length > 0)) {
+        return {
+          totalPenduduk: ringkasan?.total_penduduk ?? ringkasan?.totalPenduduk ?? defaultStatistik.totalPenduduk,
+          totalKk: ringkasan?.total_kk ?? ringkasan?.totalKk ?? defaultStatistik.totalKk,
+          lakiLaki: ringkasan?.laki_laki ?? ringkasan?.lakiLaki ?? defaultStatistik.lakiLaki,
+          perempuan: ringkasan?.perempuan ?? ringkasan?.perempuan ?? defaultStatistik.perempuan,
+          dusunList: dusun && dusun.length > 0 
+            ? dusun.map((d: any) => ({ nama: d.nama, rt: d.rt, rw: d.rw, jiwa: d.jiwa, ...(d.kk !== undefined ? { kk: d.kk } : {}) })) 
+            : defaultStatistik.dusunList,
+          pendidikanList: pendidikan && pendidikan.length > 0 
+            ? pendidikan.map((p: any) => ({ name: p.name, count: p.count })) 
+            : defaultStatistik.pendidikanList,
+          pekerjaanList: pekerjaan && pekerjaan.length > 0 
+            ? pekerjaan.map((p: any) => ({ name: p.name, count: p.count, pct: p.pct })) 
+            : defaultStatistik.pekerjaanList,
+        };
+      }
+
+      // 2. Fallback ke tabel tunggal lama jika 4 tabel terpisah belum diisi sama sekali
+      const { data: lamaRows } = await supabase.from("statistik_penduduk").select("*").limit(1);
+      if (lamaRows && lamaRows.length > 0) {
+        const data = lamaRows[0];
+        return {
+          ...defaultStatistik,
+          ...data,
+          dusunList: data.dusunList?.length ? data.dusunList : defaultStatistik.dusunList,
+          pendidikanList: data.pendidikanList?.length ? data.pendidikanList : defaultStatistik.pendidikanList,
+          pekerjaanList: data.pekerjaanList?.length ? data.pekerjaanList : defaultStatistik.pekerjaanList,
+        } as StatistikPenduduk;
+      }
+    } catch (e) {
+      console.error("Error reading statistik from Supabase:", e);
     }
   }
-  if (item.id) {
-    memoryPpid = memoryPpid.map((p) => (p.id === item.id ? { ...p, ...item } : p));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryPpid.length > 0 ? Math.max(...memoryPpid.map((p) => p.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryPpid.unshift(newItem);
-    return newItem;
+
+  // Jika Supabase tidak aktif atau kosong, gunakan local store jika valid, jika tidak gunakan defaultStatistik
+  if (store.statistik_penduduk && store.statistik_penduduk.totalPenduduk) {
+    return {
+      ...defaultStatistik,
+      ...store.statistik_penduduk,
+      dusunList: store.statistik_penduduk.dusunList?.length ? store.statistik_penduduk.dusunList : defaultStatistik.dusunList,
+      pendidikanList: store.statistik_penduduk.pendidikanList?.length ? store.statistik_penduduk.pendidikanList : defaultStatistik.pendidikanList,
+      pekerjaanList: store.statistik_penduduk.pekerjaanList?.length ? store.statistik_penduduk.pekerjaanList : defaultStatistik.pekerjaanList,
+    };
   }
+
+  return defaultStatistik;
 }
 
-export async function deletePpid(id: number): Promise<boolean> {
+export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    await supabaseServer.from("ppid").delete().eq("id", id);
-  }
-  memoryPpid = memoryPpid.filter((p) => p.id !== id);
-  return true;
-}
+    try {
+      // 1. Update ke statistik_ringkasan (tanpa id di payload untuk mencegah error PostgreSQL 428C9)
+      const { data: existingRingkasan } = await supabaseServer.from("statistik_ringkasan").select("id").limit(1);
+      const ringkasanPayload = {
+        total_penduduk: Number(dataInput.totalPenduduk || 0),
+        total_kk: Number(dataInput.totalKk || 0),
+        laki_laki: Number(dataInput.lakiLaki || 0),
+        perempuan: Number(dataInput.perempuan || 0),
+      };
 
-// --- BANSOS ---
-export async function getBansosList(): Promise<BansosItem[]> {
-  if (!isPlaceholderSupabase) {
-    const { data, error } = await supabase.from("bansos").select("*").order("id", { ascending: true });
-    if (!error && data) return data as BansosItem[];
-  }
-  return memoryBansos;
-}
+      if (existingRingkasan && existingRingkasan.length > 0) {
+        const { error: errUpdate } = await supabaseServer
+          .from("statistik_ringkasan")
+          .update(ringkasanPayload)
+          .eq("id", existingRingkasan[0].id);
+        if (errUpdate) throw new Error(`Gagal memperbarui statistik ringkasan: ${errUpdate.message}`);
+      } else {
+        const { error: errInsert } = await supabaseServer
+          .from("statistik_ringkasan")
+          .insert(ringkasanPayload);
+        if (errInsert) throw new Error(`Gagal menambahkan statistik ringkasan: ${errInsert.message}`);
+      }
 
-export async function saveBansos(item: Omit<BansosItem, "id"> & { id?: number }): Promise<BansosItem> {
-  if (!isPlaceholderSupabase) {
-    if (item.id) {
-      const { data, error } = await supabaseServer.from("bansos").update(item).eq("id", item.id).select().single();
-      if (!error && data) return data as BansosItem;
-    } else {
-      const { data, error } = await supabaseServer.from("bansos").insert(item).select().single();
-      if (!error && data) return data as BansosItem;
+      // 2. Update statistik_dusun
+      if (dataInput.dusunList && dataInput.dusunList.length > 0) {
+        const { error: errDeleteDusun } = await supabaseServer.from("statistik_dusun").delete().gt("id", -1);
+        if (errDeleteDusun) throw new Error(`Gagal mengosongkan statistik dusun: ${errDeleteDusun.message}`);
+        const { error: errDusun } = await supabaseServer.from("statistik_dusun").insert(
+          dataInput.dusunList.map((d) => ({
+            nama: String(d.nama || ""),
+            rt: Number(d.rt || 0),
+            rw: Number(d.rw || 0),
+            jiwa: Number(d.jiwa || 0),
+            ...(d.kk !== undefined ? { kk: Number(d.kk) } : {}),
+          }))
+        );
+        if (errDusun) throw new Error(`Gagal menyimpan statistik dusun: ${errDusun.message}`);
+      }
+
+      // 3. Update statistik_pendidikan
+      if (dataInput.pendidikanList && dataInput.pendidikanList.length > 0) {
+        const { error: errDeletePendidikan } = await supabaseServer.from("statistik_pendidikan").delete().gt("id", -1);
+        if (errDeletePendidikan) throw new Error(`Gagal mengosongkan statistik pendidikan: ${errDeletePendidikan.message}`);
+        const { error: errPendidikan } = await supabaseServer.from("statistik_pendidikan").insert(
+          dataInput.pendidikanList.map((p) => ({
+            name: String(p.name || ""),
+            count: Number(p.count || 0),
+          }))
+        );
+        if (errPendidikan) throw new Error(`Gagal menyimpan statistik pendidikan: ${errPendidikan.message}`);
+      }
+
+      // 4. Update statistik_pekerjaan
+      if (dataInput.pekerjaanList && dataInput.pekerjaanList.length > 0) {
+        const { error: errDeletePekerjaan } = await supabaseServer.from("statistik_pekerjaan").delete().gt("id", -1);
+        if (errDeletePekerjaan) throw new Error(`Gagal mengosongkan statistik pekerjaan: ${errDeletePekerjaan.message}`);
+        const { error: errPekerjaan } = await supabaseServer.from("statistik_pekerjaan").insert(
+          dataInput.pekerjaanList.map((p) => ({
+            name: String(p.name || ""),
+            count: Number(p.count || 0),
+            pct: Number(p.pct || 0),
+          }))
+        );
+        if (errPekerjaan) throw new Error(`Gagal menyimpan statistik pekerjaan: ${errPekerjaan.message}`);
+      }
+
+      // 5. Backup ke tabel tunggal lama
+      const { data: existingLama } = await supabaseServer.from("statistik_penduduk").select("id").limit(1);
+      if (existingLama && existingLama.length > 0) {
+        const { error } = await supabaseServer.from("statistik_penduduk").update(dataInput).eq("id", existingLama[0].id);
+        if (error) throw new Error(`Gagal memperbarui statistik penduduk: ${error.message}`);
+      } else {
+        const { error } = await supabaseServer.from("statistik_penduduk").insert(dataInput);
+        if (error) throw new Error(`Gagal menambahkan statistik penduduk: ${error.message}`);
+      }
+    } catch (error) {
+      console.error("Error updating statistik in Supabase:", error);
+      throw error;
     }
   }
-  if (item.id) {
-    memoryBansos = memoryBansos.map((b) => (b.id === item.id ? { ...b, ...item } : b));
-    return { ...item, id: item.id };
-  } else {
-    const newId = memoryBansos.length > 0 ? Math.max(...memoryBansos.map((b) => b.id)) + 1 : 1;
-    const newItem = { ...item, id: newId };
-    memoryBansos.push(newItem);
-    return newItem;
-  }
-}
 
-export async function deleteBansos(id: number): Promise<boolean> {
-  if (!isPlaceholderSupabase) {
-    await supabaseServer.from("bansos").delete().eq("id", id);
-  }
-  memoryBansos = memoryBansos.filter((b) => b.id !== id);
+  const store = readStore();
+  store.statistik_penduduk = dataInput;
+  writeStore(store);
+
   return true;
 }
-

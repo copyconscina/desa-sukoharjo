@@ -5,12 +5,17 @@ export interface Umkm {
   category: string;
   year: number;
   product: string;
+  tagline?: string;
   desc: string;
   address: string;
-  wa: string;
+  wa?: string;
+  phone?: string;
+  mapsUrl?: string;
+  maps_url?: string;
   social?: string;
   grad: string;
   image?: string;
+  images?: string;
 }
 
 export interface Berita {
@@ -29,6 +34,7 @@ export interface GaleriItem {
   cat: string;
   grad: string;
   image?: string;
+  images?: string;
   desc?: string;
 }
 
@@ -59,7 +65,7 @@ export const popData: PopData[] = [
 
 export const STAT = {
   dusun: 11,
-  population: "4.915",
+  population: "4.815",
   umkm: 54,
 };
 
@@ -97,18 +103,6 @@ export interface BukuTamu {
   date: string;
 }
 
-export interface PermohonanSurat {
-  id: number;
-  nama: string;
-  nik: string;
-  jenisSurat: string;
-  keperluan: string;
-  telepon: string;
-  tanggal: string;
-  status: "Menunggu" | "Diproses" | "Selesai" | "Ditolak";
-  catatan?: string;
-}
-
 export interface Pengaduan {
   id: number;
   nama: string;
@@ -118,6 +112,8 @@ export interface Pengaduan {
   tanggal: string;
   status: "Baru" | "Diproses" | "Selesai" | "Ditolak";
   tanggapan?: string;
+  foto?: string;
+  image?: string;
 }
 
 // Transparansi
@@ -146,22 +142,13 @@ export interface ProdukHukum {
   fileUrl?: string;
 }
 
-export interface PpidItem {
-  id: number;
-  judul: string;
-  kategori: "Berkala" | "Serta-Merta" | "Setiap Saat";
-  format: string;
-  ukuran: string;
-  tanggal: string;
-  fileUrl?: string;
+export interface StatistikPenduduk {
+  totalPenduduk: number;
+  totalKk: number;
+  lakiLaki: number;
+  perempuan: number;
+  dusunList: { nama: string; rt: number; rw: number; jiwa: number; kk?: number }[];
+  pekerjaanList: { name: string; pct: number; count: number }[];
+  pendidikanList: { name: string; count: number }[];
 }
 
-export interface BansosItem {
-  id: number;
-  name: string;
-  source: string;
-  kpmCount: number;
-  nominal: string;
-  status: string;
-  desc: string;
-}

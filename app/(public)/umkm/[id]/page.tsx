@@ -5,9 +5,9 @@ import { notFound } from "next/navigation";
 import { getUmkmList, getUmkmById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import MediaCarousel from "@/components/MediaCarousel";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ id: string }>
@@ -77,9 +77,18 @@ export default async function UmkmDetailPage({ params }: Props) {
     </svg>
   );
 
+  const icPhone = (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+
   const waText = encodeURIComponent(
     `Halo ${u.name}, saya melihat profil usaha Anda di Website Desa Sukoharjo dan tertarik untuk bertanya lebih lanjut.`
   );
+
+  const cleanWa = u.wa ? u.wa.replace(/[^0-9]/g, "") : "";
+  const mapsLink = u.mapsUrl || u.maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(u.name + " " + u.address)}`;
 
   return (
     <div className="font-sans">
@@ -98,100 +107,112 @@ export default async function UmkmDetailPage({ params }: Props) {
       <section className="block">
         <div className="wrap two-col">
           <div>
-            <div
-              className="relative w-full h-[240px] rounded-[var(--radius)] overflow-hidden mb-6"
-              style={!u.image ? { background: u.grad } : undefined}
-            >
-              {u.image && (
-                <Image
-                  src={u.image}
-                  alt={u.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  className="object-cover"
-                />
-              )}
-              <Badge
-                className="border-none z-10"
-                style={{
-                  position: "absolute",
-                  top: "16px",
-                  left: "16px",
-                  background: "rgba(33, 47, 28, 0.75)",
-                  color: "#fff",
-                  fontFamily: "var(--font-mono)",
-                  textTransform: "uppercase",
-                  fontSize: "10px",
-                  padding: "6px 12px",
-                  borderRadius: "100px",
-                  letterSpacing: ".05em",
-                }}
-              >
-                {u.category}
-              </Badge>
+            <div className="mb-6">
+              <MediaCarousel
+                imagesData={u.images}
+                coverImage={u.image}
+                title={u.name}
+                badge={u.category}
+                grad={u.grad}
+                aspectRatio="h-[280px] sm:h-[360px]"
+              />
             </div>
-            <h2 style={{ marginBottom: "12px" }}>Deskripsi Usaha</h2>
+            {u.tagline && <h2 style={{ marginBottom: "12px" }}>{u.tagline}</h2>}
             <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--ink-soft)" }}>
               {u.desc}
             </p>
           </div>
 
-          <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "30px", borderRadius: "var(--radius)" }}>
-            <h3 style={{ borderBottom: "1px solid var(--line)", paddingBottom: "12px", marginBottom: "16px" }}>
+          <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "14px 18px", borderRadius: "var(--radius)" }}>
+            <h3 style={{ borderBottom: "1px solid var(--line)", paddingBottom: "4px", marginBottom: "8px", fontSize: "16px" }}>
               Informasi Usaha
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                   {icTag}
                 </div>
                 <div>
-                  <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Produk Unggulan</div>
-                  <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)", fontWeight: "600" }}>{u.product}</div>
+                  <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Produk Unggulan</div>
+                  <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)", fontWeight: "600" }}>{u.product}</div>
                 </div>
               </div>
 
-              <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                   {icPin}
                 </div>
                 <div>
-                  <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Alamat</div>
-                  <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)", lineHeight: "1.5" }}>{u.address}</div>
+                  <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Alamat</div>
+                  <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)", lineHeight: "1.4" }}>{u.address}</div>
                 </div>
               </div>
 
-              <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                 <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                   {icCal}
                 </div>
                 <div>
-                  <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Tahun Berdiri</div>
-                  <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)" }}>{u.year}</div>
+                  <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Tahun Berdiri</div>
+                  <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)" }}>{u.year}</div>
                 </div>
               </div>
 
+              {u.phone ? (
+                <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                  <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
+                    {icPhone}
+                  </div>
+                  <div>
+                    <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>No. Telepon Seluler/Biasa</div>
+                    <a href={`tel:${u.phone.replace(/[^0-9+]/g, '')}`} className="val" style={{ fontSize: "13.5px", color: "var(--ink)", fontWeight: "600" }}>
+                      {u.phone}
+                    </a>
+                  </div>
+                </div>
+              ) : null}
+
               {u.social ? (
-                <div className="detail-row" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <div className="detail-row" style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                   <div style={{ color: "var(--forest)", marginTop: "2px", flexShrink: 0 }}>
                     {icShare}
                   </div>
                   <div>
-                    <div className="lbl" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "2px" }}>Media Sosial</div>
-                    <div className="val" style={{ fontSize: "14.5px", color: "var(--ink)" }}>{u.social}</div>
+                    <div className="lbl" style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "var(--font-mono)", color: "var(--ink-soft)", marginBottom: "0px" }}>Media Sosial</div>
+                    <div className="val" style={{ fontSize: "13.5px", color: "var(--ink)" }}>{u.social}</div>
                   </div>
                 </div>
               ) : null}
             </div>
 
-            <div style={{ marginTop: "30px" }}>
-              <Button asChild className="btn btn-wa border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
+            <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              {cleanWa ? (
+                <Button asChild className="btn btn-wa border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://wa.me/${cleanWa}?text=${waText}`}
+                  >
+                    {icChat} <span style={{ marginLeft: "8px" }}>Hubungi via WhatsApp</span>
+                  </a>
+                </Button>
+              ) : null}
+
+              {u.phone ? (
+                <Button asChild className="btn btn-ghost border border-[color:var(--line)] text-[color:var(--ink)] w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
+                  <a href={`tel:${u.phone.replace(/[^0-9+]/g, '')}`}>
+                    {icPhone} <span style={{ marginLeft: "8px" }}>Panggil Telepon ({u.phone})</span>
+                  </a>
+                </Button>
+              ) : null}
+
+              <Button asChild className="btn btn-dark border-none w-full" style={{ display: "inline-flex", justifyContent: "center" }}>
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
-                  href={`https://wa.me/${u.wa}?text=${waText}`}
+                  href={mapsLink}
                 >
-                  {icChat} <span style={{ marginLeft: "8px" }}>Hubungi via WhatsApp</span>
+                  {icPin} <span style={{ marginLeft: "8px" }}>Buka Petunjuk Arah di Google Maps</span>
                 </a>
               </Button>
             </div>

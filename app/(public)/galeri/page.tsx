@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import { getGaleriList } from "@/lib/db";
 import GaleriList from "@/components/GaleriList";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Galeri Desa Sukoharjo",
@@ -18,7 +19,7 @@ export default async function GaleriPage() {
       <div className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Galeri</p>
-          <h1>Dokumentasi kegiatan, UMKM, dan potensi desa</h1>
+          <h1>Dokumentasi Desa Sukoharjo</h1>
         </div>
       </div>
 

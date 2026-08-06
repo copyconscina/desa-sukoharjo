@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import WonogiriLogo from "@/components/WonogiriLogo";
 
@@ -10,6 +10,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   const toggleDropdown = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu);
@@ -20,8 +21,20 @@ export default function Navbar() {
     setActiveDropdown(null);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="nav">
+    <div className="nav" ref={navRef}>
       <div className="nav-inner">
         <Link href="/" className="brand" onClick={closeAll}>
           <WonogiriLogo className="brand-mark" />
@@ -72,19 +85,15 @@ export default function Navbar() {
           </li>
 
           {/* DROPDOWN PROFIL */}
-          <li
-            className="relative group"
-            onMouseEnter={() => setActiveDropdown("profil")}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
+          <li className="relative group">
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
-                (pathname.startsWith("/profil") || pathname.startsWith("/potensi") || pathname.startsWith("/lembaga")) && "bg-[color:var(--forest)] text-white hover:bg-[color:var(--forest)] hover:text-white"
+                "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
+                (pathname.startsWith("/profil") || pathname.startsWith("/potensi") || pathname.startsWith("/lembaga")) && "active"
               )}
               onClick={() => toggleDropdown("profil")}
             >
-              Profil Desa <span className="text-xs">▾</span>
+              Profil Desa ▾
             </button>
             <div
               className={cn(
@@ -94,21 +103,21 @@ export default function Navbar() {
             >
               <Link
                 href="/profil"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/profil") && "active")}
                 onClick={closeAll}
               >
                 Profil & Sejarah
               </Link>
               <Link
                 href="/lembaga"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/lembaga") && "active")}
                 onClick={closeAll}
               >
                 Lembaga Desa
               </Link>
               <Link
                 href="/potensi"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/potensi") && "active")}
                 onClick={closeAll}
               >
                 Potensi Desa
@@ -117,15 +126,11 @@ export default function Navbar() {
           </li>
 
           {/* DROPDOWN LAYANAN */}
-          <li
-            className="relative group"
-            onMouseEnter={() => setActiveDropdown("layanan")}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
+          <li className="relative group">
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
-                (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/layanan-surat") || pathname.startsWith("/pengaduan")) && "bg-[color:var(--forest)] text-white hover:bg-[color:var(--forest)] hover:text-white"
+                "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
+                (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/pengaduan")) && "active"
               )}
               onClick={() => toggleDropdown("layanan")}
             >
@@ -138,29 +143,22 @@ export default function Navbar() {
               )}
             >
               <Link
-                href="/layanan-surat"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
-                onClick={closeAll}
-              >
-                Permohonan Surat Online
-              </Link>
-              <Link
                 href="/pengaduan"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/pengaduan") && "active")}
                 onClick={closeAll}
               >
                 Pengaduan & Lapor Warga
               </Link>
               <Link
                 href="/agenda"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/agenda") && "active")}
                 onClick={closeAll}
               >
                 Agenda Kegiatan
               </Link>
               <Link
                 href="/buku-tamu"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/buku-tamu") && "active")}
                 onClick={closeAll}
               >
                 Buku Tamu Warga
@@ -169,15 +167,11 @@ export default function Navbar() {
           </li>
 
           {/* DROPDOWN TRANSPARANSI */}
-          <li
-            className="relative group"
-            onMouseEnter={() => setActiveDropdown("transparansi")}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
+          <li className="relative group">
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left font-semibold text-[color:var(--ink-soft)] hover:bg-[color:var(--parchment-2)] hover:text-[color:var(--ink)] transition-colors cursor-pointer",
-                (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik") || pathname.startsWith("/ppid") || pathname.startsWith("/bansos")) && "bg-[color:var(--forest)] text-white hover:bg-[color:var(--forest)] hover:text-white"
+                "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
+                (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik")) && "active"
               )}
               onClick={() => toggleDropdown("transparansi")}
             >
@@ -191,51 +185,28 @@ export default function Navbar() {
             >
               <Link
                 href="/apbdes"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/apbdes") && "active")}
                 onClick={closeAll}
               >
                 APBDes & Keuangan
               </Link>
               <Link
-                href="/statistik"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
-                onClick={closeAll}
-              >
-                Statistik Kependudukan
-              </Link>
-              <Link
                 href="/produk-hukum"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                className={cn(pathname.startsWith("/produk-hukum") && "active")}
                 onClick={closeAll}
               >
                 Produk Hukum Desa
               </Link>
               <Link
-                href="/ppid"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
+                href="/statistik"
+                className={cn(pathname.startsWith("/statistik") && "active")}
                 onClick={closeAll}
               >
-                PPID (Informasi Publik)
-              </Link>
-              <Link
-                href="/bansos"
-                className="px-4 py-2 text-sm font-medium hover:bg-[color:var(--parchment-2)] text-[color:var(--ink)] block rounded-lg mx-1"
-                onClick={closeAll}
-              >
-                Transparansi Bansos
+                Statistik Kependudukan
               </Link>
             </div>
           </li>
 
-          <li>
-            <Link
-              href="/peta"
-              className={cn(pathname.startsWith("/peta") && "active")}
-              onClick={closeAll}
-            >
-              Peta Desa
-            </Link>
-          </li>
           <li>
             <Link
               href="/umkm"

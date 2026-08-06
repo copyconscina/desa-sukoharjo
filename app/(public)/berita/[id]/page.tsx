@@ -6,8 +6,10 @@ import { getBeritaList, getBeritaById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import MediaCarousel from "@/components/MediaCarousel";
+import { parseImagesList } from "@/lib/utils";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ id: string }>
@@ -36,13 +38,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BeritaDetailPage({ params }: Props) {
   const { id } = await params;
-  const b = await getBeritaById(parseInt(id));
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) {
+    notFound();
+  }
+
+  const b = await getBeritaById(numId);
 
   if (!b) {
     notFound();
   }
 
-  const imageList = b.images ? b.images.split(",") : [];
+  const imageList = parseImagesList(b.images);
 
   const icCal = (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
@@ -97,51 +104,22 @@ export default async function BeritaDetailPage({ params }: Props) {
               <span>Dipublikasikan pada {b.date}</span>
             </div>
             
-            {imageList.length === 1 && (
-              <div className="mb-8 rounded-xl overflow-hidden border border-[color:var(--line)] h-[350px] md:h-[420px] relative shadow-sm">
-                <Image
-                  src={imageList[0]}
-                  alt={b.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 800px"
-                  className="object-cover"
-                />
-              </div>
-            )}
-
-            {imageList.length > 1 && (
-              <div className="mb-8 flex flex-col gap-3">
-                <div className="rounded-xl overflow-hidden border border-[color:var(--line)] h-[300px] md:h-[380px] relative shadow-sm">
-                  <Image
-                    src={imageList[0]}
-                    alt={b.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 800px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {imageList.slice(1).map((imgUrl, i) => (
-                    <div key={i} className="rounded-lg overflow-hidden border border-[color:var(--line)] aspect-video relative shadow-sm">
-                      <Image
-                        src={imgUrl}
-                        alt={`${b.title} gallery ${i + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 250px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="mb-8">
+              <MediaCarousel
+                imagesData={b.images}
+                title={b.title}
+                badge={b.tag}
+                aspectRatio="h-[300px] sm:h-[420px]"
+              />
+            </div>
             
             <article 
               className="prose max-w-none text-[color:var(--ink)]"
               style={{ 
                 fontSize: "17px", 
                 lineHeight: "1.8", 
-                whiteSpace: "pre-wrap" 
+                whiteSpace: "pre-wrap",
+                textAlign: "justify" 
               }}
             >
               {b.desc}

@@ -1,9 +1,11 @@
 import { Metadata } from "next";
 import { popData } from "@/lib/data";
-import { getProfilData } from "@/lib/db";
+import { getProfilData, getLembagaList, getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Profil Desa Sukoharjo",
@@ -12,7 +14,14 @@ export const metadata: Metadata = {
 
 export default async function ProfilPage() {
   const profil = await getProfilData();
-  const popMax = Math.max(...popData.map((d) => d.val));
+  const lembagaList = await getLembagaList();
+  const statistik = await getStatistikPenduduk();
+
+  const pemdes = lembagaList.find((l) => l.name.toLowerCase().includes("pemerintah")) || lembagaList[0];
+  const dusunList = statistik.dusunList?.length
+    ? statistik.dusunList
+    : popData.map((p) => ({ nama: p.label, rt: 0, rw: 0, jiwa: p.val, kk: 0 }));
+  const popMax = Math.max(...dusunList.map((d) => d.jiwa || 1));
 
   return (
     <div className="font-sans">
@@ -64,7 +73,7 @@ export default async function ProfilPage() {
             <p className="text-[#e7e6d6]">"{profil.visi}"</p>
             <h3 className="text-white" style={{ marginTop: "20px" }}>Misi</h3>
             <ul className="text-[#e7e6d6]">
-              {profil.misi.map((m, idx) => (
+              {profil.misi.map((m: string, idx: number) => (
                 <li key={idx}>{m}</li>
               ))}
             </ul>
@@ -75,16 +84,24 @@ export default async function ProfilPage() {
       {/* STRUKTUR PEMERINTAHAN */}
       <section className="block on-parchment2">
         <div className="wrap">
-          <div className="section-head" style={{ margin: "0 auto 40px", textAlign: "center" }}>
+          <div className="section-head" style={{ margin: "0 auto 30px", textAlign: "center" }}>
             <p className="eyebrow" style={{ textAlign: "center" }}>
               Struktur Pemerintahan
             </p>
             <h2>Perangkat Desa Sukoharjo</h2>
+            {pemdes && (
+              <div className="flex justify-center items-center gap-2 mt-2">
+                <Badge className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none">
+                  {pemdes.members}
+                </Badge>
+                <span className="text-xs font-mono text-[color:var(--clay)] font-semibold">{pemdes.leader}</span>
+              </div>
+            )}
           </div>
           <div className="org-chart">
             <div className="org-node top">
               Kepala Desa
-              <small>Sunarto.</small>
+              <small>Sunarto</small>
             </div>
             <div className="org-node">
               Sekretaris Desa
@@ -121,7 +138,7 @@ export default async function ProfilPage() {
             <div className="org-row">
               <div className="org-node">
                 Kadus Blaraksari, Sukoharjo, dan Jati
-                <small>dwijoko Widyanto</small>
+                <small>Dwijoko Widyanto</small>
               </div>
               <div className="org-node">
                 Kadus Tulakan dan Pule
@@ -138,87 +155,56 @@ export default async function ProfilPage() {
 
       {/* DATA KEPENDUDUKAN */}
       <section className="block">
-        <div className="wrap two-col">
-          <div>
-            <p className="eyebrow">Data Kependudukan</p>
-            <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
-            <div id="pop-chart">
-              {popData.map((d, idx) => (
-                <div key={idx} className="pop-bar-row">
-                  <div className="pop-bar-label">{d.label}</div>
-                  <div className="pop-bar-track">
-                    <div
-                      className="pop-bar-fill"
-                      style={{ width: `${((d.val / popMax) * 100).toFixed(0)}%` }}
-                    />
-                  </div>
-                  <div className="pop-bar-num">{d.val} jiwa</div>
+        <div className="wrap">
+          <p className="eyebrow">Data Kependudukan</p>
+          <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
+          <div id="pop-chart" className="w-full">
+            {dusunList.map((d, idx) => (
+              <div key={idx} className="pop-bar-row">
+                <div className="pop-bar-label">{d.nama}</div>
+                <div className="pop-bar-track">
+                  <div
+                    className="pop-bar-fill"
+                    style={{ width: `${(((d.jiwa || 0) / popMax) * 100).toFixed(0)}%` }}
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="pop-bar-num whitespace-nowrap">
+                  {d.jiwa} jiwa
+                  {d.kk ? (
+                    <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({d.kk} KK)</span>
+                  ) : (
+                    <span className="text-xs text-[color:var(--ink-soft)] font-normal ml-2">({Math.round((d.jiwa || 0) / 3.4)} KK)</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-
-      {/* KONTAK & LOKASI KANTOR DESA */}
+{/* KONTAK & LOKASI KANTOR DESA */}
       <section className="block on-parchment2">
         <div className="wrap">
-          <div className="section-head">
-            <p className="eyebrow">Kontak</p>
-            <h2>Hubungi Kantor Desa Sukoharjo</h2>
-          </div>
-          <div className="contact-grid" style={{ marginTop: "24px" }}>
-            <div>
-              <div className="contact-item">
-                <div className="ic">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                </div>
-                <div>
-                  <h3>Alamat Kantor Desa</h3>
-                  <p>
-                    Jl. Raya Tirtomoyo–Baturetno KM 5, Dusun Sukorejo, Desa Sukoharjo, Kec. Tirtomoyo, Kab. Wonogiri, Jawa Tengah 57672
-                  </p>
-                </div>
-              </div>
-              <div className="contact-item">
-                <div className="ic">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                </div>
-                <div>
-                  <h3>Email</h3>
-                  <p>desasukoharjotio11@gmail.go.id</p>
-                </div>
-              </div>
-              <div className="contact-item">
-                <div className="ic">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 8v4l3 3" />
-                    <circle cx="12" cy="12" r="9" />
-                  </svg>
-                </div>
-                <div>
-                  <h3>Jam Layanan</h3>
-                  <p>Senin–Jumat, 08.00–15.00 WIB</p>
-                </div>
-              </div>
-            </div>
-            <div style={{ height: "100%", minHeight: "340px", borderRadius: "var(--radius)", overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-              <iframe
-                src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                width="100%"
-                height="100%"
-                style={{ border: 0, minHeight: "340px" }}
-                allowFullScreen={true}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
+          <p className="eyebrow">Kontak & Lokasi</p>
+          <h2 style={{ margin: "10px 0 24px" }}>Kantor Desa Sukoharjo</h2>
+          <div
+            style={{
+              height: "100%",
+              minHeight: "340px",
+              borderRadius: "var(--radius)",
+              overflow: "hidden",
+              border: "1px solid var(--line)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+            }}
+          >
+            <iframe
+              src="https://maps.google.com/maps?q=Kantor%20Kepala%20Desa%20Sukoharjo%20Tirtomoyo%20Wonogiri&t=&z=15&ie=UTF8&iwloc=&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0, minHeight: "340px" }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
         </div>
       </section>

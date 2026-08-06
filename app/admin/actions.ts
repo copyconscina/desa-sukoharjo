@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addBerita,
+  updateBerita,
   deleteBerita,
   addGaleri,
+  updateGaleri,
   deleteGaleri,
   updatePotensi,
   saveUmkm,
@@ -17,9 +19,6 @@ import {
   deleteAgenda,
   addBukuTamu,
   deleteBukuTamu,
-  addPermohonanSurat,
-  updateStatusSurat,
-  deletePermohonanSurat,
   addPengaduan,
   updateStatusPengaduan,
   deletePengaduan,
@@ -28,10 +27,7 @@ import {
   deleteApbdesBidang,
   saveProdukHukum,
   deleteProdukHukum,
-  savePpid,
-  deletePpid,
-  saveBansos,
-  deleteBansos,
+  updateStatistikPenduduk,
 } from "@/lib/db";
 import {
   Umkm,
@@ -39,13 +35,11 @@ import {
   GaleriItem,
   Lembaga,
   Agenda,
-  PermohonanSurat,
   Pengaduan,
   ApbdesRingkasan,
   ApbdesBidang,
   ProdukHukum,
-  PpidItem,
-  BansosItem,
+  StatistikPenduduk,
 } from "@/lib/data";
 import {
   checkAuth,
@@ -54,8 +48,87 @@ import {
   checkRateLimit,
   resetRateLimit,
 } from "@/lib/auth";
-import { uploadSingleFile, uploadMultipleFiles } from "@/lib/upload";
+import { uploadSingleFile, uploadMultipleFiles, uploadPdfFile } from "@/lib/upload";
 import { headers } from "next/headers";
+
+export async function uploadPdfAction(formData: FormData) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) {
+    throw new Error("File PDF wajib diunggah.");
+  }
+
+  const fileUrl = await uploadPdfFile(file);
+  return { success: true, url: fileUrl };
+}
+
+// Public Actions for Citizens (No Admin Auth Required)
+export async function uploadPublicFotoAction(formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) {
+    return { success: false, error: "Tidak ada foto yang diunggah." };
+  }
+  try {
+    const url = await uploadSingleFile(file);
+    return { success: true, url };
+  } catch (err: any) {
+    console.error("Gagal upload foto publik:", err);
+    return { success: false, error: err.message || "Gagal mengunggah foto." };
+  }
+}
+
+export async function addBukuTamuPublicAction(name: string, origin: string, message: string) {
+  if (!name.trim() || !origin.trim() || !message.trim()) {
+    return { success: false, error: "Mohon isi semua bidang yang wajib." };
+  }
+  const dateStr = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const saved = await addBukuTamu({
+    name: name.trim(),
+    origin: origin.trim(),
+    message: message.trim(),
+    date: dateStr,
+  });
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
+export async function addPengaduanPublicAction(
+  nama: string,
+  dusun: string,
+  judul: string,
+  isi: string,
+  foto?: string
+) {
+  if (!judul.trim() || !isi.trim()) {
+    return { success: false, error: "Judul dan Rincian Laporan wajib diisi." };
+  }
+  const dateStr = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const saved = await addPengaduan({
+    nama: nama.trim() || "Warga Anonim",
+    dusun: dusun.trim() || "Sukoharjo",
+    judul: judul.trim(),
+    isi: isi.trim(),
+    tanggal: dateStr,
+    foto: foto?.trim() || undefined,
+    image: foto?.trim() || undefined,
+  });
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
+function revalidateAll() {
+  revalidatePath("/", "layout");
+}
 
 // Auth Actions
 export async function loginAction(formData: FormData) {
@@ -109,9 +182,25 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
   };
 
   const saved = await addBerita(newBerita);
-  
-  revalidatePath("/");
-  revalidatePath("/berita");
+
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
+export async function updateBeritaAction(id: number, tag: string, title: string, desc: string, images?: string) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  const updatedBerita: Omit<Berita, "id" | "date"> & { date?: string } = {
+    tag,
+    cls: tag.toLowerCase() === "pengumuman" ? "pengumuman" : tag.toLowerCase() === "pembangunan" ? "pembangunan" : "",
+    title,
+    desc,
+    images,
+  };
+
+  const saved = await updateBerita(id, updatedBerita);
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -120,14 +209,12 @@ export async function deleteBeritaAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteBerita(id);
-
-  revalidatePath("/");
-  revalidatePath("/berita");
+  revalidateAll();
   return { success: true };
 }
 
 // Galeri Actions
-export async function addGaleriAction(label: string, cat: string, grad: string, image?: string, desc?: string) {
+export async function addGaleriAction(label: string, cat: string, grad: string, image?: string, desc?: string, images?: string) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
@@ -135,15 +222,38 @@ export async function addGaleriAction(label: string, cat: string, grad: string, 
     label,
     cat,
     grad,
-    image,
+    image: images ? images.split(",")[0].trim() : image,
+    images: images || image,
     desc,
   };
 
-  await addGaleri(newItem);
+  const saved = await addGaleri(newItem);
+  revalidateAll();
+  return { success: true, item: saved };
+}
 
-  revalidatePath("/");
-  revalidatePath("/galeri");
-  return { success: true };
+export async function updateGaleriAction(
+  id: number,
+  label: string,
+  cat: string,
+  grad: string,
+  image?: string,
+  desc?: string,
+  images?: string
+) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  const saved = await updateGaleri(id, {
+    label,
+    cat,
+    grad,
+    image: images ? images.split(",")[0].trim() : image,
+    images: images || image,
+    desc,
+  });
+  revalidateAll();
+  return { success: true, item: saved };
 }
 
 export async function deleteGaleriAction(id: number) {
@@ -151,9 +261,7 @@ export async function deleteGaleriAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteGaleri(id);
-
-  revalidatePath("/");
-  revalidatePath("/galeri");
+  revalidateAll();
   return { success: true };
 }
 
@@ -163,9 +271,7 @@ export async function updatePotensiAction(num: string, title: string, desc: stri
   if (!isAuth) throw new Error("Unauthorized");
 
   await updatePotensi(num, title, desc);
-
-  revalidatePath("/");
-  revalidatePath("/potensi");
+  revalidateAll();
   return { success: true };
 }
 
@@ -175,12 +281,7 @@ export async function saveUmkmAction(itemData: Omit<Umkm, "id"> & { id?: number 
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveUmkm(itemData);
-
-  revalidatePath("/");
-  revalidatePath("/umkm");
-  if (itemData.id) {
-    revalidatePath(`/umkm/${itemData.id}`);
-  }
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -189,10 +290,7 @@ export async function deleteUmkmAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteUmkm(id);
-
-  revalidatePath("/");
-  revalidatePath("/umkm");
-  revalidatePath(`/umkm/${id}`);
+  revalidateAll();
   return { success: true };
 }
 
@@ -230,9 +328,7 @@ export async function saveLembagaAction(item: Omit<Lembaga, "id"> & { id?: numbe
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveLembaga(item);
-  revalidatePath("/");
-  revalidatePath("/lembaga");
-  revalidatePath("/profil");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -241,9 +337,7 @@ export async function deleteLembagaAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteLembaga(id);
-  revalidatePath("/");
-  revalidatePath("/lembaga");
-  revalidatePath("/profil");
+  revalidateAll();
   return { success: true };
 }
 
@@ -251,9 +345,8 @@ export async function updateProfilVisiMisiAction(visi: string, misi: string[]) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  await updateProfilVisiMisi(visi, misi);
-  revalidatePath("/");
-  revalidatePath("/profil");
+  await updateProfilVisiMisi({ visi, misi });
+  revalidateAll();
   return { success: true };
 }
 
@@ -263,8 +356,7 @@ export async function saveAgendaAction(item: Omit<Agenda, "id"> & { id?: number 
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveAgenda(item);
-  revalidatePath("/");
-  revalidatePath("/agenda");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -273,8 +365,7 @@ export async function deleteAgendaAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteAgenda(id);
-  revalidatePath("/");
-  revalidatePath("/agenda");
+  revalidateAll();
   return { success: true };
 }
 
@@ -283,25 +374,7 @@ export async function deleteBukuTamuAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteBukuTamu(id);
-  revalidatePath("/buku-tamu");
-  return { success: true };
-}
-
-export async function updateStatusSuratAction(id: number, status: PermohonanSurat["status"], catatan?: string) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await updateStatusSurat(id, status, catatan);
-  revalidatePath("/layanan-surat");
-  return { success: true };
-}
-
-export async function deletePermohonanSuratAction(id: number) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await deletePermohonanSurat(id);
-  revalidatePath("/layanan-surat");
+  revalidateAll();
   return { success: true };
 }
 
@@ -310,7 +383,7 @@ export async function updateStatusPengaduanAction(id: number, status: Pengaduan[
   if (!isAuth) throw new Error("Unauthorized");
 
   await updateStatusPengaduan(id, status, tanggapan);
-  revalidatePath("/pengaduan");
+  revalidateAll();
   return { success: true };
 }
 
@@ -319,7 +392,7 @@ export async function deletePengaduanAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deletePengaduan(id);
-  revalidatePath("/pengaduan");
+  revalidateAll();
   return { success: true };
 }
 
@@ -329,8 +402,7 @@ export async function updateApbdesRingkasanAction(data: ApbdesRingkasan) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await updateApbdesRingkasan(data);
-  revalidatePath("/");
-  revalidatePath("/apbdes");
+  revalidateAll();
   return { success: true };
 }
 
@@ -339,8 +411,7 @@ export async function saveApbdesBidangAction(item: Omit<ApbdesBidang, "id"> & { 
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveApbdesBidang(item);
-  revalidatePath("/");
-  revalidatePath("/apbdes");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -349,8 +420,7 @@ export async function deleteApbdesBidangAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteApbdesBidang(id);
-  revalidatePath("/");
-  revalidatePath("/apbdes");
+  revalidateAll();
   return { success: true };
 }
 
@@ -359,7 +429,7 @@ export async function saveProdukHukumAction(item: Omit<ProdukHukum, "id"> & { id
   if (!isAuth) throw new Error("Unauthorized");
 
   const saved = await saveProdukHukum(item);
-  revalidatePath("/produk-hukum");
+  revalidateAll();
   return { success: true, item: saved };
 }
 
@@ -368,42 +438,15 @@ export async function deleteProdukHukumAction(id: number) {
   if (!isAuth) throw new Error("Unauthorized");
 
   await deleteProdukHukum(id);
-  revalidatePath("/produk-hukum");
+  revalidateAll();
   return { success: true };
 }
 
-export async function savePpidAction(item: Omit<PpidItem, "id"> & { id?: number }) {
+export async function updateStatistikPendudukAction(dataInput: StatistikPenduduk) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  const saved = await savePpid(item);
-  revalidatePath("/ppid");
-  return { success: true, item: saved };
-}
-
-export async function deletePpidAction(id: number) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await deletePpid(id);
-  revalidatePath("/ppid");
-  return { success: true };
-}
-
-export async function saveBansosAction(item: Omit<BansosItem, "id"> & { id?: number }) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  const saved = await saveBansos(item);
-  revalidatePath("/bansos");
-  return { success: true, item: saved };
-}
-
-export async function deleteBansosAction(id: number) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  await deleteBansos(id);
-  revalidatePath("/bansos");
+  await updateStatistikPenduduk(dataInput);
+  revalidateAll();
   return { success: true };
 }

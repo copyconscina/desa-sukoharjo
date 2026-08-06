@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProfilDesa, Lembaga } from "@/lib/data";
 import {
   updateProfilVisiMisiAction,
@@ -10,6 +11,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Props {
   initialProfil: ProfilDesa;
@@ -17,7 +19,10 @@ interface Props {
 }
 
 export default function ProfilClientPage({ initialProfil, initialLembagaList }: Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"visi" | "lembaga">("visi");
+
+  // Visi Misi State
   const [visi, setVisi] = useState(initialProfil.visi);
   const [misiList, setMisiList] = useState<string[]>(initialProfil.misi || []);
   const [newMisiItem, setNewMisiItem] = useState("");
@@ -28,6 +33,19 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
   const [editingLembaga, setEditingLembaga] = useState<Partial<Lembaga> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmittingLembaga, setIsSubmittingLembaga] = useState(false);
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Visi Misi Handlers
   const handleAddMisi = () => {
@@ -40,12 +58,23 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
     setMisiList(misiList.filter((_, i) => i !== index));
   };
 
-  const handleSaveVisiMisi = async (e: React.FormEvent) => {
+  const promptSaveVisiMisi = (e: React.FormEvent) => {
     e.preventDefault();
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Visi & Misi",
+      message: "Apakah Anda yakin ingin menyimpan perubahan Visi & Misi Desa Sukoharjo?",
+      onConfirm: executeSaveVisiMisi,
+    });
+  };
+
+  const executeSaveVisiMisi = async () => {
     setIsSavingVisi(true);
     try {
       await updateProfilVisiMisiAction(visi, misiList);
-      alert("Visi & Misi Desa berhasil diperbarui!");
+      alert("Visi & Misi Desa berhasil diperbarui dan tersimpan!");
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      router.refresh();
     } catch (err: any) {
       alert("Gagal memperbarui Visi & Misi: " + err.message);
     } finally {
@@ -70,8 +99,22 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
     setIsModalOpen(true);
   };
 
-  const handleSaveLembaga = async (e: React.FormEvent) => {
+  const promptSaveLembaga = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingLembaga?.name || !editingLembaga?.leader) {
+      alert("Nama Lembaga dan Ketua wajib diisi!");
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      title: editingLembaga.id ? "Konfirmasi Edit Lembaga" : "Konfirmasi Lembaga Baru",
+      message: `Apakah Anda yakin ingin menyimpan data lembaga "${editingLembaga.name}"?`,
+      onConfirm: executeSaveLembaga,
+    });
+  };
+
+  const executeSaveLembaga = async () => {
     if (!editingLembaga?.name || !editingLembaga?.leader) return;
 
     setIsSubmittingLembaga(true);
@@ -84,6 +127,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
         members: editingLembaga.members || "",
         icon: editingLembaga.icon || "🏛️",
       });
+
       if (res.success && res.item) {
         if (editingLembaga.id) {
           setLembagaList(lembagaList.map((l) => (l.id === res.item.id ? res.item : l)));
@@ -92,6 +136,9 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
         }
         setIsModalOpen(false);
         setEditingLembaga(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        alert(`Data Lembaga "${res.item.name}" berhasil disimpan!`);
+        router.refresh();
       }
     } catch (err: any) {
       alert("Gagal menyimpan lembaga: " + err.message);
@@ -100,11 +147,22 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
     }
   };
 
-  const handleDeleteLembaga = async (id: number) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus lembaga ini?")) return;
+  const promptDeleteLembaga = (id: number, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Konfirmasi Hapus Lembaga",
+      message: `Apakah Anda yakin ingin menghapus data lembaga "${name}"? Tindakan ini tidak dapat dibatalkan.`,
+      onConfirm: () => executeDeleteLembaga(id),
+    });
+  };
+
+  const executeDeleteLembaga = async (id: number) => {
     try {
       await deleteLembagaAction(id);
       setLembagaList(lembagaList.filter((l) => l.id !== id));
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      alert("Lembaga berhasil dihapus!");
+      router.refresh();
     } catch (err: any) {
       alert("Gagal menghapus lembaga: " + err.message);
     }
@@ -118,7 +176,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
           Pengaturan Profil & Lembaga Desa
         </h1>
         <p className="text-sm text-[color:var(--ink-soft)] mt-1">
-          Kelola visi & misi desa serta struktur organisasi kelembagaan (BPD, PKK, Karang Taruna, LPMD, RT/RW).
+          Kelola visi & misi desa serta struktur organisasi kelembagaan (Pemerintah Desa, BPD, PKK, Karang Taruna, LPMD, RT/RW).
         </p>
       </div>
 
@@ -148,7 +206,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
 
       {/* TAB VISI MISI */}
       {activeTab === "visi" && (
-        <form onSubmit={handleSaveVisiMisi} className="flex flex-col gap-6 max-w-4xl">
+        <form onSubmit={promptSaveVisiMisi} className="flex flex-col gap-6 max-w-4xl">
           <Card className="p-6 border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col gap-4 shadow-sm">
             <h3 className="font-heading text-lg text-[color:var(--forest-deep)]">Visi Desa</h3>
             <div>
@@ -239,7 +297,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteLembaga(item.id)}
+                    onClick={() => promptDeleteLembaga(item.id, item.name)}
                     className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md font-semibold cursor-pointer border border-red-200"
                   >
                     Hapus
@@ -258,7 +316,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
             <h3 className="font-heading text-xl text-[color:var(--forest-deep)]">
               {editingLembaga.id ? "Edit Lembaga Desa" : "Tambah Lembaga Baru"}
             </h3>
-            <form onSubmit={handleSaveLembaga} className="flex flex-col gap-3">
+            <form onSubmit={promptSaveLembaga} className="flex flex-col gap-3">
               <div>
                 <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Nama Lembaga</label>
                 <input
@@ -266,7 +324,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
                   required
                   value={editingLembaga.name || ""}
                   onChange={(e) => setEditingLembaga({ ...editingLembaga, name: e.target.value })}
-                  placeholder="Misal: Karang Taruna Dusun"
+                  placeholder="Misal: Karang Taruna Sukoharjo"
                   className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
                 />
               </div>
@@ -285,13 +343,13 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Jumlah Anggota</label>
+                  <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Jumlah Anggota / Perangkat</label>
                   <input
                     type="text"
                     required
                     value={editingLembaga.members || ""}
                     onChange={(e) => setEditingLembaga({ ...editingLembaga, members: e.target.value })}
-                    placeholder="15 Anggota"
+                    placeholder="Misal: 14 Perangkat Desa & Staf"
                     className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
                   />
                 </div>
@@ -328,14 +386,24 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
                 >
                   Batal
                 </Button>
-                <Button type="submit" disabled={isSubmittingLembaga} className="bg-[color:var(--forest)] text-white text-xs">
-                  {isSubmittingLembaga ? "Menyimpan..." : "Simpan Data"}
+                <Button type="submit" className="bg-[color:var(--forest)] text-white text-xs">
+                  Simpan Perubahan
                 </Button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        isLoading={isSubmittingLembaga || isSavingVisi}
+      />
     </div>
   );
 }
