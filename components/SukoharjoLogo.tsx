@@ -1,14 +1,14 @@
 import Image from "next/image";
 
-type WonogiriLogoProps = {
+type SukoharjoLogoProps = {
   className?: string;
 };
 
-export default function WonogiriLogo({ className }: WonogiriLogoProps) {
+export default function SukoharjoLogo({ className }: SukoharjoLogoProps) {
   return (
     <Image
       className={className}
-      src="/wonogiri-logo.webp"
+      src="/logo-sukoharjo.webp"
       alt="Logo Kabupaten Wonogiri"
       width={474}
       height={591}

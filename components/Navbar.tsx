@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import WonogiriLogo from "@/components/WonogiriLogo";
+import SukoharjoLogo from "@/components/SukoharjoLogo";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -37,7 +37,7 @@ export default function Navbar() {
     <div className="nav" ref={navRef}>
       <div className="nav-inner">
         <Link href="/" className="brand" onClick={closeAll}>
-          <WonogiriLogo className="brand-mark" />
+          <SukoharjoLogo className="brand-mark" />
           <span className="brand-text">
             Desa Sukoharjo
             <span>Kec. Tirtomoyo · Kab. Wonogiri</span>

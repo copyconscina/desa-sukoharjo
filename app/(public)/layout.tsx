@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import WonogiriLogo from "@/components/WonogiriLogo";
+import WonogiriLogo from "@/components/SukoharjoLogo";
 
 export default function PublicLayout({
   children,
