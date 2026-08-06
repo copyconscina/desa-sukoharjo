@@ -9,8 +9,16 @@ import {
 } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard Admin Desa Sukoharjo",
+  description: "Website Resmi Pemerintah Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri — media informasi desa dan etalase digital UMKM warga.",
+};
 
 export const dynamic = "force-dynamic";
+
+
 
 export default async function DashboardPage() {
   const newsList = await getBeritaList();
