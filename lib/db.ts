@@ -170,43 +170,30 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
     store.umkm = [...list, resultItem];
   }
 
-  writeStore(store);
-
   if (!isPlaceholderSupabase) {
-    try {
-      if (item.id) {
-        const { error } = await supabaseServer.from("umkm").update(sbPayload).eq("id", item.id);
-        if (error) {
-          console.error("Supabase update umkm error:", error);
-          await supabase.from("umkm").update(sbPayload).eq("id", item.id);
-        }
-      } else {
-        const { error } = await supabaseServer.from("umkm").insert(sbPayload);
-        if (error) {
-          console.error("Supabase insert umkm error:", error);
-          await supabase.from("umkm").insert(sbPayload);
-        }
-      }
-    } catch (e) {
-      console.error("Supabase umkm exception:", e);
-    }
+    const query = item.id
+      ? supabaseServer.from("umkm").update(sbPayload).eq("id", item.id)
+      : supabaseServer.from("umkm").insert(sbPayload);
+    const { data, error } = await query.select().single();
+    if (error) throw new Error(`Gagal menyimpan UMKM: ${error.message}`);
+    resultItem.id = data.id;
   }
 
+  writeStore(store);
   return resultItem;
 }
 
 export async function deleteUmkm(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer.from("umkm").delete().eq("id", id).select("id");
+    if (error) throw new Error(`Gagal menghapus UMKM: ${error.message}`);
+    if (!data?.length) throw new Error("UMKM tidak ditemukan atau sudah dihapus.");
+  }
+
   const store = readStore();
   store.umkm = (store.umkm || []).filter((u: Umkm) => u.id !== id);
   store.deletedUmkm = [...(store.deletedUmkm || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("umkm").delete().eq("id", id);
-      await supabase.from("umkm").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -272,42 +259,36 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
     images: item.images,
   };
 
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer.from("berita").insert({
+      tag: item.tag.toLowerCase(),
+      cls: item.cls || "",
+      title: item.title,
+      desc: item.desc,
+      published_at: new Date().toISOString(),
+      images: item.images || null,
+    }).select().single();
+    if (error) throw new Error(`Gagal menambahkan berita: ${error.message}`);
+    newItem.id = data.id;
+  }
+
   store.berita = [newItem, ...list];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("berita").insert({
-        tag: item.tag.toLowerCase(),
-        cls: item.cls || "",
-        title: item.title,
-        desc: item.desc,
-        published_at: new Date().toISOString(),
-        images: item.images || null,
-      });
-    } catch (e) {
-      console.error("addBerita supabase exception:", e);
-    }
-  }
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
   const imageUrls = parseImagesList(item.images);
   if (imageUrls.length > 0) {
     for (const imgUrl of imageUrls) {
-      try {
-        const existingGaleri: GaleriItem[] = store.galeri || [];
-        const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
-        if (!alreadyInGaleri) {
-          await addGaleri({
-            label: item.title,
-            cat: item.tag || "Kegiatan Desa",
-            grad: "g1",
-            image: imgUrl,
-            desc: `Foto Dokumentasi Berita: ${item.title}`,
-          });
-        }
-      } catch (err) {
-        console.error("Gagal menyalin foto berita ke galeri:", err);
+      const existingGaleri: GaleriItem[] = store.galeri || [];
+      const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
+      if (!alreadyInGaleri) {
+        await addGaleri({
+          label: item.title,
+          cat: item.tag || "Kegiatan Desa",
+          grad: "g1",
+          image: imgUrl,
+          desc: `Foto Dokumentasi Berita: ${item.title}`,
+        });
       }
     }
   }
@@ -316,17 +297,16 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
 }
 
 export async function deleteBeritaById(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer.from("berita").delete().eq("id", id).select("id");
+    if (error) throw new Error(`Gagal menghapus berita: ${error.message}`);
+    if (!data?.length) throw new Error("Berita tidak ditemukan atau sudah dihapus.");
+  }
+
   const store = readStore();
   store.berita = (store.berita || []).filter((b: Berita) => b.id !== id);
   store.deletedBerita = [...(store.deletedBerita || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("berita").delete().eq("id", id);
-      await supabase.from("berita").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -344,54 +324,41 @@ export async function updateBerita(id: number, item: Omit<Berita, "id" | "date">
     images: item.images,
   };
 
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer
+      .from("berita")
+      .update({
+        tag: item.tag.toLowerCase(),
+        cls: item.cls || "",
+        title: item.title,
+        desc: item.desc,
+        images: item.images || null,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(`Gagal memperbarui berita: ${error.message}`);
+    updatedItem.id = data.id;
+  }
+
   store.berita = list.map((b) => (b.id === id ? updatedItem : b));
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer
-        .from("berita")
-        .update({
-          tag: item.tag.toLowerCase(),
-          cls: item.cls || "",
-          title: item.title,
-          desc: item.desc,
-          images: item.images || null,
-        })
-        .eq("id", id);
-
-      await supabase
-        .from("berita")
-        .update({
-          tag: item.tag.toLowerCase(),
-          cls: item.cls || "",
-          title: item.title,
-          desc: item.desc,
-          images: item.images || null,
-        })
-        .eq("id", id);
-    } catch (e) {
-      console.error("updateBerita supabase exception:", e);
-    }
-  }
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
   const imageUrls = parseImagesList(item.images);
   if (imageUrls.length > 0) {
     for (const imgUrl of imageUrls) {
-      try {
-        const existingGaleri: GaleriItem[] = store.galeri || [];
-        const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
-        if (!alreadyInGaleri) {
-          await addGaleri({
-            label: item.title,
-            cat: item.tag || "Kegiatan Desa",
-            grad: "g1",
-            image: imgUrl,
-            desc: `Foto Dokumentasi Berita: ${item.title}`,
-          });
-        }
-      } catch (err) {}
+      const existingGaleri: GaleriItem[] = store.galeri || [];
+      const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
+      if (!alreadyInGaleri) {
+        await addGaleri({
+          label: item.title,
+          cat: item.tag || "Kegiatan Desa",
+          grad: "g1",
+          image: imgUrl,
+          desc: `Foto Dokumentasi Berita: ${item.title}`,
+        });
+      }
     }
   }
 
@@ -444,64 +411,71 @@ export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
     images: item.images || item.image || undefined,
   };
 
+  if (!isPlaceholderSupabase) {
+    const payload = {
+      label: item.label,
+      cat: item.cat,
+      grad: item.grad || "",
+      image: primaryImage || null,
+      images: item.images || item.image || null,
+      desc: item.desc || null,
+    };
+    const { data, error } = await supabaseServer.from("galeri").insert(payload).select().single();
+    if (error) throw new Error(`Gagal menambahkan galeri: ${error.message}`);
+    newItem.id = data.id;
+  }
+
   store.galeri = [newItem, ...list];
   writeStore(store);
+  return newItem;
+}
+
+export async function updateGaleri(id: number, item: Omit<GaleriItem, "id">): Promise<GaleriItem> {
+  const primaryImage = item.images ? item.images.split(",")[0].trim() : item.image;
+  const updatedItem: GaleriItem = {
+    ...item,
+    id,
+    image: primaryImage,
+    images: item.images || item.image || undefined,
+  };
 
   if (!isPlaceholderSupabase) {
-    try {
-      const fullPayload = {
+    const { data, error } = await supabaseServer
+      .from("galeri")
+      .update({
         label: item.label,
         cat: item.cat,
         grad: item.grad || "",
         image: primaryImage || null,
         images: item.images || item.image || null,
         desc: item.desc || null,
-      };
-      const { data, error } = await supabaseServer.from("galeri").insert(fullPayload).select();
-      if (error) {
-        // Fallback without `images` column if column is not yet added in Supabase table
-        const fallbackPayload = {
-          label: item.label,
-          cat: item.cat,
-          grad: item.grad || "",
-          image: primaryImage || null,
-          desc: item.desc || null,
-        };
-        const { data: fbData } = await supabaseServer.from("galeri").insert(fallbackPayload).select();
-        if (fbData && fbData[0]) {
-          newItem.id = fbData[0].id;
-        }
-      } else if (data && data[0]) {
-        newItem.id = data[0].id;
-      }
-    } catch (e) {
-      try {
-        await supabase.from("galeri").insert({
-          label: item.label,
-          cat: item.cat,
-          grad: item.grad || "",
-          image: primaryImage || null,
-          desc: item.desc || null,
-        });
-      } catch (err2) {}
-    }
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(`Gagal memperbarui galeri: ${error.message}`);
+    updatedItem.id = data.id;
   }
 
-  return newItem;
+  const store = readStore();
+  store.galeri = (store.galeri || []).map((galleryItem: GaleriItem) =>
+    galleryItem.id === id ? updatedItem : galleryItem
+  );
+  writeStore(store);
+  return updatedItem;
 }
 
 export async function deleteGaleriById(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { data, error } = await supabaseServer.from("galeri").delete().eq("id", id).select("id");
+    if (error) throw new Error(`Gagal menghapus galeri: ${error.message}`);
+    if (!data?.length) throw new Error("Post galeri tidak ditemukan atau sudah dihapus.");
+  }
+
   const store = readStore();
   store.galeri = (store.galeri || []).filter((g: GaleriItem) => g.id !== id);
   store.deletedGaleri = [...(store.deletedGaleri || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("galeri").delete().eq("id", id);
-      await supabase.from("galeri").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 

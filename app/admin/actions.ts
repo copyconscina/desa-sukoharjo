@@ -7,6 +7,7 @@ import {
   updateBerita,
   deleteBerita,
   addGaleri,
+  updateGaleri,
   deleteGaleri,
   updatePotensi,
   saveUmkm,
@@ -48,7 +49,6 @@ import {
   resetRateLimit,
 } from "@/lib/auth";
 import { uploadSingleFile, uploadMultipleFiles, uploadPdfFile } from "@/lib/upload";
-import { parseImagesList } from "@/lib/utils";
 import { headers } from "next/headers";
 
 export async function uploadPdfAction(formData: FormData) {
@@ -183,23 +183,6 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
 
   const saved = await addBerita(newBerita);
 
-  const imageUrlList = parseImagesList(images);
-  if (imageUrlList.length > 0) {
-    for (const imgUrl of imageUrlList) {
-      try {
-        await addGaleri({
-          label: title,
-          cat: tag || "Kegiatan Desa",
-          grad: "g1",
-          image: imgUrl,
-          desc: `Foto dari Berita: ${title}`,
-        });
-      } catch (err) {
-        console.error("Gagal menyalin gambar berita ke galeri:", err);
-      }
-    }
-  }
-
   revalidateAll();
   return { success: true, item: saved };
 }
@@ -245,6 +228,30 @@ export async function addGaleriAction(label: string, cat: string, grad: string, 
   };
 
   const saved = await addGaleri(newItem);
+  revalidateAll();
+  return { success: true, item: saved };
+}
+
+export async function updateGaleriAction(
+  id: number,
+  label: string,
+  cat: string,
+  grad: string,
+  image?: string,
+  desc?: string,
+  images?: string
+) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  const saved = await updateGaleri(id, {
+    label,
+    cat,
+    grad,
+    image: images ? images.split(",")[0].trim() : image,
+    images: images || image,
+    desc,
+  });
   revalidateAll();
   return { success: true, item: saved };
 }

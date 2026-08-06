@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { GaleriItem } from "@/lib/data";
-import { addGaleriAction, deleteGaleriAction, uploadImageAction } from "@/app/admin/actions";
+import { addGaleriAction, updateGaleriAction, deleteGaleriAction, uploadImageAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ interface DraftFileItem {
 export default function GaleriClientPage({ initialGallery }: Props) {
   const router = useRouter();
   const [gallery, setGallery] = useState<GaleriItem[]>(initialGallery);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
   const [label, setLabel] = useState("");
   const [cat, setCat] = useState("Kegiatan Desa");
   const [desc, setDesc] = useState("");
+  const [existingUrls, setExistingUrls] = useState<string[]>([]);
   const [draftFiles, setDraftFiles] = useState<DraftFileItem[]>([]);
 
   // Confirm Modal State
@@ -92,6 +94,41 @@ export default function GaleriClientPage({ initialGallery }: Props) {
     setDraftFiles(updated);
   };
 
+  const moveExistingItem = (index: number, direction: "left" | "right") => {
+    const targetIndex = direction === "left" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= existingUrls.length) return;
+    const updated = [...existingUrls];
+    const [movedItem] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, movedItem);
+    setExistingUrls(updated);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setLabel("");
+    setCat("Kegiatan Desa");
+    setDesc("");
+    setExistingUrls([]);
+    draftFiles.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    setDraftFiles([]);
+    const fileInput = document.getElementById("galleryMultipleFileInput") as HTMLInputElement;
+    if (fileInput) fileInput.value = "";
+  };
+
+  const handleEdit = (item: GaleriItem) => {
+    if (!item.id) return;
+    setEditingId(item.id);
+    setLabel(item.label);
+    setCat(item.cat || "Kegiatan Desa");
+    setDesc(item.desc || "");
+    const images = parseImagesList(item.images);
+    setExistingUrls(images.length > 0 ? images : item.image ? [item.image] : []);
+    setDraftFiles([]);
+    setError(null);
+    setSuccess(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const promptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -102,7 +139,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
       return;
     }
 
-    if (draftFiles.length === 0) {
+    if (existingUrls.length + draftFiles.length === 0) {
       setError("Mohon unggah minimal 1 foto untuk post galeri ini.");
       return;
     }
@@ -136,29 +173,18 @@ export default function GaleriClientPage({ initialGallery }: Props) {
         uploadedUrls.push(uploadRes.url);
       }
 
-      const imagesStr = uploadedUrls.join(",");
+      const imagesStr = [...existingUrls, ...uploadedUrls].join(",");
       const firstUrl = uploadedUrls[0];
-
-      const res = await addGaleriAction(label.trim(), cat, "", firstUrl, desc.trim(), imagesStr);
+      const coverUrl = existingUrls[0] || firstUrl;
+      const res = editingId
+        ? await updateGaleriAction(editingId, label.trim(), cat, "", coverUrl, desc.trim(), imagesStr)
+        : await addGaleriAction(label.trim(), cat, "", coverUrl, desc.trim(), imagesStr);
       if (res.success) {
-        const newItem: GaleriItem = {
-          id: (res as any).item?.id || Date.now(),
-          label: label.trim(),
-          cat,
-          grad: "",
-          image: firstUrl,
-          images: imagesStr,
-          desc: desc.trim(),
-        };
-
-        setGallery([newItem, ...gallery]);
-        setLabel("");
-        setDesc("");
-        // Clean up object URLs
-        draftFiles.forEach((item) => URL.revokeObjectURL(item.previewUrl));
-        setDraftFiles([]);
-
-        setSuccess(`Post galeri "${label.trim()}" berhasil disimpan dengan ${uploadedUrls.length} foto!`);
+        const savedItem = res.item!;
+        setGallery(editingId ? gallery.map((item) => (item.id === editingId ? savedItem : item)) : [savedItem, ...gallery]);
+        const successMessage = editingId ? "berhasil diperbarui" : "berhasil disimpan";
+        setSuccess(`Post galeri "${label.trim()}" ${successMessage}.`);
+        resetForm();
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         router.refresh();
       } else {
@@ -218,7 +244,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
         <div className="lg:col-span-6">
           <Card className="border border-[color:var(--line)] p-6 bg-[color:var(--card)] shadow-sm">
             <h2 className="text-lg font-heading mb-4 text-[color:var(--forest-deep)]">
-              Buat Post Galeri Baru
+              {editingId ? "Perbarui Post Galeri" : "Buat Post Galeri Baru"}
             </h2>
 
             <form onSubmit={promptSubmit} className="flex flex-col gap-4">
@@ -289,11 +315,38 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                     hover:file:bg-[color:var(--line)] cursor-pointer"
                 />
                 <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                  Anda dapat memilih beberapa foto sekaligus. Gambar di urutan pertama akan dipakai sebagai Thumbnail Cover.
+                  {editingId && existingUrls.length > 0
+                    ? `${existingUrls.length} foto tersimpan akan dipertahankan; foto baru ditambahkan setelahnya.`
+                    : "Anda dapat memilih beberapa foto sekaligus. Gambar di urutan pertama akan dipakai sebagai Thumbnail Cover."}
                 </span>
               </div>
 
               {/* REORDERABLE DRAFT IMAGES LIST */}
+              {editingId && existingUrls.length > 0 && (
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--forest-deep)] font-semibold mb-2">
+                    Foto Tersimpan ({existingUrls.length})
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-2 bg-[color:var(--parchment)] border border-[color:var(--line)] rounded-xl">
+                    {existingUrls.map((url, idx) => (
+                      <div key={url} className="relative rounded-lg overflow-hidden border border-[color:var(--line)] bg-white">
+                        <div className="relative w-full h-24">
+                          <Image src={url} alt={`Foto tersimpan ${idx + 1}`} fill className="object-cover" />
+                          {idx === 0 && <Badge className="absolute top-1 left-1 text-[9px] px-1.5 py-0.5 border-none bg-[color:var(--forest)] text-white">Thumbnail Cover</Badge>}
+                        </div>
+                        <div className="p-1.5 flex justify-between items-center border-t border-[color:var(--line)]">
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => moveExistingItem(idx, "left")} disabled={idx === 0} className="px-1.5 py-0.5 text-[10px] border border-[color:var(--line)] rounded disabled:opacity-30">◀</button>
+                            <button type="button" onClick={() => moveExistingItem(idx, "right")} disabled={idx === existingUrls.length - 1} className="px-1.5 py-0.5 text-[10px] border border-[color:var(--line)] rounded disabled:opacity-30">▶</button>
+                          </div>
+                          <button type="button" onClick={() => setExistingUrls(existingUrls.filter((_, itemIndex) => itemIndex !== idx))} className="px-1.5 py-0.5 text-[10px] text-red-600 border border-red-200 rounded">✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {draftFiles.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -379,8 +432,13 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                 disabled={loading}
                 className="w-full h-10 rounded-full border-none text-white font-medium bg-[color:var(--forest)] cursor-pointer mt-1"
               >
-                {loading ? "Menyimpan Post & Uploading Foto..." : "Simpan Post Galeri"}
+                {loading ? "Menyimpan Post & Uploading Foto..." : editingId ? "Simpan Perubahan Galeri" : "Simpan Post Galeri"}
               </Button>
+              {editingId && (
+                <Button type="button" variant="outline" onClick={resetForm} className="w-full h-10 rounded-full">
+                  Batal Edit
+                </Button>
+              )}
             </form>
           </Card>
         </div>
@@ -445,16 +503,21 @@ export default function GaleriClientPage({ initialGallery }: Props) {
                             {item.cat}
                           </span>
 
-                          <button
-                            onClick={() => handleDelete(item)}
-                            className="p-1.5 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-                            title="Hapus post galeri"
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleEdit(item)} className="p-1.5 hover:bg-[color:var(--forest)]/10 text-[color:var(--forest)] rounded-lg transition-colors border-none bg-transparent cursor-pointer" title="Edit post galeri">
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item)}
+                              className="p-1.5 hover:bg-[color:var(--clay)]/10 text-[color:var(--clay)] rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                              title="Hapus post galeri"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="14" height="14">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
