@@ -60,15 +60,6 @@
   "berita": [],
   "galeri": [
     {
-      "label": "batu bata",
-      "cat": "Kegiatan Desa",
-      "grad": "",
-      "image": "https://hdsirturragywteqmioc.supabase.co/storage/v1/object/public/sukoharjo-assets/1785862270382_ek2yjxg.webp",
-      "images": "https://hdsirturragywteqmioc.supabase.co/storage/v1/object/public/sukoharjo-assets/1785862270382_ek2yjxg.webp,https://hdsirturragywteqmioc.supabase.co/storage/v1/object/public/sukoharjo-assets/1785862272663_99fle2e.webp,https://hdsirturragywteqmioc.supabase.co/storage/v1/object/public/sukoharjo-assets/1785862274777_kpqr0vq.webp,https://hdsirturragywteqmioc.supabase.co/storage/v1/object/public/sukoharjo-assets/1785862276471_7vhl7jb.webp",
-      "desc": "bagas doskli",
-      "id": 5
-    },
-    {
       "label": "bata",
       "cat": "Kegiatan Desa",
       "grad": "",
@@ -92,14 +83,6 @@
       "grad": "from-amber-900 to-yellow-800",
       "image": "https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=800&auto=format&fit=crop",
       "desc": "Kekompakan warga dusun dalam tradisi gotong royong membersihkan saluran irigasi menjelang musim tanam."
-    },
-    {
-      "id": 3,
-      "label": "Pentas Seni Budaya & Jathilan Desa",
-      "cat": "Kebudayaan",
-      "grad": "from-stone-900 to-amber-950",
-      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800&auto=format&fit=crop",
-      "desc": "Pelestarian seni tari tradisional jathilan yang rutin diadakan saat perayaan bersih desa."
     }
   ],
   "potensi": [
@@ -388,5 +371,9 @@
     1,
     3,
     2
+  ],
+  "deletedGaleri": [
+    5,
+    3
   ]
 }

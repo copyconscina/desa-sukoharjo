@@ -185,9 +185,8 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
 
 export async function deleteUmkm(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabaseServer.from("umkm").delete().eq("id", id).select("id");
+    const { error } = await supabaseServer.from("umkm").delete().eq("id", id);
     if (error) throw new Error(`Gagal menghapus UMKM: ${error.message}`);
-    if (!data?.length) throw new Error("UMKM tidak ditemukan atau sudah dihapus.");
   }
 
   const store = readStore();
@@ -298,9 +297,8 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
 
 export async function deleteBeritaById(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabaseServer.from("berita").delete().eq("id", id).select("id");
+    const { error } = await supabaseServer.from("berita").delete().eq("id", id);
     if (error) throw new Error(`Gagal menghapus berita: ${error.message}`);
-    if (!data?.length) throw new Error("Berita tidak ditemukan atau sudah dihapus.");
   }
 
   const store = readStore();
@@ -467,9 +465,8 @@ export async function updateGaleri(id: number, item: Omit<GaleriItem, "id">): Pr
 
 export async function deleteGaleriById(id: number): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    const { data, error } = await supabaseServer.from("galeri").delete().eq("id", id).select("id");
+    const { error } = await supabaseServer.from("galeri").delete().eq("id", id);
     if (error) throw new Error(`Gagal menghapus galeri: ${error.message}`);
-    if (!data?.length) throw new Error("Post galeri tidak ditemukan atau sudah dihapus.");
   }
 
   const store = readStore();
@@ -498,15 +495,17 @@ export async function getPotensiList(): Promise<Potensi[]> {
 }
 
 export async function updatePotensi(num: string, title: string, desc: string): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer
+      .from("potensi")
+      .update({ title, desc, updated_at: new Date().toISOString() })
+      .eq("num", num);
+    if (error) throw new Error(`Gagal memperbarui potensi: ${error.message}`);
+  }
+
   const store = readStore();
   store.potensi = (store.potensi || []).map((p: Potensi) => (p.num === num ? { ...p, title, desc } : p));
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("potensi").update({ title, desc, updated_at: new Date().toISOString() }).eq("num", num);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -528,49 +527,48 @@ export async function getLembagaList(): Promise<Lembaga[]> {
 }
 
 export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): Promise<Lembaga> {
+  let resultItem: Lembaga = { ...item } as Lembaga;
+
+  if (!isPlaceholderSupabase) {
+    const { id: itemId, ...payload } = item;
+    if (itemId) {
+      const { error } = await supabaseServer.from("lembaga").update(payload).eq("id", itemId);
+      if (error) throw new Error(`Gagal memperbarui lembaga: ${error.message}`);
+      resultItem.id = itemId;
+    } else {
+      const { data, error } = await supabaseServer.from("lembaga").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan lembaga: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
+    }
+  }
+
   const store = readStore();
   const list: Lembaga[] = store.lembaga || [];
-  let resultItem: Lembaga;
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((l) => l.id || 0)) + 1 : 1;
+  }
 
   if (item.id) {
-    resultItem = { ...item, id: item.id } as Lembaga;
     store.lembaga = list.map((l) => (l.id === item.id ? resultItem : l));
     store.deletedLembaga = (store.deletedLembaga || []).filter((dId: number) => dId !== item.id);
   } else {
-    const newId = list.length > 0 ? Math.max(...list.map((l) => l.id || 0)) + 1 : 1;
-    resultItem = { ...item, id: newId } as Lembaga;
     store.lembaga = [...list, resultItem];
   }
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      const { id: itemId, ...payload } = item;
-      if (itemId) {
-        const { error } = await supabaseServer.from("lembaga").update(payload).eq("id", itemId);
-        if (error) await supabase.from("lembaga").update(payload).eq("id", itemId);
-      } else {
-        const { error } = await supabaseServer.from("lembaga").insert(payload);
-        if (error) await supabase.from("lembaga").insert(payload);
-      }
-    } catch (e) {}
-  }
 
   return resultItem;
 }
 
 export async function deleteLembaga(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("lembaga").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus lembaga: ${error.message}`);
+  }
+
   const store = readStore();
   store.lembaga = (store.lembaga || []).filter((l: Lembaga) => l.id !== id);
   store.deletedLembaga = [...(store.deletedLembaga || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("lembaga").delete().eq("id", id);
-      await supabase.from("lembaga").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -590,15 +588,14 @@ export async function getProfilDesa(): Promise<ProfilDesa> {
 }
 
 export async function saveProfilDesa(profil: ProfilDesa): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("profil").upsert({ id: 1, visi: profil.visi, misi: profil.misi });
+    if (error) throw new Error(`Gagal menyimpan profil desa: ${error.message}`);
+  }
+
   const store = readStore();
   store.profil = profil;
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("profil").upsert({ id: 1, visi: profil.visi, misi: profil.misi });
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -623,49 +620,48 @@ export async function getAgendaList(): Promise<Agenda[]> {
 }
 
 export async function saveAgenda(item: Omit<Agenda, "id"> & { id?: number }): Promise<Agenda> {
+  let resultItem: Agenda = { ...item } as Agenda;
+
+  if (!isPlaceholderSupabase) {
+    const { id: itemId, ...payload } = item;
+    if (itemId) {
+      const { error } = await supabaseServer.from("agenda").update(payload).eq("id", itemId);
+      if (error) throw new Error(`Gagal memperbarui agenda: ${error.message}`);
+      resultItem.id = itemId;
+    } else {
+      const { data, error } = await supabaseServer.from("agenda").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan agenda: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
+    }
+  }
+
   const store = readStore();
   const list: Agenda[] = store.agenda || [];
-  let resultItem: Agenda;
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((a) => a.id || 0)) + 1 : 1;
+  }
 
   if (item.id) {
-    resultItem = { ...item, id: item.id } as Agenda;
     store.agenda = list.map((a) => (a.id === item.id ? resultItem : a));
     store.deletedAgenda = (store.deletedAgenda || []).filter((dId: number) => dId !== item.id);
   } else {
-    const newId = list.length > 0 ? Math.max(...list.map((a) => a.id || 0)) + 1 : 1;
-    resultItem = { ...item, id: newId } as Agenda;
     store.agenda = [resultItem, ...list];
   }
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      const { id: itemId, ...payload } = item;
-      if (itemId) {
-        const { error } = await supabaseServer.from("agenda").update(payload).eq("id", itemId);
-        if (error) await supabase.from("agenda").update(payload).eq("id", itemId);
-      } else {
-        const { error } = await supabaseServer.from("agenda").insert(payload);
-        if (error) await supabase.from("agenda").insert(payload);
-      }
-    } catch (e) {}
-  }
 
   return resultItem;
 }
 
 export async function deleteAgenda(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("agenda").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus agenda: ${error.message}`);
+  }
+
   const store = readStore();
   store.agenda = (store.agenda || []).filter((a: Agenda) => a.id !== id);
   store.deletedAgenda = [...(store.deletedAgenda || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("agenda").delete().eq("id", id);
-      await supabase.from("agenda").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -687,39 +683,36 @@ export async function getBukuTamuList(): Promise<BukuTamu[]> {
 }
 
 export async function addBukuTamu(item: Omit<BukuTamu, "id">): Promise<BukuTamu> {
-  const store = readStore();
-  const list: BukuTamu[] = store.buku_tamu || [];
-  const newId = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
-  const newItem = { ...item, id: newId };
-  store.buku_tamu = [newItem, ...list];
-  writeStore(store);
+  let newItem: BukuTamu = { ...item, id: 0 };
 
   if (!isPlaceholderSupabase) {
-    try {
-      const { error } = await supabaseServer.from("buku_tamu").insert(item);
-      if (error) await supabase.from("buku_tamu").insert(item);
-    } catch (e) {
-      try {
-        await supabase.from("buku_tamu").insert(item);
-      } catch (err2) {}
-    }
+    const { data, error } = await supabaseServer.from("buku_tamu").insert(item).select().single();
+    if (error) throw new Error(`Gagal menambahkan buku tamu: ${error.message}`);
+    if (data?.id) newItem.id = data.id;
   }
+
+  const store = readStore();
+  const list: BukuTamu[] = store.buku_tamu || [];
+  if (!newItem.id) {
+    newItem.id = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
+  }
+
+  store.buku_tamu = [newItem, ...list];
+  writeStore(store);
 
   return newItem;
 }
 
 export async function deleteBukuTamu(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("buku_tamu").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus buku tamu: ${error.message}`);
+  }
+
   const store = readStore();
   store.buku_tamu = (store.buku_tamu || []).filter((b: BukuTamu) => b.id !== id);
   store.deletedBukuTamu = [...(store.deletedBukuTamu || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("buku_tamu").delete().eq("id", id);
-      await supabase.from("buku_tamu").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -752,11 +745,9 @@ export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tang
     status: "Baru" as const,
     tanggapan: "",
   };
-  const store = readStore();
-  const list: Pengaduan[] = store.pengaduan || [];
-  const newId = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
-  const newItem: Pengaduan = {
-    id: newId,
+
+  let newItem: Pengaduan = {
+    id: 0,
     nama: item.nama,
     dusun: item.dusun,
     judul: item.judul,
@@ -767,48 +758,47 @@ export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tang
     status: "Baru",
     tanggapan: "",
   };
-  store.pengaduan = [newItem, ...list];
-  writeStore(store);
 
   if (!isPlaceholderSupabase) {
-    try {
-      const { error } = await supabaseServer.from("pengaduan").insert(sbPayload);
-      if (error) await supabase.from("pengaduan").insert(sbPayload);
-    } catch (e) {
-      try {
-        await supabase.from("pengaduan").insert(sbPayload);
-      } catch (err2) {}
-    }
+    const { data, error } = await supabaseServer.from("pengaduan").insert(sbPayload).select().single();
+    if (error) throw new Error(`Gagal mengirim pengaduan: ${error.message}`);
+    if (data?.id) newItem.id = data.id;
   }
+
+  const store = readStore();
+  const list: Pengaduan[] = store.pengaduan || [];
+  if (!newItem.id) {
+    newItem.id = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
+  }
+
+  store.pengaduan = [newItem, ...list];
+  writeStore(store);
 
   return newItem;
 }
 
 export async function updateStatusPengaduan(id: number, status: Pengaduan["status"], tanggapan?: string): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("pengaduan").update({ status, tanggapan }).eq("id", id);
+    if (error) throw new Error(`Gagal memperbarui status pengaduan: ${error.message}`);
+  }
+
   const store = readStore();
   store.pengaduan = (store.pengaduan || []).map((p: Pengaduan) => (p.id === id ? { ...p, status, tanggapan } : p));
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("pengaduan").update({ status, tanggapan }).eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
 export async function deletePengaduan(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("pengaduan").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus pengaduan: ${error.message}`);
+  }
+
   const store = readStore();
   store.pengaduan = (store.pengaduan || []).filter((p: Pengaduan) => p.id !== id);
   store.deletedPengaduan = [...(store.deletedPengaduan || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("pengaduan").delete().eq("id", id);
-      await supabase.from("pengaduan").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -829,15 +819,14 @@ export async function getApbdesRingkasan(): Promise<ApbdesRingkasan> {
 }
 
 export async function updateApbdesRingkasan(ringkasan: ApbdesRingkasan): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("apbdes_ringkasan").upsert({ id: 1, ...ringkasan });
+    if (error) throw new Error(`Gagal memperbarui ringkasan APBDES: ${error.message}`);
+  }
+
   const store = readStore();
   store.apbdes_ringkasan = ringkasan;
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("apbdes_ringkasan").upsert({ id: 1, ...ringkasan });
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -858,49 +847,48 @@ export async function getApbdesBidangList(): Promise<ApbdesBidang[]> {
 }
 
 export async function saveApbdesBidang(item: Omit<ApbdesBidang, "id"> & { id?: number }): Promise<ApbdesBidang> {
+  let resultItem: ApbdesBidang = { ...item } as ApbdesBidang;
+
+  if (!isPlaceholderSupabase) {
+    const { id: itemId, ...payload } = item;
+    if (itemId) {
+      const { error } = await supabaseServer.from("apbdes_bidang").update(payload).eq("id", itemId);
+      if (error) throw new Error(`Gagal memperbarui bidang APBDES: ${error.message}`);
+      resultItem.id = itemId;
+    } else {
+      const { data, error } = await supabaseServer.from("apbdes_bidang").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan bidang APBDES: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
+    }
+  }
+
   const store = readStore();
   const list: ApbdesBidang[] = store.apbdes_bidang || [];
-  let resultItem: ApbdesBidang;
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
+  }
 
   if (item.id) {
-    resultItem = { ...item, id: item.id } as ApbdesBidang;
     store.apbdes_bidang = list.map((b) => (b.id === item.id ? resultItem : b));
     store.deletedApbdesBidang = (store.deletedApbdesBidang || []).filter((dId: number) => dId !== item.id);
   } else {
-    const newId = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
-    resultItem = { ...item, id: newId } as ApbdesBidang;
     store.apbdes_bidang = [...list, resultItem];
   }
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      const { id: itemId, ...payload } = item;
-      if (itemId) {
-        const { error } = await supabaseServer.from("apbdes_bidang").update(payload).eq("id", itemId);
-        if (error) await supabase.from("apbdes_bidang").update(payload).eq("id", itemId);
-      } else {
-        const { error } = await supabaseServer.from("apbdes_bidang").insert(payload);
-        if (error) await supabase.from("apbdes_bidang").insert(payload);
-      }
-    } catch (e) {}
-  }
 
   return resultItem;
 }
 
 export async function deleteApbdesBidang(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("apbdes_bidang").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus bidang APBDES: ${error.message}`);
+  }
+
   const store = readStore();
   store.apbdes_bidang = (store.apbdes_bidang || []).filter((b: ApbdesBidang) => b.id !== id);
   store.deletedApbdesBidang = [...(store.deletedApbdesBidang || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("apbdes_bidang").delete().eq("id", id);
-      await supabase.from("apbdes_bidang").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
@@ -922,49 +910,48 @@ export async function getProdukHukumList(): Promise<ProdukHukum[]> {
 }
 
 export async function saveProdukHukum(item: Omit<ProdukHukum, "id"> & { id?: number }): Promise<ProdukHukum> {
+  let resultItem: ProdukHukum = { ...item } as ProdukHukum;
+
+  if (!isPlaceholderSupabase) {
+    const { id: itemId, ...payload } = item;
+    if (itemId) {
+      const { error } = await supabaseServer.from("produk_hukum").update(payload).eq("id", itemId);
+      if (error) throw new Error(`Gagal memperbarui produk hukum: ${error.message}`);
+      resultItem.id = itemId;
+    } else {
+      const { data, error } = await supabaseServer.from("produk_hukum").insert(payload).select().single();
+      if (error) throw new Error(`Gagal menambahkan produk hukum: ${error.message}`);
+      if (data?.id) resultItem.id = data.id;
+    }
+  }
+
   const store = readStore();
   const list: ProdukHukum[] = store.produk_hukum || [];
-  let resultItem: ProdukHukum;
+  if (!resultItem.id) {
+    resultItem.id = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
+  }
 
   if (item.id) {
-    resultItem = { ...item, id: item.id } as ProdukHukum;
     store.produk_hukum = list.map((p) => (p.id === item.id ? resultItem : p));
     store.deletedProdukHukum = (store.deletedProdukHukum || []).filter((dId: number) => dId !== item.id);
   } else {
-    const newId = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
-    resultItem = { ...item, id: newId } as ProdukHukum;
     store.produk_hukum = [resultItem, ...list];
   }
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      const { id: itemId, ...payload } = item;
-      if (itemId) {
-        const { error } = await supabaseServer.from("produk_hukum").update(payload).eq("id", itemId);
-        if (error) await supabase.from("produk_hukum").update(payload).eq("id", itemId);
-      } else {
-        const { error } = await supabaseServer.from("produk_hukum").insert(payload);
-        if (error) await supabase.from("produk_hukum").insert(payload);
-      }
-    } catch (e) {}
-  }
 
   return resultItem;
 }
 
 export async function deleteProdukHukum(id: number): Promise<boolean> {
+  if (!isPlaceholderSupabase) {
+    const { error } = await supabaseServer.from("produk_hukum").delete().eq("id", id);
+    if (error) throw new Error(`Gagal menghapus produk hukum: ${error.message}`);
+  }
+
   const store = readStore();
   store.produk_hukum = (store.produk_hukum || []).filter((p: ProdukHukum) => p.id !== id);
   store.deletedProdukHukum = [...(store.deletedProdukHukum || []), id];
   writeStore(store);
-
-  if (!isPlaceholderSupabase) {
-    try {
-      await supabaseServer.from("produk_hukum").delete().eq("id", id);
-      await supabase.from("produk_hukum").delete().eq("id", id);
-    } catch (e) {}
-  }
   return true;
 }
 
