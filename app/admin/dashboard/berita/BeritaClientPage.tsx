@@ -199,7 +199,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
       }
     } catch (err) {
       console.error(err);
-      setError("Gagal menyimpan berita.");
+      setError((err as Error).message || "Gagal menyimpan berita.");
     } finally {
       setLoading(false);
     }
@@ -229,7 +229,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
           }
         } catch (err) {
           console.error(err);
-          setError("Gagal menghapus berita.");
+          setError((err as Error).message || "Gagal menghapus berita.");
         }
       },
     });

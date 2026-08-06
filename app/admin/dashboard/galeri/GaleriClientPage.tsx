@@ -192,7 +192,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
       }
     } catch (err) {
       console.error(err);
-      setError("Terjadi kesalahan saat mengunggah post galeri.");
+      setError((err as Error).message || "Terjadi kesalahan saat mengunggah post galeri.");
     } finally {
       setLoading(false);
     }
@@ -221,7 +221,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
           }
         } catch (err) {
           console.error(err);
-          setError("Gagal menghapus post galeri.");
+          setError((err as Error).message || "Gagal menghapus post galeri.");
         }
       },
     });

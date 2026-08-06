@@ -285,7 +285,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       }
     } catch (err) {
       console.error(err);
-      setError("Gagal menyimpan data UMKM.");
+      setError((err as Error).message || "Gagal menyimpan data UMKM.");
     } finally {
       setLoading(false);
     }
@@ -310,7 +310,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
           }
         } catch (err) {
           console.error(err);
-          setError("Gagal menghapus profil UMKM.");
+          setError((err as Error).message || "Gagal menghapus profil UMKM.");
         }
       },
     });
