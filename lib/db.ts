@@ -101,7 +101,10 @@ export async function getUmkmList(): Promise<Umkm[]> {
           mapsUrl: u.maps_url || u.mapsUrl || undefined,
           maps_url: u.maps_url || u.mapsUrl || undefined,
         }));
-        return syncListWithLocal(sbList as Umkm[], localList, deletedIds);
+        // When Supabase is configured it is the source of truth.  Do not merge
+        // the build-time fallback store here: on serverless deployments that
+        // file cannot be persisted and would otherwise overwrite fresh rows.
+        return sbList as Umkm[];
       }
     } catch (e) {
       console.error("getBeritaList supabase exception:", e);
@@ -138,7 +141,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   const list: Umkm[] = store.umkm || [];
   let resultItem: Umkm;
 
-  if (item.id) {
+  if (item.id != null) {
     resultItem = {
       ...sbPayload,
       tagline: sbPayload.tagline || undefined,
@@ -171,7 +174,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   }
 
   if (!isPlaceholderSupabase) {
-    const query = item.id
+    const query = item.id != null
       ? supabaseServer.from("umkm").update(sbPayload).eq("id", item.id)
       : supabaseServer.from("umkm").insert(sbPayload);
     const { data, error } = await query.select().single();
@@ -231,7 +234,7 @@ export async function getBeritaList(): Promise<Berita[]> {
             images: b.images || null,
           };
         }) as Berita[];
-        return syncListWithLocal(sbList, localList, deletedIds);
+        return sbList;
       }
     } catch (e) {}
   }
@@ -382,7 +385,7 @@ export async function getGaleriList(): Promise<GaleriItem[]> {
           image: g.images ? g.images.split(",")[0] : g.image,
           images: g.images || g.image || undefined,
         })) as GaleriItem[];
-        return syncListWithLocal(sbList, localList, deletedIds);
+        return sbList;
       }
     } catch (e) {}
   }
@@ -496,11 +499,14 @@ export async function getPotensiList(): Promise<Potensi[]> {
 
 export async function updatePotensi(num: string, title: string, desc: string): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    const { error } = await supabaseServer
+    const { data, error } = await supabaseServer
       .from("potensi")
       .update({ title, desc, updated_at: new Date().toISOString() })
-      .eq("num", num);
+      .eq("num", num)
+      .select("id")
+      .single();
     if (error) throw new Error(`Gagal memperbarui potensi: ${error.message}`);
+    if (!data) throw new Error("Gagal memperbarui potensi: data tidak ditemukan.");
   }
 
   const store = readStore();
@@ -519,7 +525,7 @@ export async function getLembagaList(): Promise<Lembaga[]> {
     try {
       const { data, error } = await supabase.from("lembaga").select("*").order("id", { ascending: true });
       if (!error && data) {
-        return syncListWithLocal(data as Lembaga[], localList, deletedIds);
+        return data as Lembaga[];
       }
     } catch (e) {}
   }
@@ -531,9 +537,10 @@ export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): 
 
   if (!isPlaceholderSupabase) {
     const { id: itemId, ...payload } = item;
-    if (itemId) {
-      const { error } = await supabaseServer.from("lembaga").update(payload).eq("id", itemId);
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("lembaga").update(payload).eq("id", itemId).select("id").single();
       if (error) throw new Error(`Gagal memperbarui lembaga: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui lembaga: data tidak ditemukan.");
       resultItem.id = itemId;
     } else {
       const { data, error } = await supabaseServer.from("lembaga").insert(payload).select().single();
@@ -575,9 +582,6 @@ export async function deleteLembaga(id: number): Promise<boolean> {
 // ==================== PROFIL DESA ====================
 export async function getProfilDesa(): Promise<ProfilDesa> {
   const store = readStore();
-  if (store.profil && store.profil.visi) {
-    return store.profil;
-  }
   if (!isPlaceholderSupabase) {
     try {
       const { data, error } = await supabase.from("profil").select("*").single();
@@ -612,7 +616,7 @@ export async function getAgendaList(): Promise<Agenda[]> {
     try {
       const { data, error } = await supabase.from("agenda").select("*").order("id", { ascending: false });
       if (!error && data) {
-        return syncListWithLocal(data as Agenda[], localList, deletedIds);
+        return data as Agenda[];
       }
     } catch (e) {}
   }
@@ -624,9 +628,10 @@ export async function saveAgenda(item: Omit<Agenda, "id"> & { id?: number }): Pr
 
   if (!isPlaceholderSupabase) {
     const { id: itemId, ...payload } = item;
-    if (itemId) {
-      const { error } = await supabaseServer.from("agenda").update(payload).eq("id", itemId);
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("agenda").update(payload).eq("id", itemId).select("id").single();
       if (error) throw new Error(`Gagal memperbarui agenda: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui agenda: data tidak ditemukan.");
       resultItem.id = itemId;
     } else {
       const { data, error } = await supabaseServer.from("agenda").insert(payload).select().single();
@@ -675,7 +680,7 @@ export async function getBukuTamuList(): Promise<BukuTamu[]> {
     try {
       const { data, error } = await supabase.from("buku_tamu").select("*").order("id", { ascending: false });
       if (!error && data) {
-        return syncListWithLocal(data as BukuTamu[], localList, deletedIds);
+        return data as BukuTamu[];
       }
     } catch (e) {}
   }
@@ -726,7 +731,7 @@ export async function getPengaduanList(): Promise<Pengaduan[]> {
     try {
       const { data, error } = await supabase.from("pengaduan").select("*").order("id", { ascending: false });
       if (!error && data) {
-        return syncListWithLocal(data as Pengaduan[], localList, deletedIds);
+        return data as Pengaduan[];
       }
     } catch (e) {}
   }
@@ -779,8 +784,9 @@ export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tang
 
 export async function updateStatusPengaduan(id: number, status: Pengaduan["status"], tanggapan?: string): Promise<boolean> {
   if (!isPlaceholderSupabase) {
-    const { error } = await supabaseServer.from("pengaduan").update({ status, tanggapan }).eq("id", id);
+    const { data, error } = await supabaseServer.from("pengaduan").update({ status, tanggapan }).eq("id", id).select("id").single();
     if (error) throw new Error(`Gagal memperbarui status pengaduan: ${error.message}`);
+    if (!data) throw new Error("Gagal memperbarui status pengaduan: data tidak ditemukan.");
   }
 
   const store = readStore();
@@ -805,10 +811,6 @@ export async function deletePengaduan(id: number): Promise<boolean> {
 // ==================== APBDES ====================
 export async function getApbdesRingkasan(): Promise<ApbdesRingkasan> {
   const store = readStore();
-  if (store.apbdes_ringkasan && store.apbdes_ringkasan.pendapatan) {
-    return store.apbdes_ringkasan;
-  }
-
   if (!isPlaceholderSupabase) {
     try {
       const { data, error } = await supabase.from("apbdes_ringkasan").select("*").single();
@@ -839,7 +841,7 @@ export async function getApbdesBidangList(): Promise<ApbdesBidang[]> {
     try {
       const { data, error } = await supabase.from("apbdes_bidang").select("*").order("id", { ascending: true });
       if (!error && data) {
-        return syncListWithLocal(data as ApbdesBidang[], localList, deletedIds);
+        return data as ApbdesBidang[];
       }
     } catch (e) {}
   }
@@ -851,9 +853,10 @@ export async function saveApbdesBidang(item: Omit<ApbdesBidang, "id"> & { id?: n
 
   if (!isPlaceholderSupabase) {
     const { id: itemId, ...payload } = item;
-    if (itemId) {
-      const { error } = await supabaseServer.from("apbdes_bidang").update(payload).eq("id", itemId);
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("apbdes_bidang").update(payload).eq("id", itemId).select("id").single();
       if (error) throw new Error(`Gagal memperbarui bidang APBDES: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui bidang APBDES: data tidak ditemukan.");
       resultItem.id = itemId;
     } else {
       const { data, error } = await supabaseServer.from("apbdes_bidang").insert(payload).select().single();
@@ -902,7 +905,7 @@ export async function getProdukHukumList(): Promise<ProdukHukum[]> {
     try {
       const { data, error } = await supabase.from("produk_hukum").select("*").order("id", { ascending: false });
       if (!error && data) {
-        return syncListWithLocal(data as ProdukHukum[], localList, deletedIds);
+        return data as ProdukHukum[];
       }
     } catch (e) {}
   }
@@ -914,9 +917,10 @@ export async function saveProdukHukum(item: Omit<ProdukHukum, "id"> & { id?: num
 
   if (!isPlaceholderSupabase) {
     const { id: itemId, ...payload } = item;
-    if (itemId) {
-      const { error } = await supabaseServer.from("produk_hukum").update(payload).eq("id", itemId);
+    if (itemId != null) {
+      const { data, error } = await supabaseServer.from("produk_hukum").update(payload).eq("id", itemId).select("id").single();
       if (error) throw new Error(`Gagal memperbarui produk hukum: ${error.message}`);
+      if (!data) throw new Error("Gagal memperbarui produk hukum: data tidak ditemukan.");
       resultItem.id = itemId;
     } else {
       const { data, error } = await supabaseServer.from("produk_hukum").insert(payload).select().single();
@@ -1056,10 +1060,6 @@ export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
 }
 
 export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Promise<boolean> {
-  const store = readStore();
-  store.statistik_penduduk = dataInput;
-  writeStore(store);
-
   if (!isPlaceholderSupabase) {
     try {
       // 1. Update ke statistik_ringkasan (tanpa id di payload untuk mencegah error PostgreSQL 428C9)
@@ -1076,17 +1076,18 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
           .from("statistik_ringkasan")
           .update(ringkasanPayload)
           .eq("id", existingRingkasan[0].id);
-        if (errUpdate) console.error("Error update statistik_ringkasan:", errUpdate);
+        if (errUpdate) throw new Error(`Gagal memperbarui statistik ringkasan: ${errUpdate.message}`);
       } else {
         const { error: errInsert } = await supabaseServer
           .from("statistik_ringkasan")
           .insert(ringkasanPayload);
-        if (errInsert) console.error("Error insert statistik_ringkasan:", errInsert);
+        if (errInsert) throw new Error(`Gagal menambahkan statistik ringkasan: ${errInsert.message}`);
       }
 
       // 2. Update statistik_dusun
       if (dataInput.dusunList && dataInput.dusunList.length > 0) {
-        await supabaseServer.from("statistik_dusun").delete().gt("id", -1);
+        const { error: errDeleteDusun } = await supabaseServer.from("statistik_dusun").delete().gt("id", -1);
+        if (errDeleteDusun) throw new Error(`Gagal mengosongkan statistik dusun: ${errDeleteDusun.message}`);
         const { error: errDusun } = await supabaseServer.from("statistik_dusun").insert(
           dataInput.dusunList.map((d) => ({
             nama: String(d.nama || ""),
@@ -1096,24 +1097,26 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
             ...(d.kk !== undefined ? { kk: Number(d.kk) } : {}),
           }))
         );
-        if (errDusun) console.error("Error insert statistik_dusun:", errDusun);
+        if (errDusun) throw new Error(`Gagal menyimpan statistik dusun: ${errDusun.message}`);
       }
 
       // 3. Update statistik_pendidikan
       if (dataInput.pendidikanList && dataInput.pendidikanList.length > 0) {
-        await supabaseServer.from("statistik_pendidikan").delete().gt("id", -1);
+        const { error: errDeletePendidikan } = await supabaseServer.from("statistik_pendidikan").delete().gt("id", -1);
+        if (errDeletePendidikan) throw new Error(`Gagal mengosongkan statistik pendidikan: ${errDeletePendidikan.message}`);
         const { error: errPendidikan } = await supabaseServer.from("statistik_pendidikan").insert(
           dataInput.pendidikanList.map((p) => ({
             name: String(p.name || ""),
             count: Number(p.count || 0),
           }))
         );
-        if (errPendidikan) console.error("Error insert statistik_pendidikan:", errPendidikan);
+        if (errPendidikan) throw new Error(`Gagal menyimpan statistik pendidikan: ${errPendidikan.message}`);
       }
 
       // 4. Update statistik_pekerjaan
       if (dataInput.pekerjaanList && dataInput.pekerjaanList.length > 0) {
-        await supabaseServer.from("statistik_pekerjaan").delete().gt("id", -1);
+        const { error: errDeletePekerjaan } = await supabaseServer.from("statistik_pekerjaan").delete().gt("id", -1);
+        if (errDeletePekerjaan) throw new Error(`Gagal mengosongkan statistik pekerjaan: ${errDeletePekerjaan.message}`);
         const { error: errPekerjaan } = await supabaseServer.from("statistik_pekerjaan").insert(
           dataInput.pekerjaanList.map((p) => ({
             name: String(p.name || ""),
@@ -1121,20 +1124,27 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
             pct: Number(p.pct || 0),
           }))
         );
-        if (errPekerjaan) console.error("Error insert statistik_pekerjaan:", errPekerjaan);
+        if (errPekerjaan) throw new Error(`Gagal menyimpan statistik pekerjaan: ${errPekerjaan.message}`);
       }
 
       // 5. Backup ke tabel tunggal lama
       const { data: existingLama } = await supabaseServer.from("statistik_penduduk").select("id").limit(1);
       if (existingLama && existingLama.length > 0) {
-        await supabaseServer.from("statistik_penduduk").update(dataInput).eq("id", existingLama[0].id);
+        const { error } = await supabaseServer.from("statistik_penduduk").update(dataInput).eq("id", existingLama[0].id);
+        if (error) throw new Error(`Gagal memperbarui statistik penduduk: ${error.message}`);
       } else {
-        await supabaseServer.from("statistik_penduduk").insert(dataInput);
+        const { error } = await supabaseServer.from("statistik_penduduk").insert(dataInput);
+        if (error) throw new Error(`Gagal menambahkan statistik penduduk: ${error.message}`);
       }
-    } catch (e) {
-      console.error("Error updating statistik in Supabase:", e);
+    } catch (error) {
+      console.error("Error updating statistik in Supabase:", error);
+      throw error;
     }
   }
+
+  const store = readStore();
+  store.statistik_penduduk = dataInput;
+  writeStore(store);
 
   return true;
 }
