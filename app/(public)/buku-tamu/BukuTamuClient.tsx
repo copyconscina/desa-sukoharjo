@@ -77,7 +77,7 @@ export default function BukuTamuClient({ initialList }: Props) {
               </label>
               <Input
                 type="text"
-                placeholder="Contoh: Warga Dusun Ngrancah / Pengunjung"
+                placeholder="Contoh: Warga Dusun Jati / Pengunjung"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-[color:var(--line)] bg-[color:var(--parchment)] text-sm focus:outline-none focus:border-[color:var(--forest)]"
