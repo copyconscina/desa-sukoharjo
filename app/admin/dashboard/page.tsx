@@ -81,9 +81,9 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="admin-dashboard flex flex-col gap-8">
       {/* Welcome Banner */}
-      <div>
+      <div className="admin-welcome">
         <p className="eyebrow">Ringkasan Panel</p>
         <h1 className="text-3xl font-heading mt-2" style={{ color: "var(--forest-deep)" }}>
           Selamat Datang, Administrator
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat, idx) => (
           <Link href={stat.href} key={idx} className="no-underline group">
-            <Card className={`bg-[color:var(--card)] p-6 border border-[color:var(--line)] shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between ${stat.color} h-full`}>
+            <Card className={`admin-stat-card bg-[color:var(--card)] p-6 border border-[color:var(--line)] transition-all duration-300 flex items-start justify-between ${stat.color} h-full`}>
               <div className="flex flex-col gap-1">
                 <span className="text-xs uppercase font-mono tracking-wider text-[color:var(--ink-soft)]">
                   {stat.label}
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
 
       {/* Helpful Instructions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-        <Card className="border border-[color:var(--line)] shadow-sm p-6 bg-[color:var(--card)] flex flex-col gap-4">
+        <Card className="admin-surface border border-[color:var(--line)] p-6 bg-[color:var(--card)] flex flex-col gap-4">
           <h3 className="font-heading text-lg" style={{ color: "var(--forest-deep)" }}>
             Panduan Pengelolaan Website
           </h3>
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
           </ul>
         </Card>
 
-        <Card className="border border-[color:var(--line)] shadow-sm p-6 bg-[color:var(--card)] flex flex-col gap-4">
+        <Card className="admin-surface border border-[color:var(--line)] p-6 bg-[color:var(--card)] flex flex-col gap-4">
           <h3 className="font-heading text-lg" style={{ color: "var(--forest-deep)" }}>
             Akses Cepat Pengunjung
           </h3>
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
             <Link
               href="/"
               target="_blank"
-              className="flex items-center justify-between p-3 rounded-lg border border-[color:var(--line)] hover:bg-[color:var(--parchment)] transition-colors duration-200 text-sm no-underline font-medium text-[color:var(--ink)]"
+              className="admin-quick-link flex items-center justify-between p-3 rounded-xl border border-[color:var(--line)] transition-colors duration-200 text-sm no-underline font-medium text-[color:var(--ink)]"
             >
               <span>Beranda Website</span>
               <span className="text-xs text-[color:var(--ink-soft)]">Buka Website Utama →</span>
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
             <Link
               href="/umkm"
               target="_blank"
-              className="flex items-center justify-between p-3 rounded-lg border border-[color:var(--line)] hover:bg-[color:var(--parchment)] transition-colors duration-200 text-sm no-underline font-medium text-[color:var(--ink)]"
+              className="admin-quick-link flex items-center justify-between p-3 rounded-xl border border-[color:var(--line)] transition-colors duration-200 text-sm no-underline font-medium text-[color:var(--ink)]"
             >
               <span>Daftar UMKM Warga</span>
               <span className="text-xs text-[color:var(--ink-soft)]">Lihat Etalase Digital →</span>
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
             <Link
               href="/berita"
               target="_blank"
-              className="flex items-center justify-between p-3 rounded-lg border border-[color:var(--line)] hover:bg-[color:var(--parchment)] transition-colors duration-200 text-sm no-underline font-medium text-[color:var(--ink)]"
+              className="admin-quick-link flex items-center justify-between p-3 rounded-xl border border-[color:var(--line)] transition-colors duration-200 text-sm no-underline font-medium text-[color:var(--ink)]"
             >
               <span>Berita Resmi Desa</span>
               <span className="text-xs text-[color:var(--ink-soft)]">Buka Kabar Balai Desa →</span>

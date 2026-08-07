@@ -110,9 +110,9 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[color:var(--forest-deep)] text-white flex flex-col h-screen sticky top-0 font-sans border-r border-white/10">
+    <aside className="admin-sidebar w-64 text-white flex flex-col h-screen sticky top-0 font-sans">
       {/* Brand Header */}
-      <div className="p-6 border-b border-white/10 flex flex-col gap-1">
+      <div className="admin-sidebar-brand p-6 flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[color:var(--padi-light)] flex items-center justify-center text-[color:var(--forest-deep)] font-bold text-sm">
             SU
@@ -127,7 +127,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-4 py-4 flex flex-col gap-1 overflow-y-auto">
+      <nav className="admin-sidebar-nav flex-1 px-4 py-4 flex flex-col gap-1 overflow-y-auto">
         {links.map((link) => {
           const isActive = link.activeRule(pathname);
           return (
@@ -135,7 +135,7 @@ export default function AdminSidebar() {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200",
+                "admin-nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200",
                 isActive
                   ? "bg-[color:var(--forest)] text-white font-medium shadow-md"
                   : "text-white/70 hover:text-white hover:bg-white/5"
@@ -149,7 +149,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer / Logout */}
-      <div className="p-4 border-t border-white/10 flex flex-col gap-2">
+      <div className="admin-sidebar-footer p-4 flex flex-col gap-2">
         <Link
           href="/"
           target="_blank"

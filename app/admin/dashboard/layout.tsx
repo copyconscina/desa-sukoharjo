@@ -16,14 +16,14 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[color:var(--parchment-2)] text-[color:var(--ink)] font-sans">
+    <div className="admin-shell flex min-h-screen text-[color:var(--ink)] font-sans">
       {/* Sidebar navigation */}
       <AdminSidebar />
 
       {/* Main Content Workspace */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="admin-workspace flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="h-16 border-b border-[color:var(--line)] bg-[color:var(--card)] px-8 flex items-center justify-between sticky top-0 z-30">
+        <header className="admin-topbar h-16 px-8 flex items-center justify-between sticky top-0 z-30">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-[color:var(--ink-soft)]">
               Status Sesi:
@@ -38,7 +38,7 @@ export default async function DashboardLayout({
         </header>
 
         {/* Dynamic Pages */}
-        <main className="flex-1 p-8 overflow-y-auto max-w-7xl w-full mx-auto">
+        <main className="admin-main flex-1 p-8 overflow-y-auto max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
