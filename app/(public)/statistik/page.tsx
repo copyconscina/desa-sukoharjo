@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import { PendidikanDonut, PekerjaanDonut } from "@/components/statistik-charts";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 
 export default async function StatistikPage() {
   const stat = await getStatistikPenduduk();
+
+  const dusunSorted = [...stat.dusunList].sort((a, b) => b.jiwa - a.jiwa);
+  const maxDusun = dusunSorted[0]?.jiwa ?? 1;
 
   return (
     <div className="font-sans">
@@ -29,78 +33,67 @@ export default async function StatistikPage() {
         <div className="wrap flex flex-col gap-8">
           {/* REKAP UTAMA */}
           <div className="grid cols-4 gap-4">
-            <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Total Penduduk</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.totalPenduduk.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-1">Jiwa</span>
+            <Card className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col gap-2">
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] font-medium tracking-wide">Total Penduduk</span>
+              <span className="text-4xl font-bold font-mono text-[color:var(--forest-deep)] tabular-nums">{stat.totalPenduduk.toLocaleString("id-ID")}</span>
+              <span className="text-xs text-[color:var(--ink-soft)]">Jiwa</span>
             </Card>
-            <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Kepala Keluarga</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.totalKk.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-1">KK</span>
+            <Card className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col gap-2">
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] font-medium tracking-wide">Kepala Keluarga</span>
+              <span className="text-4xl font-bold font-mono text-[color:var(--forest-deep)] tabular-nums">{stat.totalKk.toLocaleString("id-ID")}</span>
+              <span className="text-xs text-[color:var(--ink-soft)]">KK</span>
             </Card>
-            <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Laki-Laki</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.lakiLaki.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-1">Jiwa</span>
+            <Card className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col gap-2">
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] font-medium tracking-wide">Laki-Laki</span>
+              <span className="text-4xl font-bold font-mono text-[color:var(--forest-deep)] tabular-nums">{stat.lakiLaki.toLocaleString("id-ID")}</span>
+              <span className="text-xs text-[color:var(--ink-soft)]">Jiwa</span>
             </Card>
-            <Card className="card shadow-none border border-[color:var(--line)] p-5 text-center">
-              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] block mb-1 font-medium">Perempuan</span>
-              <span className="text-3xl font-bold font-heading text-[color:var(--forest-deep)]">{stat.perempuan.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-[color:var(--ink-soft)] block mt-1">Jiwa</span>
+            <Card className="card shadow-none border border-[color:var(--line)] p-5 flex flex-col gap-2">
+              <span className="text-xs uppercase font-mono text-[color:var(--ink-soft)] font-medium tracking-wide">Perempuan</span>
+              <span className="text-4xl font-bold font-mono text-[color:var(--forest-deep)] tabular-nums">{stat.perempuan.toLocaleString("id-ID")}</span>
+              <span className="text-xs text-[color:var(--ink-soft)]">Jiwa</span>
             </Card>
           </div>
 
-          {/* DISTRIBUSI DUSUN */}
+          {/* DISTRIBUSI DUSUN — sorted, top 3 highlighted */}
           <Card className="card shadow-none border border-[color:var(--line)] p-6">
-            <h3 className="font-heading text-xl mb-4 text-[color:var(--ink)]">Sebaran Penduduk per Dusun</h3>
-            <div className="grid cols-3 gap-4">
-              {stat.dusunList.map((dusun, idx) => (
-                <div key={idx} className="p-4 rounded-xl bg-[color:var(--parchment)] border border-[color:var(--line)] flex justify-between items-center">
-                  <div>
-                    <h4 className="font-heading text-lg text-[color:var(--ink)]">{dusun.nama}</h4>
-                    <span className="text-xs font-mono text-[color:var(--ink-soft)]">{dusun.rt} RT · {dusun.rw} RW</span>
+            <h2 className="font-heading text-xl mb-0 text-[color:var(--ink)]">Sebaran Penduduk per Dusun</h2>
+            <div className="flex flex-col gap-1">
+              {dusunSorted.map((dusun, idx) => (
+                <div key={idx} className="pop-bar-row">
+                  <div className="pop-bar-label flex items-center gap-2">
+                    {idx < 3 && (
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono text-white shrink-0"
+                        style={{ background: idx === 0 ? "var(--clay)" : idx === 1 ? "var(--padi)" : "var(--sawah)" }}
+                      >
+                        {idx + 1}
+                      </span>
+                    )}
+                    <span>
+                      {dusun.nama}
+                      <span className="block text-xs font-mono font-normal text-[color:var(--ink-soft)] mt-0.5">{dusun.rt} RT · {dusun.rw} RW</span>
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xl font-bold font-heading text-[color:var(--forest-deep)]">{dusun.jiwa}</span>
-                    <span className="text-xs text-[color:var(--ink-soft)] block">Jiwa</span>
+                  <div className="pop-bar-track">
+                    <div className="pop-bar-fill" style={{ width: `${(dusun.jiwa / maxDusun) * 100}%` }} />
                   </div>
+                  <div className="pop-bar-num">{dusun.jiwa} Jiwa</div>
                 </div>
               ))}
             </div>
           </Card>
 
-          {/* TWO COL: PENDIDIKAN & PEKERJAAN */}
+          {/* TWO COL: PENDIDIKAN & PEKERJAAN sebagai donut chart */}
           <div className="grid cols-2 gap-6">
-            {/* TINGKAT PENDIDIKAN */}
             <Card className="card shadow-none border border-[color:var(--line)] p-6">
-              <h3 className="font-heading text-xl mb-4 text-[color:var(--ink)]">Tingkat Pendidikan</h3>
-              <div className="flex flex-col gap-3">
-                {stat.pendidikanList.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-[color:var(--parchment)] border border-[color:var(--line)]">
-                    <span className="text-sm font-medium text-[color:var(--ink)]">{item.name}</span>
-                    <div className="text-right">
-                      <span className="font-mono text-sm font-bold text-[color:var(--forest-deep)]">{item.count.toLocaleString("id-ID")} Jiwa</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h2 className="font-heading text-xl mb-0 text-[color:var(--ink)]">Tingkat Pendidikan</h2>
+              <PendidikanDonut data={stat.pendidikanList} />
             </Card>
 
-            {/* MATA PENCAHARIAN */}
             <Card className="card shadow-none border border-[color:var(--line)] p-6">
-              <h3 className="font-heading text-xl mb-4 text-[color:var(--ink)]">Mata Pencaharian Utama</h3>
-              <div className="flex flex-col gap-3">
-                {stat.pekerjaanList.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-[color:var(--parchment)] border border-[color:var(--line)]">
-                    <span className="text-sm font-medium text-[color:var(--ink)]">{item.name}</span>
-                    <div className="text-right">
-                      <span className="font-mono text-sm font-bold text-[color:var(--forest-deep)]">{item.count.toLocaleString("id-ID")} Jiwa</span>
-                      <span className="text-xs font-mono text-[color:var(--ink-soft)] block">{item.pct}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h2 className="font-heading text-xl mb-0 text-[color:var(--ink)]">Mata Pencaharian Utama</h2>
+              <PekerjaanDonut data={stat.pekerjaanList} />
             </Card>
           </div>
         </div>

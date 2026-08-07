@@ -70,9 +70,9 @@ export default async function ProfilPage() {
           </div>
           <Card className="vm-card border-none shadow-none text-white">
             <h3 className="text-white">Visi</h3>
-            <p className="text-[#e7e6d6]">"{profil.visi}"</p>
+            <p style={{ fontSize: "20px", fontStyle: "italic", fontWeight: "bold" }}>"{profil.visi}"</p>
             <h3 className="text-white" style={{ marginTop: "20px" }}>Misi</h3>
-            <ul className="text-[#e7e6d6]">
+            <ul className="text-[#e7e6d6]" style={{ listStyleType: "disc" }}>
               {profil.misi.map((m: string, idx: number) => (
                 <li key={idx}>{m}</li>
               ))}
@@ -91,10 +91,6 @@ export default async function ProfilPage() {
             <h2 className="font-heading text-[clamp(1.7rem,3vw,2.5rem)] leading-[1.1] font-semibold tracking-[-0.01em]">Perangkat Desa Sukoharjo</h2>
             {pemdes && (
               <div className="flex justify-center items-center gap-2 mt-2">
-                <Badge className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none">
-                  {pemdes.members}
-                </Badge>
-                <span className="text-xs font-mono text-[color:var(--clay)] font-semibold">{pemdes.leader}</span>
               </div>
             )}
           </div>

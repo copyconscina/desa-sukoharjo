@@ -59,7 +59,7 @@ export default function BukuTamuClient({ initialList }: Props) {
           <h3 className="font-heading mb-4 font-semibold text-2xl text-[color:var(--ink)]">Isi Buku Tamu</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Nama Lengkap *
               </label>
               <Input
@@ -72,12 +72,12 @@ export default function BukuTamuClient({ initialList }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Asal / Instansi / Dusun *
               </label>
               <Input
                 type="text"
-                placeholder="Contoh: Warga Dusun Ngrancah / Pengunjung"
+                placeholder="Contoh: Warga Dusun Jati / Pengunjung"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-[color:var(--line)] bg-[color:var(--parchment)] text-sm focus:outline-none focus:border-[color:var(--forest)]"
@@ -85,7 +85,7 @@ export default function BukuTamuClient({ initialList }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Pesan / Kesan / Aspirasi *
               </label>
               <Textarea
