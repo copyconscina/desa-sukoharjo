@@ -18,7 +18,7 @@ export default async function AgendaPage() {
       <header className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Jadwal & Agenda</p>
-          <h1>Agenda Kegiatan Desa</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Agenda Kegiatan Desa</h1>
           <p>
             Informasi kalender kegiatan pemerintahan, gotong royong warga, dan pelatihan kemasyarakatan di Desa Sukoharjo.
           </p>
@@ -34,7 +34,7 @@ export default async function AgendaPage() {
                   <Badge className="bg-[color:var(--forest)] text-white border-none w-fit mb-3">
                     {item.category}
                   </Badge>
-                  <h3 className="font-heading mb-2 text-[color:var(--ink)]">{item.title}</h3>
+                  <h3 className="font-heading font-semibold text-lg mb-2 text-[color:var(--ink)]">{item.title}</h3>
                   <p className="text-sm text-[color:var(--ink-soft)] mb-4">{item.desc}</p>
                 </div>
                 <div className="border-t border-[color:var(--line)] pt-3 text-xs font-mono text-[color:var(--ink-soft)] flex flex-col gap-1">

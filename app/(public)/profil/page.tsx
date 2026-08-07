@@ -35,7 +35,7 @@ export default async function ProfilPage() {
         </div>
         <div className="wrap">
           <p className="eyebrow on-dark">Profil Desa</p>
-          <h1>Sejarah, arah, dan struktur pemerintahan Sukoharjo</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Sejarah, arah, dan struktur pemerintahan Sukoharjo</h1>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export default async function ProfilPage() {
         <div className="wrap two-col">
           <div>
             <p className="eyebrow">Sejarah Desa</p>
-            <h2 style={{ marginTop: "10px", marginBottom: "24px" }}>
+            <h2 style={{ marginTop: "10px", marginBottom: "24px" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">
               Dari Desa Bonagung menjadi Desa Sukoharjo
             </h2>
             <div className="timeline">
@@ -88,7 +88,7 @@ export default async function ProfilPage() {
             <p className="eyebrow" style={{ textAlign: "center" }}>
               Struktur Pemerintahan
             </p>
-            <h2>Perangkat Desa Sukoharjo</h2>
+            <h2 className="font-heading text-[clamp(1.7rem,3vw,2.5rem)] leading-[1.1] font-semibold tracking-[-0.01em]">Perangkat Desa Sukoharjo</h2>
             {pemdes && (
               <div className="flex justify-center items-center gap-2 mt-2">
                 <Badge className="bg-[color:var(--forest)] text-white text-xs px-3 py-1 border-none">
@@ -157,7 +157,7 @@ export default async function ProfilPage() {
       <section className="block">
         <div className="wrap">
           <p className="eyebrow">Data Kependudukan</p>
-          <h2 style={{ margin: "10px 0 24px" }}>Sebaran penduduk per dusun</h2>
+          <h2 style={{ margin: "10px 0 24px" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">Sebaran penduduk per dusun</h2>
           <div id="pop-chart" className="w-full">
             {dusunList.map((d, idx) => (
               <div key={idx} className="pop-bar-row">
@@ -185,7 +185,7 @@ export default async function ProfilPage() {
       <section className="block on-parchment2">
         <div className="wrap">
           <p className="eyebrow">Kontak & Lokasi</p>
-          <h2 style={{ margin: "10px 0 24px" }}>Kantor Desa Sukoharjo</h2>
+          <h2 style={{ margin: "10px 0 24px" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">Kantor Desa Sukoharjo</h2>
           <div
             style={{
               height: "100%",

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import SukoharjoLogo from "@/components/SukoharjoLogo";
+import styles from "./Navbar.module.css";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -34,18 +35,18 @@ export default function Navbar() {
   }, []);
 
   return (
-    <div className="nav" ref={navRef}>
-      <div className="nav-inner">
-        <Link href="/" className="brand" onClick={closeAll}>
-          <SukoharjoLogo className="brand-mark" />
-          <span className="brand-text">
+    <div className={styles.nav} ref={navRef}>
+      <div className={styles.inner}>
+        <Link href="/" className={styles.brand} onClick={closeAll}>
+          <SukoharjoLogo className={styles.brandMark} />
+          <span className={styles.brandText}>
             Desa Sukoharjo
             <span>Kec. Tirtomoyo · Kab. Wonogiri</span>
           </span>
         </Link>
 
         <button
-          className="nav-toggle"
+          className={styles.toggle}
           id="navToggle"
           aria-label="Buka menu"
           onClick={() => setIsOpen(!isOpen)}
@@ -73,11 +74,11 @@ export default function Navbar() {
           </svg>
         </button>
 
-        <ul className={cn("nav-links", isOpen && "open")} id="navLinks">
+        <ul className={cn(styles.links, isOpen && styles.open)} id="navLinks">
           <li>
             <Link
               href="/"
-              className={cn(pathname === "/" && "active")}
+              className={cn(pathname === "/" && styles.active)}
               onClick={closeAll}
             >
               Beranda
@@ -88,8 +89,8 @@ export default function Navbar() {
           <li className="relative group">
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
-                (pathname.startsWith("/profil") || pathname.startsWith("/potensi") || pathname.startsWith("/lembaga")) && "active"
+                styles.trigger, "flex items-center gap-1 w-full text-left cursor-pointer",
+                (pathname.startsWith("/profil") || pathname.startsWith("/potensi") || pathname.startsWith("/lembaga")) && styles.active
               )}
               onClick={() => toggleDropdown("profil")}
             >
@@ -97,27 +98,27 @@ export default function Navbar() {
             </button>
             <div
               className={cn(
-                "dropdown-menu absolute top-full left-0 mt-1 w-48 bg-[#fbfaf5] border border-[color:var(--line)] rounded-xl shadow-lg py-2 flex-col gap-1 z-50",
+                styles.dropdown, "absolute top-full left-0 mt-1 w-48 bg-[#fbfaf5] border border-[color:var(--line)] rounded-xl shadow-lg py-2 flex-col gap-1 z-50",
                 activeDropdown === "profil" ? "flex" : "hidden"
               )}
             >
               <Link
                 href="/profil"
-                className={cn(pathname.startsWith("/profil") && "active")}
+                className={cn(pathname.startsWith("/profil") && styles.active)}
                 onClick={closeAll}
               >
                 Profil & Sejarah
               </Link>
               <Link
                 href="/lembaga"
-                className={cn(pathname.startsWith("/lembaga") && "active")}
+                className={cn(pathname.startsWith("/lembaga") && styles.active)}
                 onClick={closeAll}
               >
                 Lembaga Desa
               </Link>
               <Link
                 href="/potensi"
-                className={cn(pathname.startsWith("/potensi") && "active")}
+                className={cn(pathname.startsWith("/potensi") && styles.active)}
                 onClick={closeAll}
               >
                 Potensi Desa
@@ -129,8 +130,8 @@ export default function Navbar() {
           <li className="relative group">
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
-                (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/pengaduan")) && "active"
+                styles.trigger, "flex items-center gap-1 w-full text-left cursor-pointer",
+                (pathname.startsWith("/agenda") || pathname.startsWith("/buku-tamu") || pathname.startsWith("/pengaduan")) && styles.active
               )}
               onClick={() => toggleDropdown("layanan")}
             >
@@ -138,27 +139,27 @@ export default function Navbar() {
             </button>
             <div
               className={cn(
-                "dropdown-menu absolute top-full left-0 mt-1 w-52 bg-[#fbfaf5] border border-[color:var(--line)] rounded-xl shadow-lg py-2 flex-col gap-1 z-50",
+                styles.dropdown, "absolute top-full left-0 mt-1 w-52 bg-[#fbfaf5] border border-[color:var(--line)] rounded-xl shadow-lg py-2 flex-col gap-1 z-50",
                 activeDropdown === "layanan" ? "flex" : "hidden"
               )}
             >
               <Link
                 href="/pengaduan"
-                className={cn(pathname.startsWith("/pengaduan") && "active")}
+                className={cn(pathname.startsWith("/pengaduan") && styles.active)}
                 onClick={closeAll}
               >
                 Pengaduan & Lapor Warga
               </Link>
               <Link
                 href="/agenda"
-                className={cn(pathname.startsWith("/agenda") && "active")}
+                className={cn(pathname.startsWith("/agenda") && styles.active)}
                 onClick={closeAll}
               >
                 Agenda Kegiatan
               </Link>
               <Link
                 href="/buku-tamu"
-                className={cn(pathname.startsWith("/buku-tamu") && "active")}
+                className={cn(pathname.startsWith("/buku-tamu") && styles.active)}
                 onClick={closeAll}
               >
                 Buku Tamu Warga
@@ -170,8 +171,8 @@ export default function Navbar() {
           <li className="relative group">
             <button
               className={cn(
-                "nav-dropdown-trigger flex items-center gap-1 w-full text-left cursor-pointer",
-                (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik")) && "active"
+                styles.trigger, "flex items-center gap-1 w-full text-left cursor-pointer",
+                (pathname.startsWith("/produk-hukum") || pathname.startsWith("/apbdes") || pathname.startsWith("/statistik")) && styles.active
               )}
               onClick={() => toggleDropdown("transparansi")}
             >
@@ -179,27 +180,27 @@ export default function Navbar() {
             </button>
             <div
               className={cn(
-                "dropdown-menu absolute top-full left-0 mt-1 w-52 bg-[#fbfaf5] border border-[color:var(--line)] rounded-xl shadow-lg py-2 flex-col gap-1 z-50",
+                styles.dropdown, "absolute top-full left-0 mt-1 w-52 bg-[#fbfaf5] border border-[color:var(--line)] rounded-xl shadow-lg py-2 flex-col gap-1 z-50",
                 activeDropdown === "transparansi" ? "flex" : "hidden"
               )}
             >
               <Link
                 href="/apbdes"
-                className={cn(pathname.startsWith("/apbdes") && "active")}
+                className={cn(pathname.startsWith("/apbdes") && styles.active)}
                 onClick={closeAll}
               >
                 APBDes & Keuangan
               </Link>
               <Link
                 href="/produk-hukum"
-                className={cn(pathname.startsWith("/produk-hukum") && "active")}
+                className={cn(pathname.startsWith("/produk-hukum") && styles.active)}
                 onClick={closeAll}
               >
                 Produk Hukum Desa
               </Link>
               <Link
                 href="/statistik"
-                className={cn(pathname.startsWith("/statistik") && "active")}
+                className={cn(pathname.startsWith("/statistik") && styles.active)}
                 onClick={closeAll}
               >
                 Statistik Kependudukan
@@ -210,7 +211,7 @@ export default function Navbar() {
           <li>
             <Link
               href="/umkm"
-              className={cn(pathname.startsWith("/umkm") && "active")}
+              className={cn(pathname.startsWith("/umkm") && styles.active)}
               onClick={closeAll}
             >
               UMKM
@@ -219,7 +220,7 @@ export default function Navbar() {
           <li>
             <Link
               href="/berita"
-              className={cn(pathname.startsWith("/berita") && "active")}
+              className={cn(pathname.startsWith("/berita") && styles.active)}
               onClick={closeAll}
             >
               Berita
@@ -228,7 +229,7 @@ export default function Navbar() {
           <li>
             <Link
               href="/galeri"
-              className={cn(pathname.startsWith("/galeri") && "active")}
+              className={cn(pathname.startsWith("/galeri") && styles.active)}
               onClick={closeAll}
             >
               Galeri

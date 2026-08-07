@@ -99,7 +99,7 @@ export default function PengaduanClient({ initialList }: Props) {
       <div className="wrap two-col">
         {/* FORM PENGADUAN */}
         <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--card)]">
-          <h3 className="font-heading text-xl mb-4 text-[color:var(--ink)]">Buat Laporan / Pengaduan Baru</h3>
+          <h3 className="font-heading font-semibold text-2xl mb-4 text-[color:var(--ink)]">Buat Laporan / Pengaduan Baru</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">

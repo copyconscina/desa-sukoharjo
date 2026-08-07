@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SukoharjoLogo from "@/components/SukoharjoLogo";
+import styles from "./PublicLayout.module.css";
 
 export default function PublicLayout({
   children,
@@ -11,16 +12,16 @@ export default function PublicLayout({
     <>
       <Navbar />
       <main>{children}</main>
-      <footer>
-        <div className="wrap footer-grid">
+      <footer className={styles.footer}>
+        <div className={`${styles.wrap} ${styles.grid}`}>
           <div>
-            <div className="brand" style={{ marginBottom: "12px" }}>
-              <SukoharjoLogo className="brand-mark" />
-              <span className="brand-text" style={{ color: "#fcfcf8" }}>
+            <div className={styles.brand}>
+              <SukoharjoLogo className={styles.brandMark} />
+              <span className={styles.brandText}>
                 Desa Sukoharjo
               </span>
             </div>
-            <p style={{ color: "#dfe3d6", fontSize: "14px", maxWidth: "320px" }}>
+            <p className={styles.description}>
               Website resmi Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri — media informasi desa dan etalase digital UMKM warga.
             </p>
           </div>
@@ -55,7 +56,7 @@ export default function PublicLayout({
             </ul>
           </div>
         </div>
-        <div className="wrap foot-bottom">
+        <div className={`${styles.wrap} ${styles.bottom}`}>
           <span>Pemerintah Desa Sukoharjo</span>
           <span>2026 KKN Tim II Universitas Diponegoro ©</span>
         </div>

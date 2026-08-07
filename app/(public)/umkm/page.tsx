@@ -19,7 +19,7 @@ export default async function UmkmPage() {
       <div className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Database UMKM</p>
-          <h1>Etalase digital usaha warga Sukoharjo</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Etalase digital usaha warga Sukoharjo</h1>
           <p>Cari dan temukan produk unggulan langsung dari pelaku usaha, lengkap dengan kontak WhatsApp</p>
         </div>
       </div>

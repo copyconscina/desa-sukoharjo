@@ -18,7 +18,7 @@ export default async function StatistikPage() {
       <header className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Demografi Publik</p>
-          <h1>Statistik Kependudukan Desa</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Statistik Kependudukan Desa</h1>
           <p>
             Data agregat kependudukan Desa Sukoharjo (Total {stat.totalPenduduk.toLocaleString("id-ID")} Jiwa · {stat.totalKk.toLocaleString("id-ID")} KK) berdasarkan wilayah dusun, pendidikan, dan mata pencaharian.
           </p>

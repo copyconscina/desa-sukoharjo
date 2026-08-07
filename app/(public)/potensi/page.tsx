@@ -25,7 +25,7 @@ export default async function PotensiPage() {
         </div>
         <div className="wrap">
           <p className="eyebrow on-dark">Potensi Desa</p>
-          <h1>Kekayaan alam dan peluang usaha Desa Sukoharjo</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Kekayaan alam dan peluang usaha Desa Sukoharjo</h1>
           <p>
             Potensi desa ini merangkum sektor yang paling menonjol untuk dikembangkan, dari pertanian dan perkebunan sampai wisata alam perbukitan.
           </p>
@@ -36,7 +36,9 @@ export default async function PotensiPage() {
         <div className="wrap two-col">
           <div>
             <p className="eyebrow">Gambaran Umum</p>
-            <h2 style={{ marginTop: "10px" }}>Potensi utama yang bisa diolah menjadi penggerak ekonomi</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">
+              Potensi utama yang bisa diolah menjadi penggerak ekonomi
+            </h2>
             <p style={{ marginTop: "16px" }}>
               Desa Sukoharjo punya kombinasi lahan pertanian berbukit, hasil perkebunan (kelapa, cengkeh, kopi, janggelan), perajin rumahan, dan industri olahan pangan yang saling terhubung. Beberapa sektor sudah berjalan lewat kelompok tani dan koperasi desa, sisanya masih punya ruang besar untuk dikembangkan lewat promosi digital, kemasan, dan kolaborasi antarwarga.
             </p>
@@ -60,7 +62,9 @@ export default async function PotensiPage() {
         <div className="wrap">
           <div className="section-head" style={{ maxWidth: "100%" }}>
             <p className="eyebrow">Daftar Potensi</p>
-            <h2 style={{ marginTop: "10px" }}>Bidang yang sudah teridentifikasi</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">
+              Bidang yang sudah teridentifikasi
+            </h2>
           </div>
           <div className="grid cols-3" style={{ marginTop: "24px" }}>
             {potensiData.map((potensi) => (
@@ -71,7 +75,7 @@ export default async function PotensiPage() {
                 >
                   {potensi.num}
                 </div>
-                <h3 style={{ marginBottom: "8px" }}>{potensi.title}</h3>
+                <h3 style={{ marginBottom: "8px" }} className="font-semibold text-lg">{potensi.title}</h3>
                 <p style={{ fontSize: "14px" }}>{potensi.desc}</p>
               </Card>
             ))}
@@ -83,24 +87,24 @@ export default async function PotensiPage() {
         <div className="wrap two-col">
           <div>
             <p className="eyebrow">Arah Lanjut</p>
-            <h2 style={{ marginTop: "10px" }}>Potensi yang paling cepat bisa dipasarkan</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">Potensi yang paling cepat bisa dipasarkan</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "24px" }}>
               <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
-                <h3 className="font-heading">Produk olahan pangan</h3>
+                <h3 className="font-heading font-semibold text-lg">Produk olahan pangan</h3>
                 <p> Jamur, tempe, dan aneka makanan ringan punya basis produksi yang sudah berjalan di wilayah Tirtomoyo dan bisa diperkuat lewat kemasan serta branding khas Sukoharjo.</p>
               </Card>
               <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
-                <h3 className="font-heading">Kerajinan lokal</h3>
+                <h3 className="font-heading font-semibold text-lg">Kerajinan lokal</h3>
                 <p>Anyaman bambu dan genteng punya nilai jual tinggi jika dipaketkan sebagai produk khas desa dan dipromosikan lewat kanal digital.</p>
               </Card>
               <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
-                <h3 className="font-heading">Wisata desa</h3>
+                <h3 className="font-heading font-semibold text-lg">Wisata desa</h3>
                 <p>Lahan berbukit yang tengah direhabilitasi lewat penanaman sengon berpotensi jadi jalur agrowisata dan edukasi konservasi lahan, sekaligus mendukung UMKM setempat.</p>
               </Card>
             </div>
           </div>
           <div className="vm-card border-none shadow-none">
-            <h3>Langkah yang bisa diambil</h3>
+            <h3 className="font-heading text-[1.2rem] font-semibold tracking-[-0.01em]">Langkah yang bisa diambil</h3>
             <p>
               Mulai dari pendataan pelaku usaha, pelatihan pengemasan hasil kebun dan olahan pangan, sampai promosi lewat website desa dan media sosial dengan koperasi desa (KDMP) sebagai penggerak awal.
             </p>

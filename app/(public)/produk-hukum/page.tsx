@@ -20,7 +20,7 @@ export default async function ProdukHukumPage() {
       <header className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Transparansi Hukum</p>
-          <h1>Produk Hukum Desa</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Produk Hukum Desa</h1>
           <p>
             Dokumen publik Peraturan Desa (Perdes), Peraturan Kepala Desa, serta SK Kades Sukoharjo yang dapat diakses warga.
           </p>

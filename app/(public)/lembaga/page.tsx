@@ -19,7 +19,7 @@ export default async function LembagaPage() {
       <header className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Struktur Kelembagaan</p>
-          <h1>Lembaga Desa Sukoharjo</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Lembaga Desa Sukoharjo</h1>
           <p>
             Mengenal struktur kelembagaan, kemitraan pemerintah desa, dan organisasi kemasyarakatan yang aktif membangun desa.
           </p>
@@ -36,7 +36,7 @@ export default async function LembagaPage() {
                   <Badge className="bg-[color:var(--forest)] text-white border-none w-fit mb-2">
                     {item.members}
                   </Badge>
-                  <h3 className="font-heading text-xl text-[color:var(--ink)] mb-1">{item.name}</h3>
+                  <h3 className="font-heading font-semibold text-xl text-[color:var(--ink)] mb-1">{item.name}</h3>
                   <p className="text-xs font-mono text-[color:var(--clay)] font-semibold mb-3">{item.leader}</p>
                   <p className="text-sm text-[color:var(--ink-soft)] leading-relaxed">{item.desc}</p>
                 </div>

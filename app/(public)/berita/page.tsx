@@ -28,7 +28,7 @@ export default async function BeritaPage() {
         </div>
         <div className="wrap">
           <p className="eyebrow on-dark">Berita &amp; Pengumuman</p>
-          <h1>Kegiatan, agenda, dan pengumuman resmi desa</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Kegiatan, agenda, dan pengumuman resmi desa</h1>
         </div>
       </div>
 

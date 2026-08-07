@@ -19,7 +19,7 @@ export default async function GaleriPage() {
       <div className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Galeri</p>
-          <h1>Dokumentasi Desa Sukoharjo</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Dokumentasi Desa Sukoharjo</h1>
         </div>
       </div>
 

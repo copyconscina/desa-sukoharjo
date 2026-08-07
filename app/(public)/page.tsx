@@ -34,7 +34,7 @@ export default async function Home() {
         </div>
         <div className="hero-inner">
           <p className="eyebrow on-dark">Website Resmi Pemerintah Desa</p>
-          <h1>
+          <h1 className="font-heading text-[clamp(2.4rem,5vw,4.2rem)] leading-[1.03] font-semibold tracking-[-0.01em]">
             Sukoharjo, desa yang tumbuh dari <em>sawah, karya, dan usaha warganya.</em>
           </h1>
           <p className="lead">
@@ -77,7 +77,7 @@ export default async function Home() {
         <div className="wrap two-col">
           <div>
             <p className="eyebrow">Profil Singkat</p>
-            <h2 style={{ marginTop: "10px" }}>Pesona Bentang Alam Perbukitan di Jalur Tirtomoyo–Baturetno</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,2vw,4rem)]  font-semibold leading-[1.03] tracking-[-0.01em]">Pesona Bentang Alam Perbukitan di Jalur Tirtomoyo–Baturetno</h2>
             <p style={{ marginTop: "16px" }}>
               Terletak strategis di Kecamatan Tirtomoyo, Kabupaten Wonogiri, Jawa Tengah, Desa Sukoharjo membentang di atas wilayah seluas 837,77 hektare. Potensi geografisnya diwarnai oleh bentang alam berupa 637,31 hektare lahan kering produktif serta 101,29 hektare area persawahan yang subur. Secara batas wilayah administratif, Desa Sukoharjo berdampingan langsung dengan Desa Girirejo di utara, Desa Hargosari di selatan, Desa Hargorejo di timur, serta Desa Wiroko di sebelah barat.
             </p>
@@ -112,7 +112,9 @@ export default async function Home() {
         <div className="wrap">
           <div className="section-head" style={{ maxWidth: "100%" }}>
             <p className="eyebrow">Potensi Desa</p>
-            <h2 style={{ marginTop: "10px" }}>Kekayaan Sumber Daya dan Potensinya</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,2vw,4rem)] font-heading font-semibold tracking-[-0.01em]">
+              Kekayaan Sumber Daya dan Potensinya
+            </h2>
           </div>
           <div className="grid cols-4" style={{ marginTop: "24px" }}>
             {potensiData.slice(0, 4).map((p) => (
@@ -123,7 +125,9 @@ export default async function Home() {
                 >
                   {p.num}
                 </div>
-                <h3 style={{ marginBottom: "8px" }}>{p.title}</h3>
+                <h3 style={{ marginBottom: "8px" }} className="font-heading text-[clamp(0.5rem,2vw,1.25rem)] font-semibold tracking-[-0.01em]">
+                  {p.title}
+                </h3>
                 <p style={{ fontSize: "13px" }}>{p.desc}</p>
               </Card>
             ))}
@@ -141,7 +145,7 @@ export default async function Home() {
         <div className="wrap">
           <div className="section-head">
             <p className="eyebrow">Dokumentasi</p>
-            <h2 style={{ marginTop: "10px" }}>Momen di Desa Sukoharjo</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,2vw,4rem)] font-heading font-semibold">Momen di Desa Sukoharjo</h2>
           </div>
           <div className="gal-grid" style={{ marginTop: "24px" }}>
             {galeriData.slice(0, 4).map((g, idx) => (
@@ -167,7 +171,9 @@ export default async function Home() {
         <div className="wrap">
           <div className="section-head">
             <p className="eyebrow">Informasi Terbaru</p>
-            <h2 style={{ marginTop: "10px" }}>Kabar dari Balai Desa</h2>
+            <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,2vw,4rem)] font-heading font-semibold">
+              Kabar dari Balai Desa
+            </h2>
           </div>
           <div className="grid cols-3" style={{ marginTop: "24px" }}>
             {beritaData.slice(0, 3).map((b, idx) => {

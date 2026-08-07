@@ -18,7 +18,7 @@ export default async function PengaduanPage() {
       <header className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Layanan Aspirasi Warga</p>
-          <h1>Pengaduan & Lapor Warga</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Pengaduan & Lapor Warga</h1>
           <p>
             Sampaikan laporan masalah infrastruktur, fasilitas publik, atau pelayanan desa secara transparan.
           </p>

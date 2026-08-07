@@ -98,7 +98,7 @@ export default function UmkmList({ initialUmkmData }: Props) {
                   </div>
                   <div className="body flex flex-col justify-between flex-1 p-5">
                     <div>
-                      <h3 className="font-heading text-lg text-[color:var(--ink)] leading-snug">{u.name}</h3>
+                      <h3 className="font-heading font-semibold text-lg text-[color:var(--ink)] leading-snug">{u.name}</h3>
                       <div className="owner text-xs text-[color:var(--ink-soft)] mt-1">
                         {u.owner} · sejak {u.year}
                       </div>

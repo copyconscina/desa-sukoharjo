@@ -20,7 +20,7 @@ export default async function BukuTamuPage() {
       <header className="page-header">
         <div className="wrap">
           <p className="eyebrow on-dark">Layanan Publik</p>
-          <h1>Buku Tamu Warga & Pengunjung</h1>
+          <h1 className="font-heading font-semibold tracking-[-0.01em]">Buku Tamu Warga & Pengunjung</h1>
           <p>
             Sampaikan saran, kesan, pesan, atau salam hangat Anda untuk Pemerintah Desa dan warga Desa Sukoharjo.
           </p>
