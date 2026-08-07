@@ -56,10 +56,10 @@ export default function BukuTamuClient({ initialList }: Props) {
       <div className="wrap two-col">
         {/* FORM ISI BUKU TAMU */}
         <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--card)]">
-          <h3 className="font-heading mb-4 text-xl text-[color:var(--ink)]">Isi Buku Tamu</h3>
+          <h2 className="font-heading mb-2 text-xl text-[color:var(--ink)]">Isi Buku Tamu</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Nama Lengkap *
               </label>
               <Input
@@ -72,7 +72,7 @@ export default function BukuTamuClient({ initialList }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Asal / Instansi / Dusun *
               </label>
               <Input
@@ -85,7 +85,7 @@ export default function BukuTamuClient({ initialList }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Pesan / Kesan / Aspirasi *
               </label>
               <Textarea

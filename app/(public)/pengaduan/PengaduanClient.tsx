@@ -99,15 +99,15 @@ export default function PengaduanClient({ initialList }: Props) {
       <div className="wrap two-col">
         {/* FORM PENGADUAN */}
         <Card className="card shadow-none border border-[color:var(--line)] p-6 bg-[color:var(--card)]">
-          <h3 className="font-heading text-xl mb-4 text-[color:var(--ink)]">Buat Laporan / Pengaduan Baru</h3>
+          <h2 className="font-heading text-xl mb-2 text-[color:var(--ink)]">Laporan / Pengaduan Baru</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
-                Nama Pelapor (Opsional/Bisa Anonim)
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
+                Nama Pelapor 
               </label>
               <Input
                 type="text"
-                placeholder="Nama Anda atau biarkan kosong jika anonim"
+                placeholder="Nama Anda atau biarkan kosong jika Anonim"
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-[color:var(--line)] bg-[color:var(--parchment)] text-sm focus:outline-none focus:border-[color:var(--forest)]"
@@ -115,12 +115,12 @@ export default function PengaduanClient({ initialList }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Dusun / Alamat Pelapor
               </label>
               <Input
                 type="text"
-                placeholder="Contoh: Dusun Sukorejo / RT 02 RW 01"
+                placeholder="Contoh: Dusun Sukoharjo / RT 02 RW 02"
                 value={dusun}
                 onChange={(e) => setDusun(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-[color:var(--line)] bg-[color:var(--parchment)] text-sm focus:outline-none focus:border-[color:var(--forest)]"
@@ -128,7 +128,7 @@ export default function PengaduanClient({ initialList }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Judul Laporan *
               </label>
               <Input
@@ -142,7 +142,7 @@ export default function PengaduanClient({ initialList }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Rincian Laporan & Lokasi *
               </label>
               <Textarea
@@ -157,7 +157,7 @@ export default function PengaduanClient({ initialList }: Props) {
 
             {/* FOTO BUKTI PENGADUAN (NO CROPPING) */}
             <div>
-              <label className="block text-xs font-mono uppercase text-[color:var(--ink-soft)] mb-1">
+              <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Foto Bukti / Lampiran (Opsional)
               </label>
               <input
@@ -172,9 +172,6 @@ export default function PengaduanClient({ initialList }: Props) {
                   file:bg-[color:var(--parchment)] file:text-[color:var(--forest)]
                   hover:file:bg-[color:var(--line)] cursor-pointer"
               />
-              <span className="text-[10px] text-[color:var(--ink-soft)] mt-1 block">
-                Format: JPG, PNG, WebP, HEIC (Maksimal 15MB, dikompresi otomatis tanpa perlu dikrop).
-              </span>
             </div>
 
             {previewUrl && (

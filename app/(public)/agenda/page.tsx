@@ -20,7 +20,7 @@ export default async function AgendaPage() {
           <p className="eyebrow on-dark">Jadwal & Agenda</p>
           <h1>Agenda Kegiatan Desa</h1>
           <p>
-            Informasi kalender kegiatan pemerintahan, gotong royong warga, dan pelatihan kemasyarakatan di Desa Sukoharjo.
+            Informasi kalender kegiatan pemerintahan, gotong royong, dan agenda kemasyarakatan di Desa Sukoharjo.
           </p>
         </div>
       </header>

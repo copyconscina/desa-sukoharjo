@@ -9,7 +9,7 @@ export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Potensi Desa — Desa Sukoharjo",
-  description: "Kekayaan alam, pertanian, kerajinan, peternakan, dan peluang pengembangan Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri.",
+  description: "Jelajahi potensi unggulan Desa Sukoharjo yang menjadi kekuatan dalam mendukung pembangunan dan kesejahteraan masyarakat.",
 };
 
 export default async function PotensiPage() {
@@ -27,7 +27,7 @@ export default async function PotensiPage() {
           <p className="eyebrow on-dark">Potensi Desa</p>
           <h1>Kekayaan alam dan peluang usaha Desa Sukoharjo</h1>
           <p>
-            Potensi desa ini merangkum sektor yang paling menonjol untuk dikembangkan, dari pertanian dan perkebunan sampai wisata alam perbukitan.
+            Jelajahi potensi unggulan Desa Sukoharjo yang menjadi kekuatan dalam mendukung pembangunan dan kesejahteraan masyarakat.
           </p>
         </div>
       </div>
@@ -38,19 +38,19 @@ export default async function PotensiPage() {
             <p className="eyebrow">Gambaran Umum</p>
             <h2 style={{ marginTop: "10px" }}>Potensi utama yang bisa diolah menjadi penggerak ekonomi</h2>
             <p style={{ marginTop: "16px" }}>
-              Desa Sukoharjo punya kombinasi lahan pertanian berbukit, hasil perkebunan (kelapa, cengkeh, kopi, janggelan), perajin rumahan, dan industri olahan pangan yang saling terhubung. Beberapa sektor sudah berjalan lewat kelompok tani dan koperasi desa, sisanya masih punya ruang besar untuk dikembangkan lewat promosi digital, kemasan, dan kolaborasi antarwarga.
+              Desa Sukoharjo memiliki potensi unggulan di sektor pertanian, perkebunan, industri rumah tangga, dan pengolahan pangan. Didukung oleh kelompok usaha tiap dusun, potensi tersebut masih memiliki peluang besar untuk dikembangkan melalui inovasi, promosi digital, dan kolaborasi masyarakat.
             </p>
             <p style={{ marginTop: "12px" }}>
-              Halaman ini dibuat untuk memudahkan warga, investor kecil, maupun pendamping desa melihat bidang mana yang paling siap didorong lebih jauh.
+              Halaman ini dibuat untuk memudahkan warga, investor, maupun pendamping desa melihat bidang mana yang paling siap didorong lebih jauh.
             </p>
           </div>
-          <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "24px" }}>
+          <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
             <p className="eyebrow">Fokus Pengembangan</p>
-            <ul style={{ marginTop: "14px", paddingLeft: "18px", color: "var(--ink-soft)", display: "grid", gap: "10px" }}>
-              <li>Konservasi dan penguatan lahan pertanian kering berbukit.</li>
-              <li>Pengemasan hasil perkebunan serta produk industri rumahan.</li>
-              <li>Digitalisasi promosi kerajinan anyaman bambu dan genteng khas Sukoharjo.</li>
-              <li>Penguatan kelembagaan ekonomi desa lewat Koperasi Desa Merah Putih (KDMP).</li>
+            <ul style={{ marginTop: "0px", paddingLeft: "14px", color: "var(--ink-soft)", display: "grid", gap: "8px", listStyleType: "disc" }}>
+              <li>Meningkatkan produktivitas pertanian, perkebunan, dan industri rumahan.</li>
+              <li>Mengembangkan produk olahan lokal serta memperluas pemasaran melalui pemanfaatan teknologi digital.</li>
+              <li>Meningkatkan kualitas infrastruktur pendukung sektor pertanian dan perekonomian desa.</li>
+              <li>Memperkuat peran BUMDes, kelompok tani, dan kelompok usaha dalam mendukung pertumbuhan ekonomi desa.</li>
             </ul>
           </Card>
         </div>
@@ -62,7 +62,7 @@ export default async function PotensiPage() {
             <p className="eyebrow">Daftar Potensi</p>
             <h2 style={{ marginTop: "10px" }}>Bidang yang sudah teridentifikasi</h2>
           </div>
-          <div className="grid cols-3" style={{ marginTop: "24px" }}>
+          <div className="grid cols-3" style={{ marginTop: "18px" }}>
             {potensiData.map((potensi) => (
               <Card key={potensi.num} className="card shadow-none border border-[color:var(--line)]" style={{ padding: "22px" }}>
                 <div
@@ -71,7 +71,7 @@ export default async function PotensiPage() {
                 >
                   {potensi.num}
                 </div>
-                <h3 style={{ marginBottom: "8px" }}>{potensi.title}</h3>
+                <h2 style={{ marginBottom: "8px" }}>{potensi.title}</h2>
                 <p style={{ fontSize: "14px" }}>{potensi.desc}</p>
               </Card>
             ))}
@@ -85,27 +85,27 @@ export default async function PotensiPage() {
             <p className="eyebrow">Arah Lanjut</p>
             <h2 style={{ marginTop: "10px" }}>Potensi yang paling cepat bisa dipasarkan</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "24px" }}>
-              <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
+              <Card className="card border border-[color:var(--line)] shadow-none [--card-spacing:8px]"  style={{ padding: "20px" }}>
                 <h3 className="font-heading">Produk olahan pangan</h3>
-                <p> Jamur, tempe, dan aneka makanan ringan punya basis produksi yang sudah berjalan di wilayah Tirtomoyo dan bisa diperkuat lewat kemasan serta branding khas Sukoharjo.</p>
+                <p> Jamur, tempe, dan aneka makanan ringan punya basis produksi yang sudah berjalan di wilayah Tirtomoyo dan bisa diperkuat lewat kemasan serta branding khas Desa Sukoharjo.</p>
               </Card>
-              <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
+              <Card className="card border border-[color:var(--line)] shadow-none [--card-spacing:8px]"  style={{ padding: "20px" }}>
                 <h3 className="font-heading">Kerajinan lokal</h3>
-                <p>Anyaman bambu dan genteng punya nilai jual tinggi jika dipaketkan sebagai produk khas desa dan dipromosikan lewat kanal digital.</p>
+                <p>Anyaman bambu dan batu bata memiliki nilai jual tinggi jika dipaketkan sebagai produk khas desa dan dipromosikan lewat kanal digital.</p>
               </Card>
-              <Card className="card border border-[color:var(--line)] shadow-none" style={{ padding: "20px" }}>
+              <Card className="card border border-[color:var(--line)] shadow-none [--card-spacing:8px]" style={{ padding: "20px" }}>
                 <h3 className="font-heading">Wisata desa</h3>
-                <p>Lahan berbukit yang tengah direhabilitasi lewat penanaman sengon berpotensi jadi jalur agrowisata dan edukasi konservasi lahan, sekaligus mendukung UMKM setempat.</p>
+                <p>Lahan berbukit dengan pemandangan yang indah berpotensi jadi jalur agrowisata dan edukasi konservasi lahan, yang sekaligus dapat mendukung UMKM setempat.</p>
               </Card>
             </div>
           </div>
           <div className="vm-card border-none shadow-none">
             <h3>Langkah yang bisa diambil</h3>
             <p>
-              Mulai dari pendataan pelaku usaha, pelatihan pengemasan hasil kebun dan olahan pangan, sampai promosi lewat website desa dan media sosial dengan koperasi desa (KDMP) sebagai penggerak awal.
+              Mulai dari pendataan pelaku usaha, pelatihan pengemasan hasil kebun dan olahan pangan, sampai promosi lewat website desa dan media sosial dengan kelompok tani sebagai penggerak awal.
             </p>
             <p style={{ marginTop: "14px" }}>
-              Jika ingin melihat pelaku usaha yang sudah berjalan, buka database UMKM. Jika ingin mengenal latar wilayahnya, lihat profil desa.
+              Untuk melihat pelaku usaha yang sudah berjalan, buka database UMKM. Untuk mengenal latar wilayahnya, lihat profil desa.
             </p>
             <div className="hero-cta" style={{ marginTop: "24px" }}>
               <Button asChild className="btn btn-primary border-none">
