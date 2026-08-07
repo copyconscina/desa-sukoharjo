@@ -33,18 +33,19 @@ export default async function APBDesPage() {
           <div className="flex-1 py-5 sm:py-6 sm:px-6" style={{ containerType: "inline-size" }}>
             <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Total Pendapatan Desa</span>
             <div className="num" style={{ fontSize: "clamp(1.4rem, 7cqw, 2rem)", marginTop: "4px" }}>{apbdesRingkasan.pendapatan}</div>
-            <span className="text-xs text-[color:var(--ink-soft)] block mt-1 leading-relaxed">Dana Desa, ADD, Bagi Hasil Pajak & PADes</span>
+            <span className="text-xs text-[color:var(--ink-soft)] block mt-1 leading-relaxed">Pendapatan didapat dari Hasil Usaha Desa, Dana Desa, Bagi hasil Pajak dan Retribusi, dan Bantuan Keuangan Provinsi</span>
           </div>
 
           <div className="flex-1 py-5 sm:py-6 sm:px-6" style={{ containerType: "inline-size" }}>
             <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Total Belanja Desa</span>
             <div className="num" style={{ fontSize: "clamp(1.4rem, 7cqw, 2rem)", marginTop: "4px" }}>{apbdesRingkasan.belanja}</div>
-            <span className="text-xs text-[color:var(--ink-soft)] block mt-1 leading-relaxed">Pembangunan, Pemerintahan & Pemberdayaan</span>
+            <span className="text-xs text-[color:var(--ink-soft)] block mt-1 leading-relaxed">Belanja Desa digunakan untuk Pembangunan, Pemerintahan & Pemberdayaan masyarakat Desa</span>
           </div>
 
           <div className="flex-1 py-5 sm:py-6 sm:px-6" style={{ containerType: "inline-size" }}>
             <span className="text-xs font-mono uppercase text-[color:var(--forest-deep)] font-semibold tracking-wider block">Pembiayaan</span>
             <div className="num" style={{ fontSize: "clamp(1.4rem, 7cqw, 2rem)", marginTop: "4px" }}>{apbdesRingkasan.pembiayaan}</div>
+            <span className="text-xs text-[color:var(--ink-soft)] block mt-1 leading-relaxed">Pembiayaan yang digunakan untuk kebutuhan operasional dan investasi Desa</span>
           </div>
         </div>
 

@@ -30,8 +30,8 @@ export function PendidikanDonut({ data }: { data: PendidikanItem[] }) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number) => [`${value.toLocaleString("id-ID")} Jiwa`, ""]}
-              contentStyle={{ borderRadius: 8, border: "1px solid var(--line)", fontSize: 12 }}
+            formatter={(value) => [`${Number(value ?? 0).toLocaleString("id-ID")} Jiwa`, ""]}
+            contentStyle={{ borderRadius: 8, border: "1px solid var(--line)", fontSize: 12 }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -48,7 +48,10 @@ export function PendidikanDonut({ data }: { data: PendidikanItem[] }) {
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PENDIDIKAN_COLORS[idx % PENDIDIKAN_COLORS.length] }} />
               <span className="text-sm text-[color:var(--ink)] truncate">{item.name}</span>
             </div>
-            <span className="text-xs font-mono font-bold text-[color:var(--ink-soft)] shrink-0">{item.count.toLocaleString("id-ID")}</span>
+            <div className="text-right shrink-0">
+              <span className="text-xs font-mono font-bold text-[color:var(--ink-soft)]">{item.count.toLocaleString("id-ID")}</span>
+              <span className="text-xs font-mono text-[color:var(--clay)] ml-1.5">{((item.count / total) * 100).toFixed(1)}%</span>
+            </div>
           </div>
         ))}
       </div>
@@ -78,8 +81,8 @@ export function PekerjaanDonut({ data }: { data: PekerjaanItem[] }) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number) => [`${value.toLocaleString("id-ID")} Jiwa`, ""]}
-              contentStyle={{ borderRadius: 8, border: "1px solid var(--line)", fontSize: 12 }}
+            formatter={(value) => [`${Number(value ?? 0).toLocaleString("id-ID")} Jiwa`, ""]}
+            contentStyle={{ borderRadius: 8, border: "1px solid var(--line)", fontSize: 12 }}
             />
           </PieChart>
         </ResponsiveContainer>
