@@ -30,6 +30,7 @@ export async function uploadSingleFile(file: File): Promise<string> {
       // cannot load its native binary; uploads should still work without it.
       const sharp = (await import("sharp")).default;
       outputBuffer = await sharp(inputBuffer)
+        .rotate()
         .resize({
           width: 1920,
           height: 1920,

@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Umkm } from "@/lib/data";
-import { saveUmkmAction, deleteUmkmAction, uploadImageAction } from "@/app/admin/actions";
+import { saveUmkmAction, deleteUmkmAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
 import ConfirmModal from "@/components/ConfirmModal";
 import { parseImagesList } from "@/lib/utils";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
+import { uploadImageDirect } from "@/lib/direct-image-upload";
 
 interface Props {
   initialUmkm: Umkm[];
@@ -240,10 +241,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       const uploadedUrls: string[] = [];
 
       for (const draft of draftFiles) {
-        const formData = new FormData();
-        formData.append("file", draft.file);
-        
-        const uploadRes = await uploadImageAction(formData);
+        const uploadRes = await uploadImageDirect(draft.file);
         if (!uploadRes.success || !uploadRes.url) {
           setError(uploadRes.error || `Gagal mengunggah foto ${draft.file.name}`);
           return;

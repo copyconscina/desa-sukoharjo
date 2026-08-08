@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Berita } from "@/lib/data";
-import { addBeritaAction, updateBeritaAction, deleteBeritaAction, uploadImageAction } from "@/app/admin/actions";
+import { addBeritaAction, updateBeritaAction, deleteBeritaAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
 import ConfirmModal from "@/components/ConfirmModal";
 import { parseImagesList } from "@/lib/utils";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
+import { uploadImageDirect } from "@/lib/direct-image-upload";
 
 interface Props {
   initialNews: Berita[];
@@ -171,10 +172,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
       const uploadedUrls: string[] = [];
 
       for (const draft of draftFiles) {
-        const formData = new FormData();
-        formData.append("file", draft.file);
-
-        const uploadRes = await uploadImageAction(formData);
+        const uploadRes = await uploadImageDirect(draft.file);
         if (!uploadRes.success || !uploadRes.url) {
           setError(uploadRes.error || `Gagal mengunggah foto ${draft.file.name}`);
           return;

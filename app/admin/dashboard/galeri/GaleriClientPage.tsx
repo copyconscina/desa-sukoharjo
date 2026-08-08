@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { GaleriItem } from "@/lib/data";
-import { addGaleriAction, updateGaleriAction, deleteGaleriAction, uploadImageAction } from "@/app/admin/actions";
+import { addGaleriAction, updateGaleriAction, deleteGaleriAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
 import { parseImagesList } from "@/lib/utils";
 import ConfirmModal from "@/components/ConfirmModal";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
+import { uploadImageDirect } from "@/lib/direct-image-upload";
 
 interface Props {
   initialGallery: GaleriItem[];
@@ -170,10 +171,7 @@ export default function GaleriClientPage({ initialGallery }: Props) {
 
       // Upload all draft files
       for (const item of draftFiles) {
-        const formData = new FormData();
-        formData.append("file", item.file);
-
-        const uploadRes = await uploadImageAction(formData);
+        const uploadRes = await uploadImageDirect(item.file);
         if (!uploadRes.success || !uploadRes.url) {
           setError(uploadRes.error || `Gagal mengunggah foto "${item.file.name}".`);
           return;
