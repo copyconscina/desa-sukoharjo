@@ -1,6 +1,5 @@
 import { supabaseServer } from "@/utils/supabase/admin";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
-import sharp from "sharp";
 
 export async function uploadSingleFile(file: File): Promise<string> {
   if (!file || file.size === 0) {
@@ -27,6 +26,9 @@ export async function uploadSingleFile(file: File): Promise<string> {
   // Kompresi otomatis untuk semua format gambar raster menggunakan sharp
   if (file.type !== "image/svg+xml") {
     try {
+      // Load sharp only when compression is needed. Some serverless runtimes
+      // cannot load its native binary; uploads should still work without it.
+      const sharp = (await import("sharp")).default;
       outputBuffer = await sharp(inputBuffer)
         .resize({
           width: 1920,
