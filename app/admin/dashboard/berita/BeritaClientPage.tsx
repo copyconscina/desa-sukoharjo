@@ -21,6 +21,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { parseImagesList } from "@/lib/utils";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 import { uploadImageDirect } from "@/lib/direct-image-upload";
+import ImageCropDialog from "@/components/ImageCropDialog";
 
 interface Props {
   initialNews: Berita[];
@@ -48,6 +49,8 @@ export default function BeritaClientPage({ initialNews }: Props) {
   // Multi-Image Upload States
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
   const [draftFiles, setDraftFiles] = useState<DraftFileItem[]>([]);
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -107,15 +110,17 @@ export default function BeritaClientPage({ initialNews }: Props) {
       return;
     }
 
-    const newDrafts: DraftFileItem[] = selectedFiles.map((file) => ({
-      id: Math.random().toString(36).substring(2, 9),
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-
-    setDraftFiles((prev) => [...prev, ...newDrafts]);
+    setCropQueue(selectedFiles.slice(1));
+    setCropFile(selectedFiles[0]);
     setError(null);
     e.target.value = "";
+  };
+
+  const saveCroppedFile = (file: File) => {
+    setDraftFiles((prev) => [...prev, { id: Math.random().toString(36).substring(2, 9), file, previewUrl: URL.createObjectURL(file) }]);
+    const [next, ...rest] = cropQueue;
+    setCropQueue(rest);
+    setCropFile(next || null);
   };
 
   const moveExistingUrl = (index: number, direction: "left" | "right") => {
@@ -576,6 +581,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
         isLoading={loading}
       />
+      {cropFile && <ImageCropDialog file={cropFile} onSave={saveCroppedFile} onCancel={() => { setCropQueue([]); setCropFile(null); }} />}
     </div>
   );
 }

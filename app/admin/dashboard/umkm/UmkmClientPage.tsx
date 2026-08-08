@@ -20,6 +20,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { parseImagesList } from "@/lib/utils";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 import { uploadImageDirect } from "@/lib/direct-image-upload";
+import ImageCropDialog from "@/components/ImageCropDialog";
 
 interface Props {
   initialUmkm: Umkm[];
@@ -57,6 +58,8 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
   const [draftFiles, setDraftFiles] = useState<DraftFileItem[]>([]);
   const [currentGrad, setCurrentGrad] = useState<string | undefined>(undefined);
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,15 +154,17 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
       return;
     }
     
-    const newDrafts: DraftFileItem[] = selectedFiles.map((file) => ({
-      id: Math.random().toString(36).substring(2, 9),
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-
-    setDraftFiles((prev) => [...prev, ...newDrafts]);
+    setCropQueue(selectedFiles.slice(1));
+    setCropFile(selectedFiles[0]);
     setError(null);
     e.target.value = "";
+  };
+
+  const saveCroppedFile = (file: File) => {
+    setDraftFiles((prev) => [...prev, { id: Math.random().toString(36).substring(2, 9), file, previewUrl: URL.createObjectURL(file) }]);
+    const [next, ...rest] = cropQueue;
+    setCropQueue(rest);
+    setCropFile(next || null);
   };
 
   const moveExistingUrl = (index: number, direction: "left" | "right") => {
@@ -799,6 +804,7 @@ export default function UmkmClientPage({ initialUmkm }: Props) {
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
         isLoading={loading}
       />
+      {cropFile && <ImageCropDialog file={cropFile} onSave={saveCroppedFile} onCancel={() => { setCropQueue([]); setCropFile(null); }} />}
     </div>
   );
 }
