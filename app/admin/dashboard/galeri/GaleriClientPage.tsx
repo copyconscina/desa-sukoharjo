@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { parseImagesList } from "@/lib/utils";
 import ConfirmModal from "@/components/ConfirmModal";
+import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 
 interface Props {
   initialGallery: GaleriItem[];
@@ -61,8 +62,16 @@ export default function GaleriClientPage({ initialGallery }: Props) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
+    const selectedFiles = Array.from(e.target.files);
+    const oversizedFile = selectedFiles.find((file) => file.size > MAX_UPLOAD_FILE_BYTES);
+    if (oversizedFile) {
+      setError(`Foto "${oversizedFile.name}" melebihi batas ${MAX_UPLOAD_FILE_LABEL}.`);
+      e.target.value = "";
+      return;
+    }
+
     const newItems: DraftFileItem[] = [];
-    Array.from(e.target.files).forEach((selectedFile) => {
+    selectedFiles.forEach((selectedFile) => {
       newItems.push({
         id: Math.random().toString(36).substring(2, 9),
         file: selectedFile,
@@ -167,7 +176,6 @@ export default function GaleriClientPage({ initialGallery }: Props) {
         const uploadRes = await uploadImageAction(formData);
         if (!uploadRes.success || !uploadRes.url) {
           setError(uploadRes.error || `Gagal mengunggah foto "${item.file.name}".`);
-          setLoading(false);
           return;
         }
         uploadedUrls.push(uploadRes.url);

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 
 interface Props {
   initialList: Pengaduan[];
@@ -30,8 +31,8 @@ export default function PengaduanClient({ initialList }: Props) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      if (selectedFile.size > 15 * 1024 * 1024) {
-        setError("Ukuran foto tidak boleh melebihi 15MB.");
+      if (selectedFile.size > MAX_UPLOAD_FILE_BYTES) {
+        setError(`Ukuran foto tidak boleh melebihi ${MAX_UPLOAD_FILE_LABEL}.`);
         return;
       }
       setFile(selectedFile);
@@ -55,7 +56,7 @@ export default function PengaduanClient({ initialList }: Props) {
     try {
       let uploadedFotoUrl: string | undefined = undefined;
 
-      // 1. Upload photo if citizen attached one (compressed by sharp, 15MB limit, all formats supported, NO cropping)
+      // Upload an attached photo before submitting the complaint.
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -63,7 +64,6 @@ export default function PengaduanClient({ initialList }: Props) {
         const uploadRes = await uploadPublicFotoAction(formData);
         if (!uploadRes.success || !uploadRes.url) {
           setError(uploadRes.error || "Gagal mengunggah foto bukti pengaduan.");
-          setLoading(false);
           return;
         }
         uploadedFotoUrl = uploadRes.url;
