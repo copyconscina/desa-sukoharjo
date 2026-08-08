@@ -77,7 +77,7 @@ export default function ImageCropDialog({ file, onSave, onCancel }: { file: File
         const percentAspect = targetAspect / imageAspect;
         next.height = next.width / percentAspect;
         if (next.y + next.height > 100) next.height = 100 - next.y;
-        next.width = next.height * aspect;
+        next.width = next.height * percentAspect;
         if (next.x + next.width > 100) next.width = 100 - next.x;
         next.height = next.width / percentAspect;
       }
