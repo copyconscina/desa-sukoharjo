@@ -49,6 +49,7 @@ import {
   resetRateLimit,
 } from "@/lib/auth";
 import { uploadSingleFile, uploadPdfFile } from "@/lib/upload";
+import { supabaseServer } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
 
 export async function uploadPdfAction(formData: FormData) {
