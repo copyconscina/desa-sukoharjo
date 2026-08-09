@@ -513,9 +513,9 @@ const executeSavePotensi = async () => {
                   <label className="text-xs font-mono text-[color:var(--ink-soft)] block mb-1">Icon (Emoji)</label>
                   <input
                     type="text"
-                    value={editingLembaga.icon || "🏛️"}
+                    value={editingLembaga.icon || ""}
                     onChange={(e) => setEditingLembaga({ ...editingLembaga, icon: e.target.value })}
-                    placeholder="🏛️"
+                    placeholder=""
                     className="w-full p-2.5 rounded-lg border border-[color:var(--line)] text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--forest)]"
                   />
                 </div>
