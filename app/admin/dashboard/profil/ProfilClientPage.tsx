@@ -186,7 +186,7 @@ const executeSavePotensi = async () => {
         leader: editingLembaga.leader || "",
         desc: editingLembaga.desc || "",
         members: editingLembaga.members || "",
-        icon: editingLembaga.icon || "🏛️",
+        icon: editingLembaga.icon || "",
       });
 
       if (res.success && res.item) {
