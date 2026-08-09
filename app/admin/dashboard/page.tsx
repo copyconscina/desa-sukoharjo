@@ -170,6 +170,9 @@ const recentActivity: ActivityItem[] = [
       {/* Helpful Instructions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
         <Card className="admin-surface border border-[color:var(--line)] p-6 bg-[color:var(--card)] flex flex-col gap-4">
+            <span className="top-0 text-[10px] font-bold tracking-wider text-white bg-[color:var(--red)] px-2 py-0.5 rounded-bl-lg">
+             PENTING
+             </span>
           <h3 className="font-heading text-lg" style={{ color: "var(--forest-deep)" }}>
             Panduan Pengelolaan Website
           </h3>
@@ -178,9 +181,6 @@ const recentActivity: ActivityItem[] = [
             target="_blank"
             className="group flex items-center gap-4 p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--forest)]/5 hover:bg-[color:var(--forest)]/10 hover:border-[color:var(--forest)] transition-all duration-200 no-underline mt-2"
           >
-              <span className="absolute top-0 right-0 text-[10px] font-bold tracking-wider text-white bg-[color:var(--red)] px-2 py-0.5 rounded-bl-lg">
-                  PENTING
-                </span>
                 <div className="relative w-11 h-14 rounded-md overflow-hidden border border-[color:var(--line)] bg-white shrink-0 shadow-sm">
                   <Image
                     src="/panduan-admin-thumb.png"
