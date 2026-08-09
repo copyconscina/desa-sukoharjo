@@ -150,7 +150,7 @@ const executeSavePotensi = async () => {
       leader: "",
       desc: "",
       members: "",
-      icon: "🏛️",
+      icon: "",
     });
     setIsModalOpen(true);
   };
