@@ -58,6 +58,18 @@ export default function AdminSidebar() {
         </svg>
       ),
     },
+        {
+      name: "Kelola UMKM",
+      href: "/admin/dashboard/umkm",
+      activeRule: (path: string) => path.startsWith("/admin/dashboard/umkm"),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 01-8 0" />
+        </svg>
+      ),
+    },
     {
       name: "Kelola Berita",
       href: "/admin/dashboard/berita",
@@ -78,32 +90,6 @@ export default function AdminSidebar() {
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <circle cx="8.5" cy="8.5" r="1.5" />
           <polyline points="21 15 16 10 5 21" />
-        </svg>
-      ),
-    },
-    {
-      name: "Kelola Potensi",
-      href: "/admin/dashboard/potensi",
-      activeRule: (path: string) => path.startsWith("/admin/dashboard/potensi"),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
-          <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
-          <line x1="12" y1="22" x2="12" y2="15.5" />
-          <polyline points="22 8.5 12 15.5 2 8.5" />
-          <polyline points="2 15.5 12 15.5 22 15.5" />
-          <line x1="12" y1="2" x2="12" y2="15.5" />
-        </svg>
-      ),
-    },
-    {
-      name: "Kelola UMKM",
-      href: "/admin/dashboard/umkm",
-      activeRule: (path: string) => path.startsWith("/admin/dashboard/umkm"),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <path d="M16 10a4 4 0 01-8 0" />
         </svg>
       ),
     },

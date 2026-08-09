@@ -21,11 +21,12 @@ export interface Umkm {
 export interface Berita {
   id?: number;
   tag: string;
-  cls: string;
+  cls?: string;
   title: string;
   desc: string;
   date: string;
-  images?: string;
+  publishedAt?: string; // tambahan ini
+  images?: string | null;
 }
 
 export interface GaleriItem {

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ProfilDesa, Lembaga } from "@/lib/data";
+import { ProfilDesa, Lembaga, Potensi } from "@/lib/data";
 import {
   updateProfilVisiMisiAction,
   saveLembagaAction,
   deleteLembagaAction,
+  updatePotensiAction,
 } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,19 @@ import ConfirmModal from "@/components/ConfirmModal";
 interface Props {
   initialProfil: ProfilDesa;
   initialLembagaList: Lembaga[];
+  initialPotensiList: Potensi[];
 }
 
-export default function ProfilClientPage({ initialProfil, initialLembagaList }: Props) {
+export default function ProfilClientPage({ initialProfil, initialLembagaList, initialPotensiList }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"visi" | "lembaga">("visi");
+  const [activeTab, setActiveTab] = useState<"visi" | "lembaga" | "potensi">("visi");
+
+  // Potensi State
+  const [potensiList, setPotensiList] = useState<Potensi[]>(initialPotensiList);
+  const [editingPotensi, setEditingPotensi] = useState<Potensi | null>(null);
+  const [editPotensiTitle, setEditPotensiTitle] = useState("");
+  const [editPotensiDesc, setEditPotensiDesc] = useState("");
+  const [isSubmittingPotensi, setIsSubmittingPotensi] = useState(false);
 
   // Visi Misi State
   const [visi, setVisi] = useState(initialProfil.visi);
@@ -46,6 +55,58 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
     message: "",
     onConfirm: () => {},
   });
+
+  // Potensi Handlers
+  const handleEditPotensiClick = (item: Potensi) => {
+  setEditingPotensi(item);
+  setEditPotensiTitle(item.title);
+  setEditPotensiDesc(item.desc);
+};
+
+const handleCancelPotensi = () => {
+  setEditingPotensi(null);
+  setEditPotensiTitle("");
+  setEditPotensiDesc("");
+};
+
+const promptSavePotensi = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!editingPotensi) return;
+  if (!editPotensiTitle.trim() || !editPotensiDesc.trim()) {
+    alert("Judul dan deskripsi potensi wajib diisi.");
+    return;
+  }
+
+  setConfirmModal({
+    isOpen: true,
+    title: "Konfirmasi Update Potensi",
+    message: `Apakah Anda yakin ingin menyimpan perubahan pada Potensi "${editingPotensi.num} — ${editPotensiTitle.trim()}"?`,
+    onConfirm: executeSavePotensi,
+  });
+};
+
+const executeSavePotensi = async () => {
+  if (!editingPotensi) return;
+  setIsSubmittingPotensi(true);
+  try {
+    const res = await updatePotensiAction(editingPotensi.num, editPotensiTitle.trim(), editPotensiDesc.trim());
+    if (res.success) {
+      setPotensiList(
+        potensiList.map((p) =>
+          p.num === editingPotensi.num ? { ...p, title: editPotensiTitle.trim(), desc: editPotensiDesc.trim() } : p
+        )
+      );
+      handleCancelPotensi();
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      alert(`Potensi "${editingPotensi.num}" berhasil diperbarui!`);
+      router.refresh();
+    }
+  } catch (err: any) {
+    alert("Gagal memperbarui potensi: " + err.message);
+  } finally {
+    setIsSubmittingPotensi(false);
+  }
+};
 
   // Visi Misi Handlers
   const handleAddMisi = () => {
@@ -202,6 +263,16 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
         >
           Lembaga Desa ({lembagaList.length})
         </button>
+        <button
+          onClick={() => setActiveTab("potensi")}
+          className={`pb-3 text-sm font-semibold transition-colors cursor-pointer border-b-2 ${
+            activeTab === "potensi"
+              ? "border-[color:var(--forest)] text-[color:var(--forest)]"
+              : "border-transparent text-[color:var(--ink-soft)] hover:text-[color:var(--ink)]"
+          }`}
+        >
+          Potensi Desa ({potensiList.length})
+        </button>
       </div>
 
       {/* TAB VISI MISI */}
@@ -309,6 +380,90 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
         </div>
       )}
 
+      {/* TAB POTENSI DESA */}
+      {activeTab === "potensi" && (
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <div className={editingPotensi ? "lg:col-span-6" : "lg:col-span-12"}>
+      <Card className="border border-[color:var(--line)] p-6 bg-[color:var(--card)] shadow-sm">
+        <h3 className="text-lg font-heading mb-4 text-[color:var(--forest-deep)]">
+          Daftar Bidang Potensi
+        </h3>
+        <div className="flex flex-col gap-4">
+          {potensiList.map((item) => (
+            <div
+              key={item.num}
+              className={`p-5 rounded-xl border transition-all ${
+                editingPotensi?.num === item.num
+                  ? "border-[color:var(--forest)] bg-[color:var(--forest)]/5 shadow-sm"
+                  : "border-[color:var(--line)] bg-[color:var(--parchment-2)]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <span className="font-mono text-sm font-semibold text-[color:var(--clay)] uppercase block mb-1">
+                    Pilar {item.num}
+                  </span>
+                  <h4 className="font-heading text-base text-[color:var(--ink)] mb-2">{item.title}</h4>
+                  <p className="text-xs text-[color:var(--ink-soft)] leading-relaxed">{item.desc}</p>
+                </div>
+                <Button
+                  onClick={() => handleEditPotensiClick(item)}
+                  variant="outline"
+                  className="flex-shrink-0 text-xs px-3 py-1.5 h-auto rounded-lg border border-[color:var(--line)] bg-white font-medium hover:bg-[color:var(--parchment)]"
+                >
+                  Ubah Data
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+
+    {editingPotensi && (
+      <div className="lg:col-span-6">
+        <Card className="border border-[color:var(--forest)] p-6 bg-[color:var(--card)] shadow-md sticky top-24">
+          <h3 className="text-lg font-heading text-[color:var(--forest-deep)] mb-4">
+            Ubah Pilar {editingPotensi.num}
+          </h3>
+          <form onSubmit={promptSavePotensi} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                Judul Potensi
+              </label>
+              <input
+                type="text"
+                value={editPotensiTitle}
+                onChange={(e) => setEditPotensiTitle(e.target.value)}
+                className="w-full h-10 px-3 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl text-sm outline-none focus:border-[color:var(--forest)]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-[color:var(--ink-soft)] mb-1">
+                Deskripsi Potensi
+              </label>
+              <textarea
+                value={editPotensiDesc}
+                onChange={(e) => setEditPotensiDesc(e.target.value)}
+                rows={8}
+                className="w-full px-3 py-2 border border-[color:var(--line)] bg-[color:var(--parchment)] rounded-xl text-sm outline-none focus:border-[color:var(--forest)] resize-none leading-relaxed"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button type="button" onClick={handleCancelPotensi} variant="outline" className="w-1/3 h-10 rounded-full border border-[color:var(--line)] text-xs font-medium">
+                Batal
+              </Button>
+              <Button type="submit" disabled={isSubmittingPotensi} className="w-2/3 h-10 rounded-full border-none text-white font-medium bg-[color:var(--forest)]">
+                {isSubmittingPotensi ? "Menyimpan..." : "Simpan Perubahan"}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    )}
+  </div>
+)}
+
       {/* MODAL FORM LEMBAGA */}
       {isModalOpen && editingLembaga && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -402,7 +557,7 @@ export default function ProfilClientPage({ initialProfil, initialLembagaList }: 
         message={confirmModal.message}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
-        isLoading={isSubmittingLembaga || isSavingVisi}
+        isLoading={isSubmittingLembaga || isSavingVisi || isSubmittingPotensi}
       />
     </div>
   );

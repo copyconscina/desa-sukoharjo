@@ -87,22 +87,19 @@ export default async function Home() {
             </p>
           </Reveal>
           <Reveal direction="right" delay={100} className="umkm-mini" style={{ flexDirection: "column", gap: "14px" }}>
-            {umkmData.slice(0, 2).map((u) => (
+            <p className="text-2xl italic bold eyebrow">UMKM Unggulan</p>
+            {umkmData.slice(0, 3).map((u) => (
               <Card key={u.id} className="umkm-mini border border-[color:var(--line)] shadow-none" style={{ width: "100%" }}>
                 <div className="thumb" style={u.image ? { backgroundImage: `url(${u.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: u.grad }} />
                 <div>
                   <div className="cat">{u.category}</div>
                   <h3 className="font-heading">{u.name}</h3>
-                  <p style={{ fontSize: "13px" }}>
-                    {u.id === 1
-                      ? "Olahan singkong khas Wonogiri sejak 2005."
-                      : "Motif parang lereng, diwariskan tiga generasi."}
-                  </p>
+                  <p className="desc">{u.desc}</p>
                 </div>
               </Card>
             ))}
             <Button asChild className="btn btn-dark border-none" style={{ alignSelf: "flex-start" }}>
-              <Link href="/umkm">Lihat Semua UMKM Unggulan</Link>
+              <Link href="/umkm">Lihat Semua UMKM</Link>
             </Button>
           </Reveal>
         </div>
@@ -115,8 +112,8 @@ export default async function Home() {
             <p className="eyebrow">Potensi Desa</p>
             <h2 style={{ marginTop: "10px" }}>Kekayaan Sumber Daya dan Potensinya</h2>
           </div>
-          <div className="grid cols-4" style={{ marginTop: "24px" }}>
-            {potensiData.slice(0, 4).map((p, idx) => (
+          <div className="grid cols-2" style={{ marginTop: "24px" }}>
+            {potensiData.slice(0, 2).map((p, idx) => (
               <Reveal key={p.num} direction="up" delay={idx * 60}>
               <Card className="card shadow-none border border-[color:var(--line)]" style={{ padding: "20px" }}>
                 <div
@@ -133,7 +130,7 @@ export default async function Home() {
           </div>
           <div style={{ marginTop: "32px", textAlign: "center" }}>
             <Button asChild className="btn btn-dark border-none">
-              <Link href="/umkm">Lihat Bukti Nyata: Database UMKM Desa →</Link>
+              <Link href="/potensi">Lihat Potensi Lengkap</Link>
             </Button>
           </div>
         </div>

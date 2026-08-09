@@ -65,6 +65,7 @@
   --ink-soft: #5f665b;
   --line: #e3e6db;
   --wa: #3f7d55;
+  --red: #ed2f1a;
 
   --background: var(--parchment);
   --foreground: var(--ink);
@@ -116,6 +117,7 @@
   --ink-soft: #5f665b;
   --line: #e3e6db;
   --wa: #3f7d55;
+  --red: #ed2f1a;
 
   --background: var(--forest-deep);
   --foreground: var(--card);
