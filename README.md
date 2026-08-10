@@ -102,7 +102,7 @@ desa-sukoharjo/
 ## ⚙️ Panduan Menjalankan Proyek Secara Lokal
 
 ### Prerequisites
-Pastikan PC Anda telah terpasang **Node.js** (v18.x atau yang lebih baru).
+Pastikan PC Anda telah terpasang **Node.js** (v20.9 atau yang lebih baru).
 
 ### 1. Instal Dependensi
 ```bash

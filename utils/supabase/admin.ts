@@ -1,10 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-service-key";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (supabaseUrl === "https://placeholder-project.supabase.co") {
-  console.warn("Using placeholder Supabase URL. Please define SUPABASE_SERVICE_ROLE_KEY in your environment.");
+if (!supabaseUrl) {
+  throw new Error("Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL");
+}
+
+if (!supabaseServiceKey) {
+  throw new Error("Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY");
 }
 
 export const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
