@@ -84,10 +84,10 @@ export default async function Home() {
           <Reveal direction="left">
             <p className="eyebrow">Profil Singkat</p>
             <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,2vw,4rem)]  font-semibold leading-[1.03] tracking-[-0.01em]">Pesona Bentang Alam Perbukitan di Jalur Tirtomoyo–Baturetno</h2>
-            <p style={{ marginTop: "16px" }}>
+            <p style={{ marginTop: "16px" }} className="text-[clamp(0.9rem,1.5vw,1.2rem)] text-justify leading-[1.6]">
               Terletak strategis di Kecamatan Tirtomoyo, Kabupaten Wonogiri, Jawa Tengah, Desa Sukoharjo membentang di atas wilayah seluas 837,77 hektare. Potensi geografisnya diwarnai oleh bentang alam berupa 637,31 hektare lahan kering produktif serta 101,29 hektare area persawahan yang subur. Secara batas wilayah administratif, Desa Sukoharjo berdampingan langsung dengan Desa Girirejo di utara, Desa Hargosari di selatan, Desa Hargorejo di timur, serta Desa Wiroko di sebelah barat.
             </p>
-            <p style={{ marginTop: "12px" }}>
+            <p style={{ marginTop: "12px" }} className="text-[clamp(0.9rem,1.5vw,1.2rem)] text-justify leading-[1.6]">
               Portal resmi ini hadir sebagai perpanjangan tangan layanan Pemerintah Desa Sukoharjo untuk menghadirkan pusat informasi satu pintu yang transparan. Di sini, masyarakat dapat mengakses data profil desa secara terbuka, mengikuti perkembangan kabar berita teraktual, serta menjelajahi etalase digital produk UMKM unggulan karya warga desa.
             </p>
           </Reveal>
@@ -99,7 +99,7 @@ export default async function Home() {
                 <div>
                   <div className="cat">{u.category}</div>
                   <h3 className="font-heading font-bold">{u.name}</h3>
-                  <p className="desc">{u.desc}</p>
+                  <p>{u.desc.length > 100 ? u.desc.slice(0, 100) + "..." : u.desc}</p>
                 </div>
               </Card>
             ))}
@@ -119,25 +119,25 @@ export default async function Home() {
               Kekayaan Sumber Daya dan Potensinya
             </h2>
           </div>
-          <div className="grid cols-2" style={{ marginTop: "24px" }}>
+          <div className="grid cols-2" style={{ marginTop: "12px" }}>
             {potensiData.slice(0, 2).map((p, idx) => (
               <Reveal key={p.num} direction="up" delay={idx * 60}>
-              <Card className="card shadow-none border border-[color:var(--line)]" style={{ padding: "20px" }}>
+              <Card className="card shadow-none border border-[color:var(--line)]" style={{ padding: "15px" }}>
                 <div
                   className="eyebrow"
-                  style={{ fontSize: "1.4rem", fontFamily: "var(--font-display)", fontStyle: "italic", marginBottom: "8px" }}
+                  style={{ fontSize: "1.4rem", fontFamily: "var(--font-display)", fontStyle: "italic", marginBottom: "0px" }}
                 >
                   {p.num}
                 </div>
-                <h3 style={{ marginBottom: "8px" }} className="font-heading text-[clamp(0.5rem,2vw,1.25rem)] font-semibold tracking-[-0.01em]">
+                <h1 style={{ marginBottom: "0px" }} className="font-heading text-[clamp(0.5rem,2vw,1.25rem)] font-semibold tracking-[-0.01em]">
                   {p.title}
-                </h3>
-                <p style={{ fontSize: "13px" }}>{p.desc}</p>
+                </h1>
+                <p style={{ fontSize: "12px" }}>{p.desc}</p>
               </Card>
               </Reveal>
             ))}
           </div>
-          <div style={{ marginTop: "32px", textAlign: "center" }}>
+          <div style={{ marginTop: "28px", textAlign: "center" }}>
             <Button asChild className="btn btn-dark border-none">
               <Link href="/potensi">Lihat Potensi Lengkap</Link>
             </Button>
