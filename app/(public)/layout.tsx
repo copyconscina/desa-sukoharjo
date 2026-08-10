@@ -2,14 +2,25 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SukoharjoLogo from "@/components/SukoharjoLogo";
 import styles from "./PublicLayout.module.css";
+import { siteUrl } from "@/lib/site";
 
 export default function PublicLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "GovernmentOrganization",
+    name: "Pemerintah Desa Sukoharjo",
+    url: siteUrl,
+    address: { "@type": "PostalAddress", streetAddress: "Desa Sukoharjo RT 03 RW 02", addressLocality: "Tirtomoyo", addressRegion: "Jawa Tengah", postalCode: "57672", addressCountry: "ID" },
+    telephone: "+6281225432772",
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <Navbar />
       <main>{children}</main>
       <footer className={styles.footer}>

@@ -6,6 +6,7 @@ import { getUmkmList, getUmkmById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MediaCarousel from "@/components/MediaCarousel";
+import { defaultOgImage } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${u.name} — Detail UMKM Desa Sukoharjo`,
     description: u.desc,
+    alternates: { canonical: `/umkm/${id}` },
+    openGraph: { type: "website", title: u.name, description: u.desc, images: [{ url: u.image || defaultOgImage, alt: u.name }] },
+    twitter: { card: "summary_large_image", title: u.name, description: u.desc, images: [u.image || defaultOgImage] },
   };
 }
 

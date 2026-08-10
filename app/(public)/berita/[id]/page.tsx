@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MediaCarousel from "@/components/MediaCarousel";
 import { parseImagesList } from "@/lib/utils";
+import { defaultOgImage } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${b.title} — Kabar Desa Sukoharjo`,
     description: b.desc,
+    alternates: { canonical: `/berita/${id}` },
+    openGraph: { type: "article", title: b.title, description: b.desc, images: [{ url: parseImagesList(b.images)[0] || defaultOgImage, alt: b.title }] },
+    twitter: { card: "summary_large_image", title: b.title, description: b.desc, images: [parseImagesList(b.images)[0] || defaultOgImage] },
   };
 }
 

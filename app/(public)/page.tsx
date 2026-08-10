@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/" },
   title: "Selamat Datang di Desa Sukoharjo — Tirtomoyo, Wonogiri",
   description: "Website Resmi Pemerintah Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri — media informasi desa dan etalase digital UMKM warga.",
 };
