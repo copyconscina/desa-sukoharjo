@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { STAT } from "@/lib/data";
-import { getUmkmList, getBeritaList, getGaleriList, getPotensiList } from "@/lib/db";
+import { getUmkmList, getBeritaList, getGaleriList, getPotensiList, getUmkmCount, getStatistikPenduduk } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +18,14 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const umkmData = await getUmkmList();
-  const beritaData = await getBeritaList();
-  const galeriData = await getGaleriList();
-  const potensiData = await getPotensiList();
+  const [umkmData, beritaData, galeriData, potensiData, umkmCount, statistik] = await Promise.all([
+    getUmkmList(),
+    getBeritaList(),
+    getGaleriList(),
+    getPotensiList(),
+    getUmkmCount(),
+    getStatistikPenduduk(),
+  ]);
   return (
     <div className="font-sans">
       {/* HERO SECTION */}
@@ -65,11 +69,11 @@ export default async function Home() {
           <div className="lbl">Dusun</div>
         </Reveal>
         <Reveal direction="up" delay={70} className="stat">
-          <div className="num">{STAT.population}</div>
+          <div className="num">{statistik.totalPenduduk.toLocaleString("id-ID")}</div>
           <div className="lbl">Jiwa Penduduk</div>
         </Reveal>
         <Reveal direction="up" delay={140} className="stat">
-          <div className="num">{STAT.umkm}+</div>
+          <div className="num">{umkmCount}+</div>
           <div className="lbl">UMKM Terdaftar</div>
         </Reveal>
       </div>
@@ -94,7 +98,7 @@ export default async function Home() {
                 <div className="thumb" style={u.image ? { backgroundImage: `url(${u.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: u.grad }} />
                 <div>
                   <div className="cat">{u.category}</div>
-                  <h3 className="font-heading">{u.name}</h3>
+                  <h3 className="font-heading font-bold">{u.name}</h3>
                   <p className="desc">{u.desc}</p>
                 </div>
               </Card>

@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
-import { isPlaceholderSupabase } from "@/utils/supabase/static";
 
 // Rate limiter for login attempts (in-memory)
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -35,58 +34,55 @@ export async function checkAuth(): Promise<boolean> {
 
     // Check custom admin session cookie first
     const adminSession = cookieStore.get("admin_session")?.value;
-    if (adminSession === "true") return true;
+    if (adminSession !== "true") return false;
 
-    // Check Supabase Auth session if Supabase is configured
-    if (!isPlaceholderSupabase) {
-      try {
-        const supabase = createClient(cookieStore);
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (!error && user) return true;
-      } catch (e) {}
-    }
-
-    // In local fallback mode without Supabase, allow access
-    if (isPlaceholderSupabase) return true;
-
-    return false;
+    // Cross-check against the real Supabase Auth session. The admin_session
+    // cookie alone is not sufficient proof of identity.
+    const supabase = createClient(cookieStore);
+    const { data: { user }, error } = await supabase.auth.getUser();
+    return !error && !!user;
   } catch (err) {
-    return true; // Fallback for dev mode
+    // Fail closed: any unexpected error must never grant admin access.
+    console.error("checkAuth error:", err);
+    return false;
   }
 }
 
 export async function loginWithSupabase(email: string, pass: string) {
   const cookieStore = await cookies();
-  
-  // Set admin_session cookie
-  cookieStore.set("admin_session", "true", {
-    path: "/",
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  });
+  const supabase = createClient(cookieStore);
 
-  if (!isPlaceholderSupabase) {
-    try {
-      const supabase = createClient(cookieStore);
-      return await supabase.auth.signInWithPassword({
-        email,
-        password: pass,
+  try {
+    const result = await supabase.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
+
+    // Only grant the admin_session cookie after Supabase confirms the credentials.
+    if (!result.error && result.data.user) {
+      cookieStore.set("admin_session", "true", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
       });
-    } catch (e) {}
-  }
+    }
 
-  return { data: { user: { id: "admin-local", email: email || "admin@desasukoharjo.go.id" } }, error: null };
+    return result;
+  } catch (e) {
+    return { data: { user: null }, error: e instanceof Error ? e : new Error("Login gagal.") };
+  }
 }
 
 export async function logoutWithSupabase() {
   const cookieStore = await cookies();
   cookieStore.delete("admin_session");
-  
-  if (!isPlaceholderSupabase) {
-    try {
-      const supabase = createClient(cookieStore);
-      return await supabase.auth.signOut();
-    } catch (e) {}
+
+  try {
+    const supabase = createClient(cookieStore);
+    return await supabase.auth.signOut();
+  } catch (e) {
+    return { error: e instanceof Error ? e : new Error("Logout gagal.") };
   }
-  return { error: null };
 }

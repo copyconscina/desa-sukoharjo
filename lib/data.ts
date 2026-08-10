@@ -25,7 +25,7 @@ export interface Berita {
   title: string;
   desc: string;
   date: string;
-  publishedAt?: string; // tambahan ini
+  publishedAt?: string; 
   images?: string | null;
 }
 
@@ -66,8 +66,6 @@ export const popData: PopData[] = [
 
 export const STAT = {
   dusun: 11,
-  population: "4.815",
-  umkm: 54,
 };
 
 // Profil & Lembaga

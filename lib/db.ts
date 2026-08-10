@@ -113,6 +113,27 @@ export async function getUmkmList(): Promise<Umkm[]> {
   return localList.filter((u) => !deletedIds.includes(u.id));
 }
 
+export async function getUmkmCount(): Promise<number> {
+  if (!isPlaceholderSupabase) {
+    try {
+      const { count, error } = await supabase
+        .from("umkm")
+        .select("*", { count: "exact", head: true });
+      if (!error && typeof count === "number") {
+        return count;
+      }
+    } catch (e) {
+      console.error("getUmkmCount supabase exception:", e);
+    }
+  }
+
+  // Fallback: derive count from the local store when Supabase is unavailable.
+  const store = readStore();
+  const localList: Umkm[] = store.umkm || [];
+  const deletedIds: number[] = store.deletedUmkm || [];
+  return localList.filter((u) => !deletedIds.includes(u.id)).length;
+}
+
 export async function getUmkmById(id: number): Promise<Umkm | undefined> {
   const list = await getUmkmList();
   return list.find((u) => u.id === id) || list[0];
@@ -964,7 +985,7 @@ export async function deleteProdukHukum(id: number): Promise<boolean> {
 export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
   const store = readStore();
   const defaultStatistik: StatistikPenduduk = {
-    totalPenduduk: 4815,
+    totalPenduduk: 4915,
     totalKk: 1753,
     lakiLaki: 2532,
     perempuan: 2383,
