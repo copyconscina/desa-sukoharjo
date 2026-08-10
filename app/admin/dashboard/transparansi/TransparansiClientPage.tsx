@@ -21,6 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmModal from "@/components/ConfirmModal";
+import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 
 interface Props {
   initialRingkasan: ApbdesRingkasan;
@@ -182,9 +183,10 @@ export default function TransparansiClientPage({
         const formData = new FormData();
         formData.append("file", pdfFile);
         const uploadRes = await uploadPdfAction(formData);
-        if (uploadRes.success && uploadRes.url) {
-          finalFileUrl = uploadRes.url;
+        if (!uploadRes.success || !uploadRes.url) {
+          throw new Error(uploadRes.error || "Gagal mengunggah dokumen PDF.");
         }
+        finalFileUrl = uploadRes.url;
       }
 
       const res = await saveProdukHukumAction({
@@ -890,6 +892,10 @@ export default function TransparansiClientPage({
                     if (file) {
                       if (!file.type.includes("pdf") && !file.name.toLowerCase().endsWith(".pdf")) {
                         alert("File harus berformat PDF (.pdf)!");
+                        return;
+                      }
+                      if (file.size > MAX_UPLOAD_FILE_BYTES) {
+                        alert(`Ukuran file PDF tidak boleh melebihi ${MAX_UPLOAD_FILE_LABEL}!`);
                         return;
                       }
                       setPdfFile(file);

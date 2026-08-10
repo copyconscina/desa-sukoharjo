@@ -1,7 +1,5 @@
 import { supabaseServer } from "@/utils/supabase/admin";
-import sharp from "sharp";
-
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // Allow up to 15MB input file since server compresses it down to ~300KB
+import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 
 export async function uploadSingleFile(file: File): Promise<string> {
   if (!file || file.size === 0) {
@@ -14,8 +12,8 @@ export async function uploadSingleFile(file: File): Promise<string> {
   if (!file.type.startsWith("image/") && !isImageByExt) {
     throw new Error("File harus berupa gambar (JPG, JPEG, PNG, WebP, dll).");
   }
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error("Ukuran file asli tidak boleh melebihi 15MB.");
+  if (file.size > MAX_UPLOAD_FILE_BYTES) {
+    throw new Error(`Ukuran file asli tidak boleh melebihi ${MAX_UPLOAD_FILE_LABEL}.`);
   }
 
   const bytes = await file.arrayBuffer();
@@ -28,7 +26,11 @@ export async function uploadSingleFile(file: File): Promise<string> {
   // Kompresi otomatis untuk semua format gambar raster menggunakan sharp
   if (file.type !== "image/svg+xml") {
     try {
+      // Load sharp only when compression is needed. Some serverless runtimes
+      // cannot load its native binary; uploads should still work without it.
+      const sharp = (await import("sharp")).default;
       outputBuffer = await sharp(inputBuffer)
+        .rotate()
         .resize({
           width: 1920,
           height: 1920,
@@ -67,20 +69,6 @@ export async function uploadSingleFile(file: File): Promise<string> {
   return publicUrlData.publicUrl;
 }
 
-export async function uploadMultipleFiles(files: File[]): Promise<string[]> {
-  if (!files || files.length === 0) {
-    throw new Error("Tidak ada file yang diunggah.");
-  }
-
-  const urls: string[] = [];
-  for (const file of files) {
-    if (file.size === 0) continue;
-    const url = await uploadSingleFile(file);
-    urls.push(url);
-  }
-  return urls;
-}
-
 export async function uploadPdfFile(file: File): Promise<string> {
   if (!file || file.size === 0) {
     throw new Error("Tidak ada file PDF yang diunggah.");
@@ -89,8 +77,8 @@ export async function uploadPdfFile(file: File): Promise<string> {
   if (!isPdf) {
     throw new Error("File harus berupa dokumen PDF (.pdf).");
   }
-  if (file.size > 25 * 1024 * 1024) {
-    throw new Error("Ukuran file PDF tidak boleh melebihi 25MB.");
+  if (file.size > MAX_UPLOAD_FILE_BYTES) {
+    throw new Error(`Ukuran file PDF tidak boleh melebihi ${MAX_UPLOAD_FILE_LABEL}.`);
   }
 
   const bytes = await file.arrayBuffer();

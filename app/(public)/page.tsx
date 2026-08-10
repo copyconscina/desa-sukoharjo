@@ -6,6 +6,7 @@ import { getUmkmList, getBeritaList, getGaleriList, getPotensiList } from "@/lib
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Reveal } from "@/components/Reveal";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -32,7 +33,7 @@ export default async function Home() {
             <polygon points="0,270 0,210 1200,260 1200,330" fill="#4d6b40" opacity="0.9" />
           </svg>
         </div>
-        <div className="hero-inner">
+        <div className="hero-inner hero-cascade">
           <p className="eyebrow on-dark">Website Resmi Pemerintah Desa</p>
           <h1 className="font-heading text-[clamp(2.4rem,5vw,4.2rem)] leading-[1.03] font-semibold tracking-[-0.01em]">
             Sukoharjo, desa yang tumbuh dari <em>sawah, karya, dan usaha warganya.</em>
@@ -58,24 +59,24 @@ export default async function Home() {
 
       {/* STAT STRIP */}
       <div className="stat-strip wrap" style={{ borderTop: "none" }}>
-        <div className="stat">
+        <Reveal direction="up" className="stat">
           <div className="num">{STAT.dusun}</div>
           <div className="lbl">Dusun</div>
-        </div>
-        <div className="stat">
+        </Reveal>
+        <Reveal direction="up" delay={70} className="stat">
           <div className="num">{STAT.population}</div>
           <div className="lbl">Jiwa Penduduk</div>
-        </div>
-        <div className="stat">
+        </Reveal>
+        <Reveal direction="up" delay={140} className="stat">
           <div className="num">{STAT.umkm}+</div>
           <div className="lbl">UMKM Terdaftar</div>
-        </div>
+        </Reveal>
       </div>
 
       {/* PROFIL SINGKAT */}
       <section className="block">
         <div className="wrap two-col">
-          <div>
+          <Reveal direction="left">
             <p className="eyebrow">Profil Singkat</p>
             <h2 style={{ marginTop: "10px" }} className="text-[clamp(1.4rem,2vw,4rem)]  font-semibold leading-[1.03] tracking-[-0.01em]">Pesona Bentang Alam Perbukitan di Jalur Tirtomoyo–Baturetno</h2>
             <p style={{ marginTop: "16px" }}>
@@ -84,26 +85,23 @@ export default async function Home() {
             <p style={{ marginTop: "12px" }}>
               Portal resmi ini hadir sebagai perpanjangan tangan layanan Pemerintah Desa Sukoharjo untuk menghadirkan pusat informasi satu pintu yang transparan. Di sini, masyarakat dapat mengakses data profil desa secara terbuka, mengikuti perkembangan kabar berita teraktual, serta menjelajahi etalase digital produk UMKM unggulan karya warga desa.
             </p>
-          </div>
-          <div className="umkm-mini" style={{ flexDirection: "column", gap: "14px" }}>
-            {umkmData.slice(0, 2).map((u) => (
+          </Reveal>
+          <Reveal direction="right" delay={100} className="umkm-mini" style={{ flexDirection: "column", gap: "14px" }}>
+            <p className="text-2xl italic bold eyebrow">UMKM Unggulan</p>
+            {umkmData.slice(0, 3).map((u) => (
               <Card key={u.id} className="umkm-mini border border-[color:var(--line)] shadow-none" style={{ width: "100%" }}>
                 <div className="thumb" style={u.image ? { backgroundImage: `url(${u.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: u.grad }} />
                 <div>
                   <div className="cat">{u.category}</div>
                   <h3 className="font-heading">{u.name}</h3>
-                  <p style={{ fontSize: "13px" }}>
-                    {u.id === 1
-                      ? "Olahan singkong khas Wonogiri sejak 2005."
-                      : "Motif parang lereng, diwariskan tiga generasi."}
-                  </p>
+                  <p className="desc">{u.desc}</p>
                 </div>
               </Card>
             ))}
             <Button asChild className="btn btn-dark border-none" style={{ alignSelf: "flex-start" }}>
-              <Link href="/umkm">Lihat Semua UMKM Unggulan</Link>
+              <Link href="/umkm">Lihat Semua UMKM</Link>
             </Button>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -116,9 +114,10 @@ export default async function Home() {
               Kekayaan Sumber Daya dan Potensinya
             </h2>
           </div>
-          <div className="grid cols-4" style={{ marginTop: "24px" }}>
-            {potensiData.slice(0, 4).map((p) => (
-              <Card key={p.num} className="card shadow-none border border-[color:var(--line)]" style={{ padding: "20px" }}>
+          <div className="grid cols-2" style={{ marginTop: "24px" }}>
+            {potensiData.slice(0, 2).map((p, idx) => (
+              <Reveal key={p.num} direction="up" delay={idx * 60}>
+              <Card className="card shadow-none border border-[color:var(--line)]" style={{ padding: "20px" }}>
                 <div
                   className="eyebrow"
                   style={{ fontSize: "1.4rem", fontFamily: "var(--font-display)", fontStyle: "italic", marginBottom: "8px" }}
@@ -130,11 +129,12 @@ export default async function Home() {
                 </h3>
                 <p style={{ fontSize: "13px" }}>{p.desc}</p>
               </Card>
+              </Reveal>
             ))}
           </div>
           <div style={{ marginTop: "32px", textAlign: "center" }}>
             <Button asChild className="btn btn-dark border-none">
-              <Link href="/umkm">Lihat Bukti Nyata: Database UMKM Desa →</Link>
+              <Link href="/potensi">Lihat Potensi Lengkap</Link>
             </Button>
           </div>
         </div>
@@ -149,13 +149,13 @@ export default async function Home() {
           </div>
           <div className="gal-grid" style={{ marginTop: "24px" }}>
             {galeriData.slice(0, 4).map((g, idx) => (
-              <div key={idx} className="gal-tile" style={g.image ? { backgroundImage: `url(${g.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: g.grad }}>
+              <Reveal key={idx} direction="up" delay={idx * 60} className="gal-tile" style={g.image ? { backgroundImage: `url(${g.image})`, backgroundSize: "cover", backgroundPosition: "center" } : { background: g.grad }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
                   <circle cx="11" cy="11" r="7" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <span>{g.label}</span>
-              </div>
+              </Reveal>
             ))}
           </div>
           <div style={{ marginTop: "32px", textAlign: "center" }}>
@@ -179,7 +179,8 @@ export default async function Home() {
             {beritaData.slice(0, 3).map((b, idx) => {
               const firstImage = b.images ? b.images.split(",")[0] : null;
               return (
-                <Link href={`/berita/${b.id}`} target="_blank" key={idx} style={{ textDecoration: "none", color: "inherit" }} className="h-full block">
+                <Reveal key={idx} direction="up" delay={idx * 70} className="h-full">
+                <Link href={`/berita/${b.id}`} target="_blank" style={{ textDecoration: "none", color: "inherit" }} className="h-full block">
                   <Card 
                     className="card info-card shadow-none border border-[color:var(--line)] transition-transform hover:-translate-y-1 hover:shadow-sm duration-200 cursor-pointer h-full flex flex-col justify-between overflow-hidden"
                     style={{ padding: 0 }}
@@ -209,6 +210,7 @@ export default async function Home() {
                     </div>
                   </Card>
                 </Link>
+                </Reveal>
               );
             })}
           </div>

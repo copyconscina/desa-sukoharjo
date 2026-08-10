@@ -231,6 +231,7 @@ export async function getBeritaList(): Promise<Berita[]> {
             title: b.title || "",
             desc: b.desc || "",
             date: dateStr,
+            publishedAt: b.published_at || null,
             images: b.images || null,
           };
         }) as Berita[];

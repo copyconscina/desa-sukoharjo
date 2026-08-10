@@ -48,7 +48,8 @@ import {
   checkRateLimit,
   resetRateLimit,
 } from "@/lib/auth";
-import { uploadSingleFile, uploadMultipleFiles, uploadPdfFile } from "@/lib/upload";
+import { uploadSingleFile, uploadPdfFile } from "@/lib/upload";
+import { supabaseServer } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
 
 export async function uploadPdfAction(formData: FormData) {
@@ -56,12 +57,20 @@ export async function uploadPdfAction(formData: FormData) {
   if (!isAuth) throw new Error("Unauthorized");
 
   const file = formData.get("file") as File;
-  if (!file || file.size === 0) {
-    throw new Error("File PDF wajib diunggah.");
-  }
+  try {
+    if (!file || file.size === 0) {
+      throw new Error("File PDF wajib diunggah.");
+    }
 
-  const fileUrl = await uploadPdfFile(file);
-  return { success: true, url: fileUrl };
+    const fileUrl = await uploadPdfFile(file);
+    return { success: true, url: fileUrl };
+  } catch (err: unknown) {
+    console.error("Failed to upload PDF:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Gagal mengunggah dokumen PDF.",
+    };
+  }
 }
 
 // Public Actions for Citizens (No Admin Auth Required)
@@ -294,31 +303,31 @@ export async function deleteUmkmAction(id: number) {
   return { success: true };
 }
 
-export async function uploadImageAction(formData: FormData) {
+export async function createImageUploadUrlAction(fileName: string, contentType: string) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  const file = formData.get("file") as File;
-  try {
-    const url = await uploadSingleFile(file);
-    return { success: true, url };
-  } catch (err: any) {
-    console.error("Failed to upload image:", err);
-    return { success: false, error: err.message || "Gagal mengunggah foto." };
+  const extension = (fileName.split(".").pop() || "").toLowerCase();
+  const allowedExtensions = new Set(["jpg", "jpeg", "png", "webp", "jfif", "avif", "heic", "gif", "svg", "bmp", "tif", "tiff"]);
+  if (!contentType.startsWith("image/") && !allowedExtensions.has(extension)) {
+    return { success: false, error: "File harus berupa gambar (JPG, JPEG, PNG, WebP, dll)." };
   }
-}
 
-export async function uploadMultipleImagesAction(formData: FormData) {
-  const isAuth = await checkAuthAction();
-  if (!isAuth) throw new Error("Unauthorized");
-
-  const files = formData.getAll("files") as File[];
+  const objectPath = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${extension || "jpg"}`;
   try {
-    const urls = await uploadMultipleFiles(files);
-    return { success: true, urls };
-  } catch (err: any) {
-    console.error("Failed to upload images:", err);
-    return { success: false, error: err.message || "Gagal mengunggah satu atau beberapa gambar." };
+    const { data, error } = await supabaseServer.storage
+      .from("sukoharjo-assets")
+      .createSignedUploadUrl(objectPath);
+    if (error || !data) {
+      throw new Error(error?.message || "Gagal menyiapkan upload foto.");
+    }
+    return { success: true, path: data.path, token: data.token };
+  } catch (err: unknown) {
+    console.error("Failed to create image upload URL:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Gagal menyiapkan upload foto.",
+    };
   }
 }
 

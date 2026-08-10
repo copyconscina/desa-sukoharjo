@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Berita } from "@/lib/data";
-import { addBeritaAction, updateBeritaAction, deleteBeritaAction, uploadImageAction } from "@/app/admin/actions";
+import { addBeritaAction, updateBeritaAction, deleteBeritaAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ import {
 } from "@/components/ui/select";
 import ConfirmModal from "@/components/ConfirmModal";
 import { parseImagesList } from "@/lib/utils";
+import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
+import { uploadImageDirect } from "@/lib/direct-image-upload";
+import ImageCropDialog from "@/components/ImageCropDialog";
 
 interface Props {
   initialNews: Berita[];
@@ -46,6 +49,8 @@ export default function BeritaClientPage({ initialNews }: Props) {
   // Multi-Image Upload States
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
   const [draftFiles, setDraftFiles] = useState<DraftFileItem[]>([]);
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -98,14 +103,24 @@ export default function BeritaClientPage({ initialNews }: Props) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const selectedFiles = Array.from(e.target.files);
+    const oversizedFile = selectedFiles.find((file) => file.size > MAX_UPLOAD_FILE_BYTES);
+    if (oversizedFile) {
+      setError(`Foto "${oversizedFile.name}" melebihi batas ${MAX_UPLOAD_FILE_LABEL}.`);
+      e.target.value = "";
+      return;
+    }
 
-    const newDrafts: DraftFileItem[] = selectedFiles.map((file) => ({
-      id: Math.random().toString(36).substring(2, 9),
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
+    setCropQueue(selectedFiles.slice(1));
+    setCropFile(selectedFiles[0]);
+    setError(null);
+    e.target.value = "";
+  };
 
-    setDraftFiles((prev) => [...prev, ...newDrafts]);
+  const saveCroppedFile = (file: File) => {
+    setDraftFiles((prev) => [...prev, { id: Math.random().toString(36).substring(2, 9), file, previewUrl: URL.createObjectURL(file) }]);
+    const [next, ...rest] = cropQueue;
+    setCropQueue(rest);
+    setCropFile(next || null);
   };
 
   const moveExistingUrl = (index: number, direction: "left" | "right") => {
@@ -162,13 +177,9 @@ export default function BeritaClientPage({ initialNews }: Props) {
       const uploadedUrls: string[] = [];
 
       for (const draft of draftFiles) {
-        const formData = new FormData();
-        formData.append("file", draft.file);
-
-        const uploadRes = await uploadImageAction(formData);
+        const uploadRes = await uploadImageDirect(draft.file);
         if (!uploadRes.success || !uploadRes.url) {
           setError(uploadRes.error || `Gagal mengunggah foto ${draft.file.name}`);
-          setLoading(false);
           return;
         }
         uploadedUrls.push(uploadRes.url);
@@ -570,6 +581,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
         isLoading={loading}
       />
+      {cropFile && <ImageCropDialog file={cropFile} onSave={saveCroppedFile} onCancel={() => { setCropQueue([]); setCropFile(null); }} />}
     </div>
   );
 }

@@ -58,6 +58,18 @@ export default function AdminSidebar() {
         </svg>
       ),
     },
+        {
+      name: "Kelola UMKM",
+      href: "/admin/dashboard/umkm",
+      activeRule: (path: string) => path.startsWith("/admin/dashboard/umkm"),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 01-8 0" />
+        </svg>
+      ),
+    },
     {
       name: "Kelola Berita",
       href: "/admin/dashboard/berita",
@@ -81,38 +93,12 @@ export default function AdminSidebar() {
         </svg>
       ),
     },
-    {
-      name: "Kelola Potensi",
-      href: "/admin/dashboard/potensi",
-      activeRule: (path: string) => path.startsWith("/admin/dashboard/potensi"),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
-          <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
-          <line x1="12" y1="22" x2="12" y2="15.5" />
-          <polyline points="22 8.5 12 15.5 2 8.5" />
-          <polyline points="2 15.5 12 15.5 22 15.5" />
-          <line x1="12" y1="2" x2="12" y2="15.5" />
-        </svg>
-      ),
-    },
-    {
-      name: "Kelola UMKM",
-      href: "/admin/dashboard/umkm",
-      activeRule: (path: string) => path.startsWith("/admin/dashboard/umkm"),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <path d="M16 10a4 4 0 01-8 0" />
-        </svg>
-      ),
-    },
   ];
 
   return (
-    <aside className="w-64 bg-[color:var(--forest-deep)] text-white flex flex-col h-screen sticky top-0 font-sans border-r border-white/10">
+    <aside className="admin-sidebar w-64 text-white flex flex-col h-screen sticky top-0 font-sans">
       {/* Brand Header */}
-      <div className="p-6 border-b border-white/10 flex flex-col gap-1">
+      <div className="admin-sidebar-brand p-6 flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[color:var(--padi-light)] flex items-center justify-center text-[color:var(--forest-deep)] font-bold text-sm">
             SU
@@ -127,7 +113,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-4 py-4 flex flex-col gap-1 overflow-y-auto">
+      <nav className="admin-sidebar-nav flex-1 px-4 py-4 flex flex-col gap-1 overflow-y-auto">
         {links.map((link) => {
           const isActive = link.activeRule(pathname);
           return (
@@ -135,7 +121,7 @@ export default function AdminSidebar() {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200",
+                "admin-nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200",
                 isActive
                   ? "bg-[color:var(--forest)] text-white font-medium shadow-md"
                   : "text-white/70 hover:text-white hover:bg-white/5"
@@ -149,7 +135,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer / Logout */}
-      <div className="p-4 border-t border-white/10 flex flex-col gap-2">
+      <div className="admin-sidebar-footer p-4 flex flex-col gap-2">
         <Link
           href="/"
           target="_blank"
