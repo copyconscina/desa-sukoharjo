@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getPengaduanList } from "@/lib/db";
 import PengaduanClient from "./PengaduanClient";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default async function PengaduanPage() {
+  const aduanList = await getPengaduanList();
+
   return (
     <div className="font-sans">
       <header className="page-header">
@@ -23,7 +26,7 @@ export default async function PengaduanPage() {
         </div>
       </header>
 
-      <PengaduanClient />
+      <PengaduanClient initialList={aduanList} />
     </div>
   );
 }

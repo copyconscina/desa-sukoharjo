@@ -830,7 +830,9 @@ export async function getPengaduanList(): Promise<Pengaduan[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("pengaduan").select("*").order("id", { ascending: false });
+      // Halaman publik dirender di server. Gunakan service role agar daftar
+      // laporan tetap tampil tanpa membuka akses SELECT langsung ke anon.
+      const { data, error } = await supabaseServer.from("pengaduan").select("*").order("id", { ascending: false });
       if (!error && data) {
         return data as Pengaduan[];
       }

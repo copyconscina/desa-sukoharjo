@@ -2,14 +2,21 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { Pengaduan } from "@/lib/data";
 import { addPengaduanPublicAction, uploadPublicFotoAction } from "@/app/admin/actions";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
 
-export default function PengaduanClient() {
+interface Props {
+  initialList: Pengaduan[];
+}
+
+export default function PengaduanClient({ initialList }: Props) {
+  const [list, setList] = useState<Pengaduan[]>(initialList);
   const [nama, setNama] = useState("");
   const [dusun, setDusun] = useState("");
   const [judul, setJudul] = useState("");
@@ -80,6 +87,7 @@ export default function PengaduanClient() {
       );
 
       if (res.success && res.item) {
+        setList((currentList) => [res.item!, ...currentList]);
         setSuccess("Laporan pengaduan Anda berhasil terkirim dan akan diverifikasi Pemerintah Desa.");
         setNama("");
         setDusun("");
@@ -239,17 +247,43 @@ export default function PengaduanClient() {
         </Card>
 
         <div className="flex flex-col gap-4">
-          <h3 className="font-heading font-semibold text-xl text-[color:var(--ink)]">
-            Privasi Laporan Anda
+          <h3 className="font-heading text-xl text-[color:var(--ink)]">
+            Daftar Laporan Terkini ({list.length})
           </h3>
-          <Card className="card shadow-none border border-[color:var(--line)] bg-[color:var(--card)] p-6">
-            <p className="text-sm leading-relaxed text-[color:var(--ink-soft)]">
-              Detail laporan, identitas pelapor, dan foto bukti tidak ditampilkan di halaman publik. Data hanya dapat diakses oleh petugas atau admin desa untuk proses verifikasi dan tindak lanjut.
-            </p>
-            <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
-              Setelah laporan terkirim, pemerintah desa akan meninjau laporan melalui panel admin. Publikasi tindak lanjut sebaiknya dilakukan lewat berita atau pengumuman tanpa memuat data pribadi warga.
-            </div>
-          </Card>
+          {list.length === 0 ? (
+            <Card className="p-6 text-center text-sm text-[color:var(--ink-soft)] border border-[color:var(--line)]">
+              Belum ada laporan pengaduan warga.
+            </Card>
+          ) : (
+            list.map((aduan) => {
+              const fotoUrl = aduan.foto || aduan.image;
+              return (
+                <Card key={aduan.id} className="card shadow-none border border-[color:var(--line)] bg-[color:var(--card)] flex flex-col" style={{ padding: "12px 16px", gap: "4px" }}>
+                  <div className="flex justify-between items-center gap-2 m-0 p-0">
+                    <Badge className={`border-none text-[10px] px-2 py-0.5 ${aduan.status === "Selesai" ? "bg-[color:var(--forest)]" : aduan.status === "Diproses" ? "bg-amber-600" : "bg-[color:var(--clay)]"} text-white`}>
+                      {aduan.status}
+                    </Badge>
+                    <span className="text-[11px] font-mono text-[color:var(--ink-soft)]">{aduan.tanggal}</span>
+                  </div>
+                  <h4 className="font-semibold text-[color:var(--ink)] text-sm md:text-base leading-snug m-0 p-0 mt-0.5">{aduan.judul}</h4>
+                  <p className="text-[11px] font-mono text-[color:var(--ink-soft)] m-0 p-0">
+                    Pelapor: {aduan.nama} · Dusun: {aduan.dusun}
+                  </p>
+                  <p className="text-xs md:text-sm text-[color:var(--ink-soft)] leading-relaxed m-0 p-0 mt-1">{aduan.isi}</p>
+                  {fotoUrl && (
+                    <div className="mt-2 relative w-full h-36 rounded-lg overflow-hidden border border-[color:var(--line)]">
+                      <Image src={fotoUrl} alt={aduan.judul} fill className="object-cover" />
+                    </div>
+                  )}
+                  {aduan.tanggapan && (
+                    <div className="mt-2 text-xs bg-[color:var(--forest)]/10 text-[color:var(--forest-deep)] p-2 rounded-lg border border-[color:var(--forest)]/20">
+                      <strong>Tanggapan Resmi Desa:</strong> {aduan.tanggapan}
+                    </div>
+                  )}
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
     </section>

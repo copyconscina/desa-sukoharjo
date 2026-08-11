@@ -14,6 +14,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://images.unsplash.com",
   "media-src 'self' blob: https://*.supabase.co https://*.supabase.in",
   "connect-src 'self' https://*.supabase.co https://*.supabase.in",
+  "frame-src 'self' https://www.google.com https://maps.google.com",
   isProduction ? "upgrade-insecure-requests" : "",
 ].filter(Boolean).join("; ");
 

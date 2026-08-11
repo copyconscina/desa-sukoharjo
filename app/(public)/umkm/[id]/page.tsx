@@ -234,7 +234,7 @@ export default async function UmkmDetailPage({ params }: Props) {
           {nextUmkm ? <Button asChild className="btn btn-dark border-none"><Link href={`/umkm/${nextUmkm.id}`}>UMKM berikutnya →</Link></Button> : <span />}
         </div>
       </section>
-      <section className="block pt-0">
+      <section className="block">
         <div className="wrap text-sm text-[color:var(--ink-soft)]">
           Ada informasi yang tidak sesuai? <Link href="/pengaduan" className="underline font-medium text-[color:var(--forest)]">Laporkan atau koreksi data UMKM</Link>.
         </div>
