@@ -43,5 +43,8 @@
   "allowScripts": {
     "sharp": true,
     "unrs-resolver": true
+  },
+  "overrides": {
+    "jsdom": "25.0.1"
   }
 }
