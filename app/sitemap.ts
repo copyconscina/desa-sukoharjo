@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getBeritaList, getUmkmList } from "@/lib/db";
 import { siteUrl } from "@/lib/site";
 
-const publicRoutes = ["", "/profil", "/umkm", "/berita", "/potensi", "/galeri", "/agenda", "/lembaga", "/statistik", "/apbdes", "/produk-hukum", "/pengaduan", "/buku-tamu"];
+const publicRoutes = ["", "/profil", "/umkm", "/berita", "/potensi", "/galeri", "/agenda", "/lembaga", "/statistik", "/apbdes", "/produk-hukum", "/pengaduan", "/buku-tamu", "/tentang", "/kebijakan-privasi", "/ketentuan-penggunaan"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [berita, umkm] = await Promise.all([getBeritaList(), getUmkmList()]);

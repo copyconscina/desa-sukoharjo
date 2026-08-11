@@ -1,7 +1,6 @@
 "use client";
 
-import { createImageUploadUrlAction } from "@/app/admin/actions";
-import { supabase } from "@/utils/supabase/static";
+import { uploadImageAction } from "@/app/admin/actions";
 
 export type ImageUploadResult = {
   success: boolean;
@@ -11,23 +10,12 @@ export type ImageUploadResult = {
 
 export async function uploadImageDirect(file: File): Promise<ImageUploadResult> {
   try {
-    const signedUpload = await createImageUploadUrlAction(file.name, file.type);
-    if (!signedUpload.success || !signedUpload.path || !signedUpload.token) {
-      return { success: false, error: signedUpload.error || "Gagal menyiapkan upload foto." };
-    }
-
-    const { error: uploadError } = await supabase.storage
-      .from("sukoharjo-assets")
-      .uploadToSignedUrl(signedUpload.path, signedUpload.token, file, {
-        contentType: file.type || undefined,
-      });
-
-    if (uploadError) {
-      return { success: false, error: `Gagal mengunggah foto: ${uploadError.message}` };
-    }
-
-    const { data } = supabase.storage.from("sukoharjo-assets").getPublicUrl(signedUpload.path);
-    return { success: true, url: data.publicUrl };
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await uploadImageAction(formData);
+    return result.success && result.url
+      ? { success: true, url: result.url }
+      : { success: false, error: result.error || "Gagal mengunggah foto." };
   } catch (error: unknown) {
     return {
       success: false,

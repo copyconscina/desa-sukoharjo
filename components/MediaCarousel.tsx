@@ -11,6 +11,7 @@ interface Props {
   badge?: string;
   grad?: string;
   aspectRatio?: string;
+  thumbnailContainerClassName?: string;
 }
 
 const icChevronLeft = (
@@ -32,6 +33,7 @@ export default function MediaCarousel({
   badge,
   grad,
   aspectRatio = "h-[320px] sm:h-[400px]",
+  thumbnailContainerClassName = "bg-slate-900/90 border-slate-800",
 }: Props) {
   const parsed = parseImagesList(imagesData);
   const images: string[] =
@@ -134,7 +136,7 @@ export default function MediaCarousel({
 
       {/* THUMBNAIL STRIP (JIKA FOTO > 1) */}
       {images.length > 1 && (
-        <div className="flex gap-2 p-2 bg-slate-900/90 rounded-xl overflow-x-auto justify-center border border-slate-800">
+        <div className={`flex gap-2 p-2 rounded-xl overflow-x-auto justify-center border ${thumbnailContainerClassName}`}>
           {images.map((imgUrl, i) => (
             <button
               key={i}

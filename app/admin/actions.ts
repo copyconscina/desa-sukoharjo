@@ -49,8 +49,16 @@ import {
   resetRateLimit,
 } from "@/lib/auth";
 import { uploadSingleFile, uploadPdfFile } from "@/lib/upload";
-import { supabaseServer } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
+import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from "@/lib/upload-limits";
+
+async function checkPublicRateLimit(action: string) {
+  const headerList = await headers();
+  const clientIp = headerList.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || headerList.get("x-real-ip")
+    || "anonymous";
+  return checkRateLimit(`${action}_${clientIp}`);
+}
 
 export async function uploadPdfAction(formData: FormData) {
   const isAuth = await checkAuthAction();
@@ -75,6 +83,8 @@ export async function uploadPdfAction(formData: FormData) {
 
 // Public Actions for Citizens (No Admin Auth Required)
 export async function uploadPublicFotoAction(formData: FormData) {
+  const rateCheck = await checkPublicRateLimit("public_upload");
+  if (!rateCheck.allowed) return { success: false, error: "Terlalu banyak unggahan. Silakan coba lagi beberapa menit lagi." };
   const file = formData.get("file") as File;
   if (!file || file.size === 0) {
     return { success: false, error: "Tidak ada foto yang diunggah." };
@@ -82,15 +92,21 @@ export async function uploadPublicFotoAction(formData: FormData) {
   try {
     const url = await uploadSingleFile(file);
     return { success: true, url };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Gagal upload foto publik:", err);
-    return { success: false, error: err.message || "Gagal mengunggah foto." };
+    return { success: false, error: err instanceof Error ? err.message : "Gagal mengunggah foto." };
   }
 }
 
-export async function addBukuTamuPublicAction(name: string, origin: string, message: string) {
+export async function addBukuTamuPublicAction(name: string, origin: string, message: string, consent: boolean) {
+  const rateCheck = await checkPublicRateLimit("buku_tamu");
+  if (!rateCheck.allowed) return { success: false, error: "Terlalu banyak kiriman. Silakan coba lagi beberapa menit lagi." };
   if (!name.trim() || !origin.trim() || !message.trim()) {
     return { success: false, error: "Mohon isi semua bidang yang wajib." };
+  }
+  if (!consent) return { success: false, error: "Persetujuan publikasi diperlukan untuk mengirim buku tamu." };
+  if (name.trim().length > 100 || origin.trim().length > 150 || message.trim().length > 2_000) {
+    return { success: false, error: "Isian melebihi batas karakter yang diperbolehkan." };
   }
   const dateStr = new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -112,10 +128,17 @@ export async function addPengaduanPublicAction(
   dusun: string,
   judul: string,
   isi: string,
-  foto?: string
+  foto?: string,
+  consent?: boolean
 ) {
+  const rateCheck = await checkPublicRateLimit("pengaduan");
+  if (!rateCheck.allowed) return { success: false, error: "Terlalu banyak kiriman. Silakan coba lagi beberapa menit lagi." };
   if (!judul.trim() || !isi.trim()) {
     return { success: false, error: "Judul dan Rincian Laporan wajib diisi." };
+  }
+  if (!consent) return { success: false, error: "Persetujuan pemrosesan data diperlukan untuk mengirim pengaduan." };
+  if (nama.trim().length > 100 || dusun.trim().length > 150 || judul.trim().length > 200 || isi.trim().length > 5_000) {
+    return { success: false, error: "Isian melebihi batas karakter yang diperbolehkan." };
   }
   const dateStr = new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -145,26 +168,38 @@ export async function loginAction(formData: FormData) {
   const password = (formData.get("password") as string) || "";
 
   const headerList = await headers();
-  const clientIp = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip") || "global_ip";
-  const rateLimitKey = `${clientIp}_${email || 'user'}`;
+  const clientIp = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() || headerList.get("x-real-ip") || "global_ip";
+  const ipRateLimitKey = `login_ip_${clientIp}`;
+  const accountRateLimitKey = `login_account_${email.toLowerCase() || "unknown"}`;
 
-  const rateCheck = checkRateLimit(rateLimitKey);
-  if (!rateCheck.allowed) {
+  const [ipRateCheck, accountRateCheck] = await Promise.all([
+    checkRateLimit(ipRateLimitKey),
+    checkRateLimit(accountRateLimitKey),
+  ]);
+  const blockedCheck = !ipRateCheck.allowed ? ipRateCheck : !accountRateCheck.allowed ? accountRateCheck : null;
+  if (blockedCheck) {
     return {
       success: false,
       error: `Terlalu banyak percobaan login yang gagal. Silakan coba lagi dalam ${Math.ceil(
-        (rateCheck.remainingSeconds || 900) / 60
+        (blockedCheck.remainingSeconds || 900) / 60
       )} menit.`,
     };
+  }
+
+  if (!email || !password || password.length < 8) {
+    return { success: false, error: "Email atau password salah." };
   }
 
   const { data, error } = await loginWithSupabase(email, password);
 
   if (error || !data.user) {
-    return { success: false, error: error?.message || "Email atau password salah!" };
+    return { success: false, error: "Email atau password salah." };
   }
 
-  resetRateLimit(rateLimitKey);
+  await Promise.all([
+    resetRateLimit(ipRateLimitKey),
+    resetRateLimit(accountRateLimitKey),
+  ]);
   return { success: true };
 }
 
@@ -182,6 +217,7 @@ export async function addBeritaAction(tag: string, title: string, desc: string, 
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
+  validateBeritaInput(title, desc);
   const newBerita: Omit<Berita, "date"> & { date?: string } = {
     tag,
     cls: tag.toLowerCase() === "pengumuman" ? "pengumuman" : tag.toLowerCase() === "pembangunan" ? "pembangunan" : "",
@@ -200,6 +236,7 @@ export async function updateBeritaAction(id: number, tag: string, title: string,
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
+  validateBeritaInput(title, desc);
   const updatedBerita: Omit<Berita, "id" | "date"> & { date?: string } = {
     tag,
     cls: tag.toLowerCase() === "pengumuman" ? "pengumuman" : tag.toLowerCase() === "pembangunan" ? "pembangunan" : "",
@@ -303,30 +340,28 @@ export async function deleteUmkmAction(id: number) {
   return { success: true };
 }
 
-export async function createImageUploadUrlAction(fileName: string, contentType: string) {
+function validateBeritaInput(title: string, desc: string) {
+  if (!title?.trim() || title.trim().length > 300) throw new Error("Judul berita tidak valid.");
+  if (!desc?.trim()) throw new Error("Isi berita wajib diisi.");
+  if (desc.length > 150_000) throw new Error("Isi berita terlalu panjang (maksimal 150.000 karakter).");
+}
+
+export async function uploadImageAction(formData: FormData) {
   const isAuth = await checkAuthAction();
   if (!isAuth) throw new Error("Unauthorized");
 
-  const extension = (fileName.split(".").pop() || "").toLowerCase();
-  const allowedExtensions = new Set(["jpg", "jpeg", "png", "webp", "jfif", "avif", "heic", "gif", "svg", "bmp", "tif", "tiff"]);
-  if (!contentType.startsWith("image/") && !allowedExtensions.has(extension)) {
-    return { success: false, error: "File harus berupa gambar (JPG, JPEG, PNG, WebP, dll)." };
+  const file = formData.get("file") as File | null;
+  if (!file || file.size <= 0 || file.size > MAX_UPLOAD_FILE_BYTES) {
+    return { success: false, error: `File tidak valid atau melebihi ${MAX_UPLOAD_FILE_LABEL}.` };
   }
-
-  const objectPath = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${extension || "jpg"}`;
   try {
-    const { data, error } = await supabaseServer.storage
-      .from("sukoharjo-assets")
-      .createSignedUploadUrl(objectPath);
-    if (error || !data) {
-      throw new Error(error?.message || "Gagal menyiapkan upload foto.");
-    }
-    return { success: true, path: data.path, token: data.token };
+    const url = await uploadSingleFile(file);
+    return { success: true, url };
   } catch (err: unknown) {
-    console.error("Failed to create image upload URL:", err);
+    console.error("Failed to upload image:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Gagal menyiapkan upload foto.",
+      error: err instanceof Error ? err.message : "Gagal mengunggah foto.",
     };
   }
 }

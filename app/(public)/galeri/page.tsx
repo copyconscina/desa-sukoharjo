@@ -8,6 +8,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Galeri Desa Sukoharjo",
   description: "Dokumentasi foto kegiatan warga, database UMKM, dan potensi Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri.",
+  alternates: { canonical: "/galeri" },
 };
 
 export default async function GaleriPage() {

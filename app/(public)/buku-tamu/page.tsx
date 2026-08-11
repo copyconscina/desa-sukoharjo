@@ -10,6 +10,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Buku Tamu — Desa Sukoharjo",
   description: "Formulir buku tamu dan ruang aspirasi/kesan pesan masyarakat bagi Desa Sukoharjo, Kecamatan Tirtomoyo.",
+  alternates: { canonical: "/buku-tamu" },
 };
 
 export default async function BukuTamuPage() {

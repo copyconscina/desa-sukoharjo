@@ -14,9 +14,12 @@ interface Props {
   initialUmkmData: Umkm[];
 }
 
+const ITEMS_PER_PAGE = 8;
+
 export default function UmkmList({ initialUmkmData }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Semua");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const categories = ["Semua", ...Array.from(new Set(initialUmkmData.map((u) => u.category)))];
 
@@ -28,6 +31,20 @@ export default function UmkmList({ initialUmkmData }: Props) {
       [u.name, u.product, u.owner].join(" ").toLowerCase().includes(term);
     return matchCat && matchTerm;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredUmkm.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pagedUmkm = filteredUmkm.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
+  const handleFilterChange = (category: string) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="wrap">
@@ -42,7 +59,7 @@ export default function UmkmList({ initialUmkmData }: Props) {
             id="umkmSearch"
             placeholder="Cari nama UMKM, produk, atau pemilik…"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-[42px] pr-4 py-3 rounded-full border border-[color:var(--line)] bg-[color:var(--card)] text-sm font-sans h-[46px]"
           />
         </div>
@@ -55,20 +72,27 @@ export default function UmkmList({ initialUmkmData }: Props) {
             variant={activeCategory === c ? "default" : "outline"}
             className={`chip ${activeCategory === c ? "active" : ""}`}
             style={{ display: "inline-flex", height: "auto", border: "1px solid var(--line)" }}
-            onClick={() => setActiveCategory(c)}
+            onClick={() => handleFilterChange(c)}
           >
             {c}
           </Button>
         ))}
       </div>
 
-      <p className="result-count" id="umkmResultCount">
-        {filteredUmkm.length} UMKM ditemukan
-      </p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="result-count" id="umkmResultCount">
+          {filteredUmkm.length} UMKM ditemukan
+        </p>
+        {totalPages > 1 && (
+          <span className="text-xs font-mono text-[color:var(--ink-soft)]">
+            Halaman {safePage} / {totalPages}
+          </span>
+        )}
+      </div>
 
       <div className="grid cols-4" id="umkmGrid">
-        {filteredUmkm.length > 0 ? (
-          filteredUmkm.map((u) => {
+        {pagedUmkm.length > 0 ? (
+          pagedUmkm.map((u) => {
             const images = parseImagesList(u.images);
             const cover = images[0] || u.image;
 
@@ -117,6 +141,87 @@ export default function UmkmList({ initialUmkmData }: Props) {
           </div>
         )}
       </div>
+
+      {/* PAGINATION ARROWS */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            aria-label="Halaman sebelumnya"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              border: "1px solid var(--line)",
+              background: safePage === 1 ? "var(--parchment-2)" : "var(--card)",
+              cursor: safePage === 1 ? "not-allowed" : "pointer",
+              opacity: safePage === 1 ? 0.4 : 1,
+              transition: "background 0.15s, opacity 0.15s",
+              flexShrink: 0,
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                aria-label={`Halaman ${page}`}
+                aria-current={page === safePage ? "page" : undefined}
+                style={{
+                  width: page === safePage ? "36px" : "32px",
+                  height: page === safePage ? "36px" : "32px",
+                  borderRadius: "50%",
+                  border: "1px solid var(--line)",
+                  background: page === safePage ? "var(--forest)" : "var(--card)",
+                  color: page === safePage ? "#fff" : "var(--ink)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "13px",
+                  fontWeight: page === safePage ? 700 : 400,
+                  cursor: "pointer",
+                  transition: "background 0.15s, transform 0.1s",
+                  transform: page === safePage ? "scale(1.05)" : "none",
+                  flexShrink: 0,
+                }}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Halaman berikutnya"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              border: "1px solid var(--line)",
+              background: safePage === totalPages ? "var(--parchment-2)" : "var(--card)",
+              cursor: safePage === totalPages ? "not-allowed" : "pointer",
+              opacity: safePage === totalPages ? 0.4 : 1,
+              transition: "background 0.15s, opacity 0.15s",
+              flexShrink: 0,
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

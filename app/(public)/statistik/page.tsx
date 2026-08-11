@@ -9,6 +9,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Statistik Kependudukan — Desa Sukoharjo",
   description: "Demografi dan statistik agregat penduduk Desa Sukoharjo berdasarkan dusun, tingkat pendidikan, dan pekerjaan.",
+  alternates: { canonical: "/statistik" },
 };
 
 export default async function StatistikPage() {
@@ -57,7 +58,7 @@ export default async function StatistikPage() {
 
         {/* DISTRIBUSI DUSUN — sorted, top 3 highlighted */}
         <Card className="card shadow-none border border-[color:var(--line)] p-6">
-          <h3 className="font-heading text-xl mb-5 text-[color:var(--ink)]">Sebaran Penduduk per Dusun</h3>
+          <h3 className="font-heading font-semibold text-xl mb-5 text-[color:var(--ink)]">Sebaran Penduduk per Dusun</h3>
           <div className="flex flex-col gap-1">
             {dusunSorted.map((dusun, idx) => (
               <div key={idx} className="pop-bar-row">

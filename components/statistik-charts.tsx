@@ -101,7 +101,7 @@ export function PekerjaanDonut({ data }: { data: PekerjaanItem[] }) {
             </div>
             <div className="text-right shrink-0">
               <span className="text-xs font-mono font-bold text-[color:var(--ink-soft)]">{item.count.toLocaleString("id-ID")}</span>
-              <span className="text-xs font-mono text-[color:var(--clay)] ml-1.5">{item.pct}%</span>
+              <span className="text-xs font-mono text-[color:var(--clay)] ml-1.5">{((item.count / total) * 100).toFixed(1)}%</span>
             </div>
           </div>
         ))}

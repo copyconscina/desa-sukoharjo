@@ -21,6 +21,15 @@ import { parseImagesList } from "./utils";
 
 const STORE_PATH = path.join(process.cwd(), "lib", "store.json");
 
+export type AdminActivity = {
+  id?: number;
+  module: string;
+  action: "create" | "update" | "delete";
+  title: string;
+  entity_id?: string | null;
+  created_at: string;
+};
+
 declare global {
   var __DESA_STORE__: any;
 }
@@ -49,6 +58,59 @@ function writeStore(data: any) {
   } catch (err) {
     // Read-only filesystem safe fallback
   }
+}
+
+/**
+ * Audit trail untuk panel admin. Kegagalan pencatatan tidak boleh
+ * menggagalkan penyimpanan konten utama, misalnya ketika mode fallback lokal
+ * sedang dipakai atau migrasi belum dijalankan.
+ */
+async function recordAdminActivity(
+  module: string,
+  action: AdminActivity["action"],
+  title: string,
+  entityId?: number | string
+): Promise<void> {
+  const activity: AdminActivity = {
+    module,
+    action,
+    title,
+    entity_id: entityId == null ? null : String(entityId),
+    created_at: new Date().toISOString(),
+  };
+
+  if (!isPlaceholderSupabase) {
+    try {
+      const { error } = await supabaseServer.from("admin_activity").insert(activity);
+      if (!error) return;
+      console.error("Gagal mencatat aktivitas admin:", error.message);
+    } catch (error) {
+      console.error("Gagal mencatat aktivitas admin:", error);
+    }
+  }
+
+  const store = readStore();
+  const localActivities: AdminActivity[] = store.admin_activity || [];
+  store.admin_activity = [{ ...activity, id: Date.now() }, ...localActivities].slice(0, 100);
+  writeStore(store);
+}
+
+export async function getAdminActivityList(limit = 12): Promise<AdminActivity[]> {
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data, error } = await supabaseServer
+        .from("admin_activity")
+        .select("id, module, action, title, entity_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (!error && data) return data as AdminActivity[];
+    } catch (error) {
+      console.error("Gagal membaca aktivitas admin:", error);
+    }
+  }
+
+  const store = readStore();
+  return ((store.admin_activity || []) as AdminActivity[]).slice(0, limit);
 }
 
 // Helper to filter and merge Supabase list with local edits & deletes
@@ -135,8 +197,9 @@ export async function getUmkmCount(): Promise<number> {
 }
 
 export async function getUmkmById(id: number): Promise<Umkm | undefined> {
+  if (isNaN(id)) return undefined;
   const list = await getUmkmList();
-  return list.find((u) => u.id === id) || list[0];
+  return list.find((u) => u.id === id);
 }
 
 export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promise<Umkm> {
@@ -204,6 +267,7 @@ export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promis
   }
 
   writeStore(store);
+  await recordAdminActivity("UMKM", item.id != null ? "update" : "create", `${item.id != null ? "Memperbarui" : "Menambahkan"} UMKM: ${resultItem.name}`, resultItem.id);
   return resultItem;
 }
 
@@ -217,6 +281,7 @@ export async function deleteUmkm(id: number): Promise<boolean> {
   store.umkm = (store.umkm || []).filter((u: Umkm) => u.id !== id);
   store.deletedUmkm = [...(store.deletedUmkm || []), id];
   writeStore(store);
+  await recordAdminActivity("UMKM", "delete", "Menghapus data UMKM", id);
   return true;
 }
 
@@ -298,6 +363,7 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
 
   store.berita = [newItem, ...list];
   writeStore(store);
+  await recordAdminActivity("Berita", "create", `Menambahkan berita: ${newItem.title}`, newItem.id);
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
   const imageUrls = parseImagesList(item.images);
@@ -330,6 +396,7 @@ export async function deleteBeritaById(id: number): Promise<boolean> {
   store.berita = (store.berita || []).filter((b: Berita) => b.id !== id);
   store.deletedBerita = [...(store.deletedBerita || []), id];
   writeStore(store);
+  await recordAdminActivity("Berita", "delete", "Menghapus berita", id);
   return true;
 }
 
@@ -366,6 +433,7 @@ export async function updateBerita(id: number, item: Omit<Berita, "id" | "date">
 
   store.berita = list.map((b) => (b.id === id ? updatedItem : b));
   writeStore(store);
+  await recordAdminActivity("Berita", "update", `Memperbarui berita: ${updatedItem.title}`, id);
 
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
   const imageUrls = parseImagesList(item.images);
@@ -450,6 +518,7 @@ export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
 
   store.galeri = [newItem, ...list];
   writeStore(store);
+  await recordAdminActivity("Galeri", "create", `Menambahkan galeri: ${newItem.label}`, newItem.id);
   return newItem;
 }
 
@@ -485,6 +554,7 @@ export async function updateGaleri(id: number, item: Omit<GaleriItem, "id">): Pr
     galleryItem.id === id ? updatedItem : galleryItem
   );
   writeStore(store);
+  await recordAdminActivity("Galeri", "update", `Memperbarui galeri: ${updatedItem.label}`, id);
   return updatedItem;
 }
 
@@ -498,6 +568,7 @@ export async function deleteGaleriById(id: number): Promise<boolean> {
   store.galeri = (store.galeri || []).filter((g: GaleriItem) => g.id !== id);
   store.deletedGaleri = [...(store.deletedGaleri || []), id];
   writeStore(store);
+  await recordAdminActivity("Galeri", "delete", "Menghapus galeri", id);
   return true;
 }
 
@@ -534,6 +605,7 @@ export async function updatePotensi(num: string, title: string, desc: string): P
   const store = readStore();
   store.potensi = (store.potensi || []).map((p: Potensi) => (p.num === num ? { ...p, title, desc } : p));
   writeStore(store);
+  await recordAdminActivity("Profil", "update", `Memperbarui potensi desa: ${title}`, num);
   return true;
 }
 
@@ -585,6 +657,8 @@ export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): 
   }
   writeStore(store);
 
+  await recordAdminActivity("Profil", item.id ? "update" : "create", `${item.id ? "Memperbarui" : "Menambahkan"} lembaga: ${resultItem.name}`, resultItem.id);
+
   return resultItem;
 }
 
@@ -598,6 +672,7 @@ export async function deleteLembaga(id: number): Promise<boolean> {
   store.lembaga = (store.lembaga || []).filter((l: Lembaga) => l.id !== id);
   store.deletedLembaga = [...(store.deletedLembaga || []), id];
   writeStore(store);
+  await recordAdminActivity("Profil", "delete", "Menghapus data lembaga desa", id);
   return true;
 }
 
@@ -622,6 +697,7 @@ export async function saveProfilDesa(profil: ProfilDesa): Promise<boolean> {
   const store = readStore();
   store.profil = profil;
   writeStore(store);
+  await recordAdminActivity("Profil", "update", "Memperbarui visi dan misi desa", 1);
   return true;
 }
 
@@ -676,6 +752,8 @@ export async function saveAgenda(item: Omit<Agenda, "id"> & { id?: number }): Pr
   }
   writeStore(store);
 
+  await recordAdminActivity("Layanan", item.id ? "update" : "create", `${item.id ? "Memperbarui" : "Menambahkan"} agenda: ${resultItem.title}`, resultItem.id);
+
   return resultItem;
 }
 
@@ -689,6 +767,7 @@ export async function deleteAgenda(id: number): Promise<boolean> {
   store.agenda = (store.agenda || []).filter((a: Agenda) => a.id !== id);
   store.deletedAgenda = [...(store.deletedAgenda || []), id];
   writeStore(store);
+  await recordAdminActivity("Layanan", "delete", "Menghapus agenda layanan", id);
   return true;
 }
 
@@ -814,6 +893,7 @@ export async function updateStatusPengaduan(id: number, status: Pengaduan["statu
   const store = readStore();
   store.pengaduan = (store.pengaduan || []).map((p: Pengaduan) => (p.id === id ? { ...p, status, tanggapan } : p));
   writeStore(store);
+  await recordAdminActivity("Layanan", "update", `Memperbarui status pengaduan menjadi ${status}`, id);
   return true;
 }
 
@@ -851,6 +931,7 @@ export async function updateApbdesRingkasan(ringkasan: ApbdesRingkasan): Promise
   const store = readStore();
   store.apbdes_ringkasan = ringkasan;
   writeStore(store);
+  await recordAdminActivity("Transparansi", "update", `Memperbarui ringkasan APBDes ${ringkasan.tahun}`, 1);
   return true;
 }
 
@@ -901,6 +982,8 @@ export async function saveApbdesBidang(item: Omit<ApbdesBidang, "id"> & { id?: n
   }
   writeStore(store);
 
+  await recordAdminActivity("Transparansi", item.id ? "update" : "create", `${item.id ? "Memperbarui" : "Menambahkan"} bidang APBDes: ${resultItem.name}`, resultItem.id);
+
   return resultItem;
 }
 
@@ -914,6 +997,7 @@ export async function deleteApbdesBidang(id: number): Promise<boolean> {
   store.apbdes_bidang = (store.apbdes_bidang || []).filter((b: ApbdesBidang) => b.id !== id);
   store.deletedApbdesBidang = [...(store.deletedApbdesBidang || []), id];
   writeStore(store);
+  await recordAdminActivity("Transparansi", "delete", "Menghapus bidang APBDes", id);
   return true;
 }
 
@@ -965,6 +1049,8 @@ export async function saveProdukHukum(item: Omit<ProdukHukum, "id"> & { id?: num
   }
   writeStore(store);
 
+  await recordAdminActivity("Transparansi", item.id ? "update" : "create", `${item.id ? "Memperbarui" : "Menambahkan"} produk hukum: ${resultItem.judul}`, resultItem.id);
+
   return resultItem;
 }
 
@@ -978,6 +1064,7 @@ export async function deleteProdukHukum(id: number): Promise<boolean> {
   store.produk_hukum = (store.produk_hukum || []).filter((p: ProdukHukum) => p.id !== id);
   store.deletedProdukHukum = [...(store.deletedProdukHukum || []), id];
   writeStore(store);
+  await recordAdminActivity("Transparansi", "delete", "Menghapus produk hukum", id);
   return true;
 }
 
@@ -1167,6 +1254,8 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
   const store = readStore();
   store.statistik_penduduk = dataInput;
   writeStore(store);
+
+  await recordAdminActivity("Transparansi", "update", "Memperbarui statistik kependudukan", "statistik-penduduk");
 
   return true;
 }

@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getBeritaList, getBeritaById } from "@/lib/db";
 import { Card } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import MediaCarousel from "@/components/MediaCarousel";
 import { parseImagesList } from "@/lib/utils";
 import { defaultOgImage } from "@/lib/site";
+import DOMPurify from "isomorphic-dompurify";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +54,11 @@ export default async function BeritaDetailPage({ params }: Props) {
   }
 
   const imageList = parseImagesList(b.images);
+  const cleanHtml = DOMPurify.sanitize(b.desc, {
+    ALLOWED_TAGS: ["a", "b", "br", "em", "i", "li", "ol", "p", "s", "span", "strong", "u", "ul"],
+    ALLOWED_ATTR: ["class", "href", "rel", "target"],
+    ALLOW_DATA_ATTR: false,
+  });
 
   const icCal = (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
@@ -121,13 +126,11 @@ export default async function BeritaDetailPage({ params }: Props) {
               className="prose max-w-none text-[color:var(--ink)]"
               style={{ 
                 fontSize: "17px", 
-                lineHeight: "1.8", 
-                whiteSpace: "pre-wrap",
+                lineHeight: "1.8",
                 textAlign: "justify" 
               }}
-            >
-              {b.desc}
-            </article>
+              dangerouslySetInnerHTML={{ __html: cleanHtml }}
+            />
           </Card>
         </div>
       </section>

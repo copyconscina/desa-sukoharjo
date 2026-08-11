@@ -116,12 +116,19 @@ export default function TransparansiClientPage({
   const executeSaveBidang = async () => {
     if (!editingBidang?.name) return;
     try {
+      // Auto-calculate pct from anggaran and realisasi
+      const parseRupiah = (v: string) => parseInt((v || "").replace(/[^0-9]/g, "") || "0", 10);
+      const anggaranNum = parseRupiah(editingBidang.anggaran || "");
+      const realisasiNum = parseRupiah(editingBidang.realisasi || "");
+      const pctNum = anggaranNum > 0 ? Math.min((realisasiNum / anggaranNum) * 100, 100) : 0;
+      const autoPct = `${pctNum.toFixed(1)}%`;
+
       const res = await saveApbdesBidangAction({
         id: editingBidang.id,
         name: editingBidang.name || "",
         anggaran: editingBidang.anggaran || "Rp 0",
         realisasi: editingBidang.realisasi || "Rp 0",
-        pct: editingBidang.pct || "0%",
+        pct: autoPct,
         desc: editingBidang.desc || "",
       });
       if (res.success && res.item) {
@@ -247,7 +254,15 @@ export default function TransparansiClientPage({
   const executeSaveStatistik = async () => {
     setIsStatistikSaving(true);
     try {
-      await updateStatistikPendudukAction(statistik);
+      // Auto-compute pct for each pekerjaan from count values
+      const totalPekerjaan = (statistik.pekerjaanList || []).reduce((s, p) => s + p.count, 0);
+      const updatedPekerjaanList = (statistik.pekerjaanList || []).map((p) => ({
+        ...p,
+        pct: totalPekerjaan > 0 ? parseFloat(((p.count / totalPekerjaan) * 100).toFixed(1)) : 0,
+      }));
+      const statistikToSave = { ...statistik, pekerjaanList: updatedPekerjaanList };
+      await updateStatistikPendudukAction(statistikToSave);
+      setStatistik(statistikToSave);
       alert("Statistik kependudukan berhasil disimpan!");
       setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       router.refresh();
@@ -726,19 +741,6 @@ export default function TransparansiClientPage({
                         className="w-20 px-1.5 py-1 border rounded text-xs text-right font-mono font-bold text-[color:var(--clay)]"
                       />
                     </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-[color:var(--ink-soft)]">%:</span>
-                      <input
-                        type="number"
-                        value={item.pct}
-                        onChange={(e) => {
-                          const newList = [...statistik.pekerjaanList];
-                          newList[idx].pct = parseFloat(e.target.value) || 0;
-                          setStatistik({ ...statistik, pekerjaanList: newList });
-                        }}
-                        className="w-14 px-1.5 py-1 border rounded text-xs text-center font-mono"
-                      />
-                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -780,7 +782,7 @@ export default function TransparansiClientPage({
                   className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                 />
               </div>
-              <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-mono uppercase mb-1">Anggaran</label>
                   <input
@@ -801,17 +803,8 @@ export default function TransparansiClientPage({
                     className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-mono uppercase mb-1">Persen (%)</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingBidang?.pct || ""}
-                    onChange={(e) => setEditingBidang({ ...editingBidang, pct: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm bg-[color:var(--parchment)]"
-                  />
-                </div>
               </div>
+              <p className="text-xs text-[color:var(--ink-soft)] mt-[-4px]">💡 Persentase realisasi dihitung otomatis dari Realisasi ÷ Anggaran.</p>
               <div>
                 <label className="block text-xs font-mono uppercase mb-1">Deskripsi Kegiatan</label>
                 <textarea

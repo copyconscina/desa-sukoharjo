@@ -7,7 +7,7 @@ export async function uploadSingleFile(file: File): Promise<string> {
   }
 
   const fileExt = (file.name.split(".").pop() || "").toLowerCase();
-  const isImageByExt = ["jpg", "jpeg", "png", "webp", "jfif", "avif", "heic", "gif", "svg", "bmp", "tif", "tiff"].includes(fileExt);
+  const isImageByExt = ["jpg", "jpeg", "png", "webp", "jfif", "avif", "heic", "gif", "bmp", "tif", "tiff"].includes(fileExt);
 
   if (!file.type.startsWith("image/") && !isImageByExt) {
     throw new Error("File harus berupa gambar (JPG, JPEG, PNG, WebP, dll).");
@@ -23,9 +23,9 @@ export async function uploadSingleFile(file: File): Promise<string> {
   let contentType = file.type;
   let fileExtension = file.name.split(".").pop() || "jpg";
 
-  // Kompresi otomatis untuk semua format gambar raster menggunakan sharp
-  if (file.type !== "image/svg+xml") {
-    try {
+  // Decode and re-encode raster uploads to verify their content and remove
+  // untrusted metadata. Do not fall back to the original binary on failure.
+  try {
       // Load sharp only when compression is needed. Some serverless runtimes
       // cannot load its native binary; uploads should still work without it.
       const sharp = (await import("sharp")).default;
@@ -42,9 +42,9 @@ export async function uploadSingleFile(file: File): Promise<string> {
 
       contentType = "image/webp";
       fileExtension = "webp";
-    } catch (compressErr) {
-      console.warn("Gagal kompresi gambar dengan sharp, menggunakan buffer asli:", compressErr);
-    }
+  } catch (compressErr) {
+    console.warn("Gagal memvalidasi gambar dengan sharp:", compressErr);
+    throw new Error("File gambar tidak valid atau formatnya tidak didukung.");
   }
 
   const uniqueFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
@@ -103,9 +103,9 @@ export async function uploadPdfFile(file: File): Promise<string> {
       }
     }
   } catch (err) {
-    console.warn("Supabase storage PDF upload error, using Data URL fallback:", err);
+    console.error("Supabase storage PDF upload error:", err);
   }
 
-  // Fallback to Data URL if Supabase storage bucket is not active
-  return `data:application/pdf;base64,${buffer.toString("base64")}`;
+  // Never store a large base64 document in database fields as a fallback.
+  throw new Error("Gagal mengunggah PDF ke penyimpanan. Pastikan bucket sukoharjo-assets aktif.");
 }

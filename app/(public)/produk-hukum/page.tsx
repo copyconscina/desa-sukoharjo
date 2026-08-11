@@ -10,6 +10,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Produk Hukum — Desa Sukoharjo",
   description: "Arsip Peraturan Desa (Perdes), Peraturan Kepala Desa (Perkades), dan Keputusan Kepala Desa Sukoharjo.",
+  alternates: { canonical: "/produk-hukum" },
 };
 
 export default async function ProdukHukumPage() {
@@ -39,7 +40,7 @@ export default async function ProdukHukumPage() {
                     </Badge>
                     <span className="font-mono text-xs text-[color:var(--ink-soft)]">{doc.nomor}</span>
                   </div>
-                  <h3 className="font-heading text-base md:text-lg text-[color:var(--ink)] mt-1 break-words leading-snug">
+                  <h3 className="font-heading font-semibold text-base md:text-lg text-[color:var(--ink)] mt-1 break-words leading-snug">
                     {doc.judul}
                   </h3>
                   <span className="font-mono text-xs text-[color:var(--ink-soft)]">Ditetapkan: {doc.tanggal}</span>

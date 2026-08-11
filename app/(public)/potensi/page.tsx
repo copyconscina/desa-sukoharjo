@@ -10,6 +10,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Potensi Desa — Desa Sukoharjo",
   description: "Jelajahi potensi unggulan Desa Sukoharjo yang menjadi kekuatan dalam mendukung pembangunan dan kesejahteraan masyarakat.",
+  alternates: { canonical: "/potensi" },
 };
 
 export default async function PotensiPage() {

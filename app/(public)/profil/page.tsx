@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { popData } from "@/lib/data";
 import { getProfilData, getLembagaList, getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -10,6 +9,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Profil Desa Sukoharjo",
   description: "Sejarah, visi-misi, struktur pemerintahan, data kependudukan, dan kontak kantor Desa Sukoharjo.",
+  alternates: { canonical: "/profil" },
 };
 
 export default async function ProfilPage() {
@@ -57,7 +57,7 @@ export default async function ProfilPage() {
               <div>
                 <div className="yr">1941 (Penggabungan Wilayah)</div>
                 <p>
-                  Kedua wilayah administratif akhirnya secara resmi diintegrasikan menjadi satu kesatuan di bawah nama Desa Sukoharjo. Diambil dari perpaduan kata bahasa Jawa "Suko" yang bermakna kemakmuran atau kebahagiaan dan "Harjo" yang berarti keselamatan atau kesejahteraan, nama ini melambangkan harapan luhur terwujudnya desa yang makmur, aman, dan sentosa.
+                  Kedua wilayah administratif akhirnya secara resmi diintegrasikan menjadi satu kesatuan di bawah nama Desa Sukoharjo. Diambil dari perpaduan kata bahasa Jawa &ldquo;Suko&rdquo; yang bermakna kemakmuran atau kebahagiaan dan &ldquo;Harjo&rdquo; yang berarti keselamatan atau kesejahteraan, nama ini melambangkan harapan luhur terwujudnya desa yang makmur, aman, dan sentosa.
                 </p>
               </div>
               <div>
@@ -69,9 +69,9 @@ export default async function ProfilPage() {
             </div>
           </div>
           <Card className="vm-card border-none shadow-none text-white">
-            <h3 className="text-white">Visi</h3>
-            <p style={{ fontSize: "20px", fontStyle: "italic", fontWeight: "bold" }}>"{profil.visi}"</p>
-            <h3 className="text-white" style={{ marginTop: "20px" }}>Misi</h3>
+            <h3 className="font-semibold text-white">Visi</h3>
+            <p style={{ fontSize: "20px", fontStyle: "italic", fontWeight: "bold" }}>&ldquo;{profil.visi}&rdquo;</p>
+            <h3 className="font-semibold text-white" style={{ marginTop: "20px" }}>Misi</h3>
             <ul className="text-[#e7e6d6]" style={{ listStyleType: "disc" }}>
               {profil.misi.map((m: string, idx: number) => (
                 <li key={idx}>{m}</li>

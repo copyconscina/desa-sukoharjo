@@ -1,10 +1,11 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { supabaseServer } from "@/utils/supabase/admin";
 
-// Rate limiter for login attempts (in-memory)
+// Development fallback only. Production uses the persistent Supabase table.
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
-export function checkRateLimit(key: string = "global_ip"): { allowed: boolean; remainingSeconds?: number } {
+function checkInMemoryRateLimit(key: string): { allowed: boolean; remainingSeconds?: number } {
   const now = Date.now();
   const attemptKey = `rate_${key}`;
   const attempt = loginAttempts.get(attemptKey);
@@ -24,8 +25,33 @@ export function checkRateLimit(key: string = "global_ip"): { allowed: boolean; r
   return { allowed: true };
 }
 
-export function resetRateLimit(key: string = "global_ip"): void {
+export async function checkRateLimit(key: string = "global_ip"): Promise<{ allowed: boolean; remainingSeconds?: number }> {
+  try {
+    const { data, error } = await supabaseServer.rpc("consume_rate_limit", {
+      p_rate_key: `rate_${key}`,
+      p_max_requests: 5,
+      p_window_seconds: 15 * 60,
+    });
+    if (error) throw error;
+
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result || typeof result.allowed !== "boolean") throw new Error("Respons rate limit tidak valid.");
+    return { allowed: result.allowed, remainingSeconds: result.remaining_seconds ?? undefined };
+  } catch (error) {
+    // Preserve protection in local development if Supabase has not been migrated.
+    console.warn("Rate limit database tidak tersedia; memakai fallback in-memory.", error);
+    return checkInMemoryRateLimit(key);
+  }
+}
+
+export async function resetRateLimit(key: string = "global_ip"): Promise<void> {
   loginAttempts.delete(`rate_${key}`);
+  try {
+    const { error } = await supabaseServer.from("rate_limits").delete().eq("rate_key", `rate_${key}`);
+    if (error) throw error;
+  } catch (error) {
+    console.warn("Gagal mereset rate limit database.", error);
+  }
 }
 
 export async function checkAuth(): Promise<boolean> {
@@ -63,7 +89,7 @@ export async function loginWithSupabase(email: string, pass: string) {
       cookieStore.set("admin_session", "true", {
         path: "/",
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 24 * 7, // 7 days
       });

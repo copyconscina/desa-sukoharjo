@@ -17,6 +17,7 @@ export default function BukuTamuClient({ initialList }: Props) {
   const [name, setName] = useState("");
   const [origin, setOrigin] = useState("");
   const [message, setMessage] = useState("");
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -26,24 +27,25 @@ export default function BukuTamuClient({ initialList }: Props) {
     setError(null);
     setSuccess(null);
 
-    if (!name.trim() || !origin.trim() || !message.trim()) {
+    if (!name.trim() || !origin.trim() || !message.trim() || !consent) {
       setError("Mohon lengkapi semua bidang isian buku tamu.");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await addBukuTamuPublicAction(name, origin, message);
+      const res = await addBukuTamuPublicAction(name, origin, message, consent);
       if (res.success && res.item) {
         setList([res.item, ...list]);
         setSuccess("Terima kasih! Pesan & kesan Anda berhasil tersimpan dalam Buku Tamu Desa Sukoharjo.");
         setName("");
         setOrigin("");
         setMessage("");
+        setConsent(false);
       } else {
         setError(res.error || "Gagal menyimpan pesan buku tamu.");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setError("Terjadi kesalahan saat mengirim pesan. Silakan coba lagi.");
     } finally {
@@ -71,6 +73,10 @@ export default function BukuTamuClient({ initialList }: Props) {
                 required
               />
             </div>
+            <label className="flex gap-2 items-start text-xs leading-relaxed text-[color:var(--ink-soft)] cursor-pointer">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" required />
+              <span>Saya menyetujui nama, asal, dan pesan saya ditampilkan di website Desa Sukoharjo. Baca <a href="/kebijakan-privasi" className="underline">Kebijakan Privasi</a>.</span>
+            </label>
             <div>
               <label className="block text-sm font-mono text-[color:var(--ink-soft)] mb-1">
                 Asal / Instansi / Dusun *
@@ -122,7 +128,7 @@ export default function BukuTamuClient({ initialList }: Props) {
 
         {/* ENTRI BUKU TAMU TERBARU */}
         <div className="flex flex-col gap-4">
-          <h3 className="font-heading text-xl text-[color:var(--ink)]">
+          <h3 className="font-heading font-semibold text-xl text-[color:var(--ink)]">
             Pesan & Kesan Terbaru ({list.length})
           </h3>
           {list.length === 0 ? (

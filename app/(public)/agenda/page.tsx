@@ -9,6 +9,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Agenda Kegiatan — Desa Sukoharjo",
   description: "Jadwal dan kalender kegiatan masyarakat serta Pemerintah Desa Sukoharjo, Kecamatan Tirtomoyo, Wonogiri.",
+  alternates: { canonical: "/agenda" },
 };
 
 export default async function AgendaPage() {

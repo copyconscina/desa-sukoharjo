@@ -6,11 +6,17 @@ import {
   getLembagaList,
   getPengaduanList,
   getProdukHukumList,
+  getAdminActivityList,
 } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Metadata } from "next";
 import Image from "next/image";
+
+type GalleryWithCreatedAt = {
+  label: string;
+  created_at?: string | null;
+};
 
 export const metadata: Metadata = {
   title: "Dashboard Admin Desa Sukoharjo",
@@ -33,13 +39,25 @@ function timeAgo(date: string | Date) {
 }
 
 export default async function DashboardPage() {
-  const newsList = await getBeritaList();
-  const galleryList = await getGaleriList();
-  const umkmList = await getUmkmList();
-  const potentialsList = await getPotensiList();
-  const lembagaList = await getLembagaList();
-  const pengaduanList = await getPengaduanList();
-  const produkHukumList = await getProdukHukumList();
+  const [
+    newsList,
+    galleryList,
+    umkmList,
+    potentialsList,
+    lembagaList,
+    pengaduanList,
+    produkHukumList,
+    activityLog,
+  ] = await Promise.all([
+    getBeritaList(),
+    getGaleriList(),
+    getUmkmList(),
+    getPotensiList(),
+    getLembagaList(),
+    getPengaduanList(),
+    getProdukHukumList(),
+    getAdminActivityList(),
+  ]);
 
   const stats = [
     {
@@ -100,8 +118,28 @@ type ActivityItem = {
   color: string;
 };
 
+const activityMeta: Record<string, Pick<ActivityItem, "href" | "color">> = {
+  Berita: { href: "/admin/dashboard/berita", color: "bg-[color:var(--forest-deep)]" },
+  Galeri: { href: "/admin/dashboard/galeri", color: "bg-[color:var(--sawah)]" },
+  UMKM: { href: "/admin/dashboard/umkm", color: "bg-[color:var(--clay)]" },
+  Profil: { href: "/admin/dashboard/profil", color: "bg-[color:var(--forest)]" },
+  Layanan: { href: "/admin/dashboard/layanan", color: "bg-[color:var(--padi)]" },
+  Transparansi: { href: "/admin/dashboard/transparansi", color: "bg-[color:var(--red)]" },
+};
+
 const recentActivity: ActivityItem[] = [
-  ...newsList.slice(0, 5).map((item: any): ActivityItem => ({
+  ...activityLog.map((item): ActivityItem => {
+    const meta = activityMeta[item.module] || activityMeta.Profil;
+    return {
+      type: item.module,
+      title: item.title,
+      label: timeAgo(item.created_at),
+      sortDate: item.created_at,
+      ...meta,
+    };
+  }),
+  // Riwayat lama sebelum tabel log tersedia tetap ditampilkan.
+  ...newsList.slice(0, 5).map((item): ActivityItem => ({
     type: "Berita",
     title: item.title,
     label: item.date,
@@ -109,15 +147,18 @@ const recentActivity: ActivityItem[] = [
     href: "/admin/dashboard/berita",
     color: "bg-[color:var(--forest-deep)]",
   })),
-  ...galleryList.slice(0, 5).map((item: any): ActivityItem => ({
+  ...galleryList.slice(0, 5).map((item): ActivityItem => {
+    const galleryItem = item as GalleryWithCreatedAt;
+    return {
     type: "Galeri",
-    title: item.label,
-    label: item.created_at ? timeAgo(item.created_at) : "Baru ditambahkan",
-    sortDate: item.created_at || null,
+    title: galleryItem.label,
+    label: galleryItem.created_at ? timeAgo(galleryItem.created_at) : "Baru ditambahkan",
+    sortDate: galleryItem.created_at || null,
     href: "/admin/dashboard/galeri",
     color: "bg-[color:var(--sawah)]",
-  })),
-  ...pengaduanList.slice(0, 5).map((item: any): ActivityItem => ({
+    };
+  }),
+  ...pengaduanList.slice(0, 5).map((item): ActivityItem => ({
     type: "Pengaduan",
     title: item.judul,
     label: item.tanggal ?? "-",

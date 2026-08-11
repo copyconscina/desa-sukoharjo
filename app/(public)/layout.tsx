@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import PublicBreadcrumbs from "@/components/PublicBreadcrumbs";
 import SukoharjoLogo from "@/components/SukoharjoLogo";
 import styles from "./PublicLayout.module.css";
 import { siteUrl } from "@/lib/site";
@@ -22,6 +23,7 @@ export default function PublicLayout({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <Navbar />
+      <PublicBreadcrumbs />
       <main>{children}</main>
       <footer className={styles.footer}>
         <div className={`${styles.wrap} ${styles.grid}`}>
@@ -64,6 +66,14 @@ export default function PublicLayout({
               <li>Jawa Tengah 57672</li>
               <li>Telp: (0812) 25432772 / (0851) 73204364</li>
               <li>Jam Layanan: Senin–Jumat, 08.00–15.00 WIB</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Informasi</h4>
+            <ul>
+              <li><Link href="/tentang">Tentang Pengelola</Link></li>
+              <li><Link href="/kebijakan-privasi">Kebijakan Privasi</Link></li>
+              <li><Link href="/ketentuan-penggunaan">Ketentuan Penggunaan</Link></li>
             </ul>
           </div>
         </div>

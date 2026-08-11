@@ -9,6 +9,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Lembaga Desa — Desa Sukoharjo",
   description: "Struktur organisasi kelembagaan Pemerintah Desa, BPD, PKK, Karang Taruna, dan RT/RW Desa Sukoharjo.",
+  alternates: { canonical: "/lembaga" },
 };
 
 export default async function LembagaPage() {

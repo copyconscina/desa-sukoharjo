@@ -45,6 +45,10 @@ export default async function UmkmDetailPage({ params }: Props) {
   if (!u) {
     notFound();
   }
+  const umkmList = await getUmkmList();
+  const currentIndex = umkmList.findIndex((item) => item.id === u.id);
+  const previousUmkm = currentIndex > 0 ? umkmList[currentIndex - 1] : undefined;
+  const nextUmkm = currentIndex >= 0 && currentIndex < umkmList.length - 1 ? umkmList[currentIndex + 1] : undefined;
 
   const icTag = (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
@@ -119,6 +123,7 @@ export default async function UmkmDetailPage({ params }: Props) {
                 badge={u.category}
                 grad={u.grad}
                 aspectRatio="h-[280px] sm:h-[360px]"
+                thumbnailContainerClassName="bg-[color:var(--parchment-2)] border-[color:var(--line)]"
               />
             </div>
             {u.tagline && <h2 style={{ marginBottom: "12px" }}>{u.tagline}</h2>}
@@ -221,6 +226,17 @@ export default async function UmkmDetailPage({ params }: Props) {
               </Button>
             </div>
           </Card>
+        </div>
+      </section>
+      <section className="block pt-0" aria-label="Navigasi UMKM">
+        <div className="wrap flex flex-col sm:flex-row gap-3 justify-between">
+          {previousUmkm ? <Button asChild className="btn btn-ghost border border-[color:var(--line)]"><Link href={`/umkm/${previousUmkm.id}`}>← UMKM sebelumnya</Link></Button> : <span />}
+          {nextUmkm ? <Button asChild className="btn btn-dark border-none"><Link href={`/umkm/${nextUmkm.id}`}>UMKM berikutnya →</Link></Button> : <span />}
+        </div>
+      </section>
+      <section className="block pt-0">
+        <div className="wrap text-sm text-[color:var(--ink-soft)]">
+          Ada informasi yang tidak sesuai? <Link href="/pengaduan" className="underline font-medium text-[color:var(--forest)]">Laporkan atau koreksi data UMKM</Link>.
         </div>
       </section>
     </div>

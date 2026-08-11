@@ -8,6 +8,7 @@ export const fetchCache = "force-no-store";
 export const metadata: Metadata = {
   title: "Database UMKM Desa Sukoharjo",
   description: "Daftar unit usaha mikro, kecil, dan menengah (UMKM) unggulan Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri",
+  alternates: { canonical: "/umkm" },
 };
 
 export default async function UmkmPage() {

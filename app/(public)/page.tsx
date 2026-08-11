@@ -206,7 +206,7 @@ export default async function Home() {
                         <Badge className={`tag ${b.cls} border-none w-fit inline-flex justify-center`} variant="default" style={{ height: "auto", margin: 0 }}>
                           {b.tag}
                         </Badge>
-                        <h3 className="font-heading" style={{ margin: 0, fontSize: "1.15rem", lineHeight: "1.35", color: "var(--ink)" }}>{b.title}</h3>
+                        <h3 className="font-heading font-semibold" style={{ margin: 0, fontSize: "1.15rem", lineHeight: "1.35", color: "var(--ink)" }}>{b.title}</h3>
                         <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "14px", lineHeight: "1.5" }} className="line-clamp-3">{b.desc}</p>
                       </div>
                       <div className="date" style={{ marginTop: "12px", borderTop: "1px solid var(--line)", paddingTop: "12px", fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--ink-soft)" }}>
