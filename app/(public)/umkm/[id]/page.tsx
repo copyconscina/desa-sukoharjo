@@ -112,7 +112,7 @@ export default async function UmkmDetailPage({ params }: Props) {
       </div>
 
       {/* DETAIL CONTENT */}
-      <section className="block">
+      <section className="block" style={{ paddingBottom: "24px" }}>
         <div className="wrap two-col">
           <div>
             <div className="mb-6">
@@ -228,13 +228,13 @@ export default async function UmkmDetailPage({ params }: Props) {
           </Card>
         </div>
       </section>
-      <section className="block pt-0" aria-label="Navigasi UMKM">
+      <section aria-label="Navigasi UMKM" style={{ padding: "20px 0" }}>
         <div className="wrap flex flex-col sm:flex-row gap-3 justify-between">
           {previousUmkm ? <Button asChild className="btn btn-ghost border border-[color:var(--line)]"><Link href={`/umkm/${previousUmkm.id}`}>← UMKM sebelumnya</Link></Button> : <span />}
           {nextUmkm ? <Button asChild className="btn btn-dark border-none"><Link href={`/umkm/${nextUmkm.id}`}>UMKM berikutnya →</Link></Button> : <span />}
         </div>
       </section>
-      <section className="block">
+      <section style={{ padding: "16px 0 24px" }}>
         <div className="wrap text-sm text-[color:var(--ink-soft)]">
           Ada informasi yang tidak sesuai? <Link href="/pengaduan" className="underline font-medium text-[color:var(--forest)]">Laporkan atau koreksi data UMKM</Link>.
         </div>

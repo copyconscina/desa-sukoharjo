@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MediaCarousel from "@/components/MediaCarousel";
-import { parseImagesList } from "@/lib/utils";
+import { parseImagesList, stripHtml } from "@/lib/utils";
 import { defaultOgImage } from "@/lib/site";
 import DOMPurify from "isomorphic-dompurify";
 
@@ -31,12 +31,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: "Berita Tidak Ditemukan",
     };
   }
+  const plainDesc = stripHtml(b.desc);
   return {
     title: `${b.title} — Kabar Desa Sukoharjo`,
-    description: b.desc,
+    description: plainDesc,
     alternates: { canonical: `/berita/${id}` },
-    openGraph: { type: "article", title: b.title, description: b.desc, images: [{ url: parseImagesList(b.images)[0] || defaultOgImage, alt: b.title }] },
-    twitter: { card: "summary_large_image", title: b.title, description: b.desc, images: [parseImagesList(b.images)[0] || defaultOgImage] },
+    openGraph: { type: "article", title: b.title, description: plainDesc, images: [{ url: parseImagesList(b.images)[0] || defaultOgImage, alt: b.title }] },
+    twitter: { card: "summary_large_image", title: b.title, description: plainDesc, images: [parseImagesList(b.images)[0] || defaultOgImage] },
   };
 }
 
