@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/Reveal";
+import { parseImagesList, stripHtml } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -182,7 +183,7 @@ export default async function Home() {
           </div>
           <div className="grid cols-3" style={{ marginTop: "24px" }}>
             {beritaData.slice(0, 3).map((b, idx) => {
-              const firstImage = b.images ? b.images.split(",")[0] : null;
+              const firstImage = parseImagesList(b.images)[0] || null;
               return (
                 <Reveal key={idx} direction="up" delay={idx * 70} className="h-full">
                 <Link href={`/berita/${b.id}`} target="_blank" style={{ textDecoration: "none", color: "inherit" }} className="h-full block">
@@ -207,7 +208,7 @@ export default async function Home() {
                           {b.tag}
                         </Badge>
                         <h3 className="font-heading font-semibold" style={{ margin: 0, fontSize: "1.15rem", lineHeight: "1.35", color: "var(--ink)" }}>{b.title}</h3>
-                        <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "14px", lineHeight: "1.5" }} className="line-clamp-3">{b.desc}</p>
+                        <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "14px", lineHeight: "1.5" }} className="line-clamp-3">{stripHtml(b.desc)}</p>
                       </div>
                       <div className="date" style={{ marginTop: "12px", borderTop: "1px solid var(--line)", paddingTop: "12px", fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--ink-soft)" }}>
                         {b.date}
