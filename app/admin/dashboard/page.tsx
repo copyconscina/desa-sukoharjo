@@ -142,7 +142,7 @@ const recentActivity: ActivityItem[] = [
   ...newsList.slice(0, 5).map((item): ActivityItem => ({
     type: "Berita",
     title: item.title,
-    label: item.date,
+    label: item.date ?? "",
     sortDate: item.publishedAt || null,
     href: "/admin/dashboard/berita",
     color: "bg-[color:var(--forest-deep)]",
@@ -218,7 +218,7 @@ const recentActivity: ActivityItem[] = [
             Panduan Pengelolaan Website
           </h3>
           <Link
-            href="/panduan-admin.pdf"
+            href="https://drive.google.com/file/d/196QTBXJpFBaAO32JJKTWfm_BBQpRhGop/view?usp=sharing"
             target="_blank"
             className="group flex items-center gap-4 p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--forest)]/5 hover:bg-[color:var(--forest)]/10 hover:border-[color:var(--forest)] transition-all duration-200 no-underline mt-2"
           >

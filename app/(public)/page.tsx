@@ -2,15 +2,14 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { STAT } from "@/lib/data";
-import { getUmkmList, getBeritaList, getGaleriList, getPotensiList, getUmkmCount, getStatistikPenduduk } from "@/lib/db";
+import { getUmkmList, getBeritaList, getGaleriList, getPotensiList, getStatistikPenduduk } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/Reveal";
 import { parseImagesList, stripHtml } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -19,14 +18,14 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [umkmData, beritaData, galeriData, potensiData, umkmCount, statistik] = await Promise.all([
+  const [umkmData, beritaData, galeriData, potensiData, statistik] = await Promise.all([
     getUmkmList(),
     getBeritaList(),
     getGaleriList(),
     getPotensiList(),
-    getUmkmCount(),
     getStatistikPenduduk(),
   ]);
+  const umkmCount = umkmData.length;
   return (
     <div className="font-sans">
       {/* HERO SECTION */}
