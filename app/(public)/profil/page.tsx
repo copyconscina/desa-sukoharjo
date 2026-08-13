@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import { popData } from "@/lib/data";
 import { getProfilData, getLembagaList, getStatistikPenduduk } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import SukoharjoLogo from "@/components/SukoharjoLogo";
+
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -146,6 +148,17 @@ export default async function ProfilPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+
+<section className="block">
+        <div className="wrap">
+          <p className="eyebrow" style={{ textAlign: "center" }}>Filosofi Logo </p>
+          <h2 style={{ margin: "10px 0 24px", textAlign: "center" }} className="text-[clamp(1.4rem,3vw,2.5rem)] font-heading font-semibold leading-[1.03] tracking-[-0.01em]">Logo Desa Sukoharjo</h2>
+              <SukoharjoLogo className="block mx-auto w-75 h-auto tracking-[-0.01em]" />
+          <p style={{ marginTop: "20px", textAlign: "center" }} className="text-[color:var(--ink-soft)] text-sm text-justify">Logo berbentuk perisai melambangkan pelindung dan identitas Desa Sukoharjo. Gunung hijau menggambarkan kekayaan alam dan kondisi geografis desa, dengan matahari bersinar di puncaknya sebagai simbol harapan serta semangat baru. Untaian padi di kanan-kiri mencerminkan kemakmuran dan sektor pertanian sebagai penopang kehidupan warga, sementara daun-daun hijau di tengah menyimbolkan kesuburan dan semangat gotong royong. Garis merah-putih di bagian bawah menegaskan identitas kebangsaan Indonesia.</p>
+        <p style={{ marginTop: "20px", textAlign: "center" }} className="text-[color:var(--ink-soft)] text-sm">Baca Selengkapnya <a href="/filosofi-logo.pdf" className="text-blue-500 hover:underline">Filosofi Logo</a></p>
         </div>
       </section>
 
