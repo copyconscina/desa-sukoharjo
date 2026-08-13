@@ -28,6 +28,10 @@ import {
   saveProdukHukum,
   deleteProdukHukum,
   updateStatistikPenduduk,
+  archiveItems,
+  getArchivedItems,
+  restoreArchivedItem,
+  type ArchivedItemType,
 } from "@/lib/db";
 import {
   UmkmSchema,
@@ -614,4 +618,68 @@ export async function updateStatistikPendudukAction(dataInput: StatistikPenduduk
 
 function revalidateAll() {
   revalidatePath("/", "layout");
+}
+
+// ─── Arsip Backup Actions ─────────────────────────────────────────────────────
+
+/**
+ * Arsipkan item terpilih dari galeri, UMKM, dan produk hukum.
+ * Item yang diarsipkan langsung disembunyikan dari tampilan publik.
+ */
+export async function archiveForBackupAction(
+  galeriIds: number[],
+  umkmIds: number[],
+  produkHukumIds: number[]
+) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  if (galeriIds.length + umkmIds.length + produkHukumIds.length === 0) {
+    return { success: false, error: "Tidak ada item yang dipilih." };
+  }
+
+  try {
+    const result = await archiveItems(galeriIds, umkmIds, produkHukumIds);
+    revalidateAll();
+    return { success: true, archived: result.archived };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Gagal mengarsipkan item.",
+    };
+  }
+}
+
+/** Ambil daftar item yang sedang dalam status arsip (belum dihapus permanen). */
+export async function getArchivedItemsAction() {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  try {
+    const items = await getArchivedItems();
+    return { success: true, items };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Gagal mengambil data arsip.",
+      items: [],
+    };
+  }
+}
+
+/** Restore satu item dari arsip — item kembali tampil di website publik. */
+export async function undoArchiveAction(id: number, type: ArchivedItemType) {
+  const isAuth = await checkAuthAction();
+  if (!isAuth) throw new Error("Unauthorized");
+
+  try {
+    await restoreArchivedItem(id, type);
+    revalidateAll();
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Gagal merestore item.",
+    };
+  }
 }

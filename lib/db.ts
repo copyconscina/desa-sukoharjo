@@ -156,7 +156,7 @@ export async function getUmkmList(): Promise<Umkm[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("umkm").select("*").order("id", { ascending: true }).limit(200);
+      const { data, error } = await supabase.from("umkm").select("*").is("archived_at", null).order("id", { ascending: true }).limit(200);
       if (!error && data) {
         const sbList = data.map((u: any) => ({
           ...u,
@@ -171,7 +171,7 @@ export async function getUmkmList(): Promise<Umkm[]> {
         return sbList as Umkm[];
       }
     } catch (e) {
-      console.error("getBeritaList supabase exception:", e);
+      console.error("getUmkmList supabase exception:", e);
     }
   }
   return localList.filter((u) => !deletedIds.includes(u.id ?? 0));
@@ -513,7 +513,7 @@ export async function getGaleriList(): Promise<GaleriItem[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("galeri").select("*").order("created_at", { ascending: false }).limit(100);
+      const { data, error } = await supabase.from("galeri").select("*").is("archived_at", null).order("created_at", { ascending: false }).limit(100);
       if (!error && data) {
         const sbList = data.map((g: any) => ({
           ...g,
@@ -1111,7 +1111,7 @@ export async function getProdukHukumList(): Promise<ProdukHukum[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("produk_hukum").select("*").order("id", { ascending: false });
+      const { data, error } = await supabase.from("produk_hukum").select("*").is("archived_at", null).order("id", { ascending: false });
       if (!error && data) {
         return data as ProdukHukum[];
       }
@@ -1362,4 +1362,197 @@ export async function updateStatistikPenduduk(dataInput: StatistikPenduduk): Pro
   await recordAdminActivity("Transparansi", "update", "Memperbarui statistik kependudukan", "statistik-penduduk");
 
   return true;
+}
+
+// ─── Sistem Arsip Backup ─────────────────────────────────────────────────────
+
+export type ArchivedItemType = "galeri" | "umkm" | "produk_hukum";
+
+export type ArchivedItem = {
+  id: number;
+  type: ArchivedItemType;
+  label: string;        // nama/judul item untuk ditampilkan di UI
+  archivedAt: string;   // ISO string waktu diarsipkan
+  purgeAt: string;      // ISO string batas akhir sebelum hapus permanen
+  imageUrls: string[];  // URL file yang akan dihapus dari storage
+  fileUrl?: string;     // untuk produk_hukum (PDF)
+};
+
+/** Arsipkan item terpilih — set archived_at = now() → hilang dari publik. */
+export async function archiveItems(
+  galeriIds: number[],
+  umkmIds: number[],
+  produkHukumIds: number[]
+): Promise<{ archived: number }> {
+  if (isPlaceholderSupabase) throw new Error("Supabase belum dikonfigurasi.");
+
+  const now = new Date().toISOString();
+  let total = 0;
+
+  if (galeriIds.length > 0) {
+    const { error } = await supabaseServer
+      .from("galeri")
+      .update({ archived_at: now })
+      .in("id", galeriIds)
+      .is("archived_at", null);
+    if (error) throw new Error(`Gagal mengarsipkan galeri: ${error.message}`);
+    total += galeriIds.length;
+  }
+  if (umkmIds.length > 0) {
+    const { error } = await supabaseServer
+      .from("umkm")
+      .update({ archived_at: now })
+      .in("id", umkmIds)
+      .is("archived_at", null);
+    if (error) throw new Error(`Gagal mengarsipkan UMKM: ${error.message}`);
+    total += umkmIds.length;
+  }
+  if (produkHukumIds.length > 0) {
+    const { error } = await supabaseServer
+      .from("produk_hukum")
+      .update({ archived_at: now })
+      .in("id", produkHukumIds)
+      .is("archived_at", null);
+    if (error) throw new Error(`Gagal mengarsipkan produk hukum: ${error.message}`);
+    total += produkHukumIds.length;
+  }
+
+  return { archived: total };
+}
+
+/** Ambil semua item yang sedang diarsipkan, dari 3 tabel. */
+export async function getArchivedItems(): Promise<ArchivedItem[]> {
+  if (isPlaceholderSupabase) return [];
+
+  const results: ArchivedItem[] = [];
+  const GRACE_DAYS = 30;
+
+  try {
+    const [galeriRes, umkmRes, hukumRes] = await Promise.all([
+      supabaseServer.from("galeri").select("id, label, images, image, archived_at").not("archived_at", "is", null).order("archived_at", { ascending: false }),
+      supabaseServer.from("umkm").select("id, name, images, image, archived_at").not("archived_at", "is", null).order("archived_at", { ascending: false }),
+      supabaseServer.from("produk_hukum").select("id, judul, file_url, archived_at").not("archived_at", "is", null).order("archived_at", { ascending: false }),
+    ]);
+
+    for (const row of galeriRes.data || []) {
+      const archivedAt = row.archived_at as string;
+      const purgeAt = new Date(new Date(archivedAt).getTime() + GRACE_DAYS * 86400_000).toISOString();
+      results.push({
+        id: row.id,
+        type: "galeri",
+        label: row.label || `Galeri #${row.id}`,
+        archivedAt,
+        purgeAt,
+        imageUrls: parseImagesList(row.images || row.image || ""),
+      });
+    }
+    for (const row of umkmRes.data || []) {
+      const archivedAt = row.archived_at as string;
+      const purgeAt = new Date(new Date(archivedAt).getTime() + GRACE_DAYS * 86400_000).toISOString();
+      results.push({
+        id: row.id,
+        type: "umkm",
+        label: row.name || `UMKM #${row.id}`,
+        archivedAt,
+        purgeAt,
+        imageUrls: parseImagesList(row.images || row.image || ""),
+      });
+    }
+    for (const row of hukumRes.data || []) {
+      const archivedAt = row.archived_at as string;
+      const purgeAt = new Date(new Date(archivedAt).getTime() + GRACE_DAYS * 86400_000).toISOString();
+      results.push({
+        id: row.id,
+        type: "produk_hukum",
+        label: row.judul || `Produk Hukum #${row.id}`,
+        archivedAt,
+        purgeAt,
+        imageUrls: [],
+        fileUrl: row.file_url || undefined,
+      });
+    }
+  } catch (e) {
+    console.error("getArchivedItems error:", e);
+  }
+
+  return results;
+}
+
+/** Restore item yang diarsipkan — set archived_at = NULL. */
+export async function restoreArchivedItem(id: number, type: ArchivedItemType): Promise<void> {
+  if (isPlaceholderSupabase) throw new Error("Supabase belum dikonfigurasi.");
+
+  const { error } = await supabaseServer
+    .from(type)
+    .update({ archived_at: null })
+    .eq("id", id);
+  if (error) throw new Error(`Gagal merestore item: ${error.message}`);
+}
+
+/**
+ * Purge item yang sudah melewati grace period (30 hari).
+ * Dipanggil oleh cron job harian.
+ * Hapus file di Storage, lalu hapus baris dari DB.
+ */
+export async function purgeExpiredArchives(): Promise<{ purged: number }> {
+  if (isPlaceholderSupabase) return { purged: 0 };
+
+  const cutoff = new Date(Date.now() - 30 * 86400_000).toISOString();
+  let purged = 0;
+
+  async function purgeTable(table: ArchivedItemType, imageCol: string, fileCol?: string) {
+    const { data, error } = await supabaseServer
+      .from(table)
+      .select(`id, ${imageCol}${fileCol ? ", " + fileCol : ""}, archived_at`)
+      .not("archived_at", "is", null)
+      .lt("archived_at", cutoff);
+    if (error || !data || data.length === 0) return;
+
+    // Kumpulkan semua path file yang akan dihapus dari storage
+    const storageKeys: string[] = [];
+    for (const row of data) {
+      const imgStr: string = row[imageCol] || "";
+      const urls = parseImagesList(imgStr);
+      for (const url of urls) {
+        try {
+          const u = new URL(url);
+          // Path setelah "/sukoharjo-assets/"
+          const marker = "/sukoharjo-assets/";
+          const idx = u.pathname.indexOf(marker);
+          if (idx !== -1) storageKeys.push(u.pathname.slice(idx + marker.length));
+        } catch {}
+      }
+      if (fileCol) {
+        const fileUrl: string = row[fileCol] || "";
+        if (fileUrl) {
+          try {
+            const u = new URL(fileUrl);
+            const marker = "/sukoharjo-assets/";
+            const idx = u.pathname.indexOf(marker);
+            if (idx !== -1) storageKeys.push(u.pathname.slice(idx + marker.length));
+          } catch {}
+        }
+      }
+    }
+
+    // Hapus file dari storage (best-effort, lanjut walau gagal)
+    if (storageKeys.length > 0) {
+      const { error: storageErr } = await supabaseServer.storage
+        .from("sukoharjo-assets")
+        .remove(storageKeys);
+      if (storageErr) console.warn(`[purge] Storage remove error (${table}):`, storageErr.message);
+    }
+
+    // Hapus baris dari DB
+    const ids = data.map((r) => r.id as number);
+    const { error: delErr } = await supabaseServer.from(table).delete().in("id", ids);
+    if (delErr) throw new Error(`Gagal menghapus baris ${table}: ${delErr.message}`);
+    purged += ids.length;
+  }
+
+  await purgeTable("galeri", "images");
+  await purgeTable("umkm", "images");
+  await purgeTable("produk_hukum", "images", "file_url");
+
+  return { purged };
 }

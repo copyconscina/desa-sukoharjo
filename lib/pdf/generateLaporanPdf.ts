@@ -167,7 +167,7 @@ export function generateLaporanPdf(data: ExportData, selection: ExportSelection)
 
   function table(
     head: string[],
-    body: (string | number)[][],
+    body: (string | number | undefined)[][],
     columnStyles?: Record<number, { cellWidth?: number; halign?: "left" | "center" | "right" }>
   ) {
     if (body.length === 0) {
