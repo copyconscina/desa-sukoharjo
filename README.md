@@ -1,7 +1,7 @@
 # 🌾 Website Resmi & Portal Pelayanan Desa Sukoharjo
 ### Kecamatan Tirtomoyo, Kabupaten Wonogiri
 
-Website ini merupakan platform digital terpadu Pemerintah Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri. Platform ini berfungsi sebagai media publikasi informasi desa, portal pelayanan publik mandiri, transparansi anggaran APBDES, etalase digital UMKM warga, serta dilengkapi **Panel Admin Terintegrasi** berbasis **Supabase Auth & Row Level Security (RLS)**.
+Website ini merupakan platform digital terpadu Pemerintah Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri. Platform ini berfungsi sebagai media publikasi informasi desa, portal pelayanan publik mandiri, transparansi anggaran APBDes, etalase digital UMKM warga, serta pusat dokumentasi kegiatan desa.
 
 ---
 
@@ -9,52 +9,56 @@ Website ini merupakan platform digital terpadu Pemerintah Desa Sukoharjo, Kecama
 
 Website ini dirancang secara modular, modern, dan responsif:
 
-### 🌐 Halaman Publik
-1. **Beranda (`/`)**: 
-   - Banner hero interaktif bertema alam Sukoharjo.
-   - Ringkasan statistik desa (Dusun, Penduduk, UMKM, Potensi).
-   - Preview berita terbaru, UMKM unggulan, agenda desa, dan galeri foto.
-2. **Profil Desa (`/profil`)**: Sejarah desa, Visi & Misi, Struktur Pemerintahan, dan informasi kontak kantor desa.
-3. **Berita Desa (`/berita` & `/berita/[id]`)**: Berita kegiatan, agenda acara, pengumuman publik, dan informasi pembangunan desa.
+1. **Beranda (`/`)**:
+   - Hero interaktif bertema sawah & perbukitan Sukoharjo.
+   - Ringkasan statistik desa (Dusun, Jiwa Penduduk, UMKM Terdaftar).
+   - Preview profil singkat, UMKM unggulan, potensi desa, galeri foto, dan berita terbaru.
+   - Dirender statis dengan revalidasi berkala (5 menit).
+2. **Profil Desa (`/profil`)**: Sejarah desa, Visi & Misi, struktur pemerintahan, data kependudukan per dusun, serta informasi kontak kantor desa.
+3. **Berita Desa (`/berita` & `/berita/[id]`)**: Berita kegiatan, pengumuman publik, dan informasi pembangunan desa beserta detail dan galeri gambar.
 4. **Database & Etalase UMKM (`/umkm` & `/umkm/[id]`)**: Katalog produk lokal dengan pencarian *real-time*, filter kategori, detail usaha, serta fitur pemesanan *Direct to WhatsApp*.
-5. **Potensi Desa (`/potensi`)**: Pemetaan 5 potensi utama desa (SDA, SDM, Pembangunan, Sosial Budaya, dan Kelembagaan).
-6. **Lembaga Kemasyarakatan (`/lembaga`)**: Profil lembaga desa (BPD, LPM, PKK, Karang Taruna, RT/RW, Linmas).
-7. **Agenda Desa (`/agenda`)**: Kalender dan jadwal kegiatan desa mendatang.
-8. **Transparansi APBDES (`/apbdes`)**: Infografis ringkasan Pendapatan, Belanja, Pembiayaan, serta realisasi anggaran per bidang.
-9. **Informasi Bantuan Sosial (`/bansos`)**: Data penerima dan alokasi program bantuan sosial (PKH, BLT-DD, BPNT, dll).
-10. **Produk Hukum & Perdes (`/produk-hukum`)**: Unduh dokumen Peraturan Desa (Perdes) dan keputusan Kepala Desa.
-11. **Layanan Informasi PPID (`/ppid`)**: Layanan Keterbukaan Informasi Publik (Berkala, Serta-Merta, Setiap Saat).
-12. **Layanan Surat Online (`/layanan-surat`)**: Permohonan pengurusan surat publik secara mandiri.
-13. **Layanan Pengaduan (`/pengaduan`)**: Form aspirasi dan pengaduan warga secara online.
-14. **Buku Tamu Digital (`/buku-tamu`)**: Form pendaftaran kunjungan tamu/dinas desa.
-15. **Statistik Desa (`/statistik`)**: Visualisasi data demografi dan kependudukan interaktif.
+5. **Potensi Desa (`/potensi`)**: Pemetaan potensi unggulan desa (pertanian, perkebunan, industri rumah tangga, pengolahan pangan) dan fokus pengembangannya.
+6. **Lembaga Kemasyarakatan (`/lembaga`)**: Profil lembaga desa (Pemerintah Desa, BPD, PKK, Karang Taruna, RT/RW, dan organisasi kemasyarakatan).
+7. **Agenda Kegiatan (`/agenda`)**: Jadwal dan kalender kegiatan pemerintahan serta kemasyarakatan desa.
+8. **Transparansi APBDes (`/apbdes`)**: Ringkasan Pendapatan, Belanja, dan Pembiayaan, serta realisasi anggaran per bidang secara terbuka dan akuntabel.
+9. **Produk Hukum & Perdes (`/produk-hukum`)**: Arsip Peraturan Desa (Perdes), Peraturan Kepala Desa, dan SK Kepala Desa yang dapat diunduh sebagai berkas PDF.
+10. **Pengaduan & Lapor Warga (`/pengaduan`)**: Layanan penyampaian laporan dan aspirasi warga secara online.
+11. **Buku Tamu (`/buku-tamu`)**: Formulir buku tamu serta ruang kesan, pesan, dan saran untuk Pemerintah Desa.
+12. **Statistik Kependudukan (`/statistik`)**: Visualisasi data demografi publik (total penduduk, KK, sebaran per dusun, tingkat pendidikan, dan mata pencaharian) dengan grafik interaktif.
+13. **Galeri Desa (`/galeri`)**: Dokumentasi foto kegiatan warga, UMKM, dan potensi desa dengan filter kategori.
+14. **Tentang (`/tentang`)**: Informasi mengenai pengelola website dan tujuan keberadaannya.
+15. **Kebijakan Privasi (`/kebijakan-privasi`)** & **Ketentuan Penggunaan (`/ketentuan-penggunaan`)**: Dokumen hukum yang mengatur penggunaan website.
 
-### 🔐 Panel Administrasi (`/admin`)
-- **Keamanan Tingkat Tinggi**: Autentikasi berbasis **Supabase Auth** dan kebijakan **Row Level Security (RLS)** pada database PostgreSQL.
-- **Dashboard Manajemen (`/admin/dashboard`)**:
-  - **Manajemen Berita**: Tambah, edit, dan hapus berita beserta gambar pendukung.
-  - **Manajemen UMKM**: Pengelolaan katalog UMKM warga secara *real-time*.
-  - **Manajemen Galeri**: Unggah foto & dokumentasi kegiatan desa.
-  - **Manajemen Potensi**: Pembaruan narasi potensi desa.
-- **Fitur Keamanan**: *Rate-limiting* login, proteksi rute halaman admin, serta cookie terenkripsi HTTP-only dari Supabase SSR.
+### ⚙️ Fitur Teknis
+- **SEO Lengkap**: Metadata dinamis, canonical URL, Open Graph, `robots.txt`, dan `sitemap.xml` otomatis.
+- **Keamanan Konten**: Sanitasi HTML input menggunakan **DOMPurify** dan **sanitize-html** untuk mencegah serangan XSS.
+- **Manajemen Media**: Konversi & kompresi gambar (format HEIC) serta upload langsung ke **Supabase Storage** (`sukoharjo-assets`).
+- **Ketersediaan Data**: Database **Supabase PostgreSQL** dengan *fallback* data lokal (`lib/db.json`) jika koneksi offline.
+- **Dokumen PDF**: Pembuatan laporan data desa berformat A4 siap cetak menggunakan **jsPDF**.
 
 ---
 
 ## 🛠️ Spesifikasi Teknologi (Tech Stack)
 
-* **Framework Utama**: [Next.js 16.2.10](https://nextjs.org/) (App Router, Turbopack, Server Actions)
+* **Framework Utama**: [Next.js 16.3.0](https://nextjs.org/) (App Router, Turbopack, Server Actions)
 * **Library UI**: [React 19.2.4](https://react.dev/) & [React DOM 19.2.4](https://react.dev/)
 * **Bahasa Pemrograman**: [TypeScript](https://www.typescriptlang.org/)
 * **Database & Autentikasi**:
-  - [Supabase PostgreSQL](https://supabase.com/) dengan 15 tabel aktif & RLS Policies enabled.
-  - **Supabase Auth** via `@supabase/ssr`.
-  - Fallback data lokal di `lib/db.json` jika koneksi database offline.
+  - [Supabase PostgreSQL](https://supabase.com/) dengan RLS Policies.
+  - **Supabase Auth** via `@supabase/ssr` & `@supabase/supabase-js`.
+  - Storage untuk media unggahan (gambar, dokumen).
 * **Styling & Desain**:
   - [Tailwind CSS v4](https://tailwindcss.com/) & Vanilla CSS custom design system (`globals.css`).
   - Google Fonts (*Fraunces*, *Public Sans*, *JetBrains Mono*).
 * **Komponen & Ikon**:
-  - [Shadcn UI](https://ui.shadcn.com/) (Badge, Button, Card, Dialog, Input) berbasis [Radix UI](https://www.radix-ui.com/).
+  - [Shadcn UI](https://ui.shadcn.com/) berbasis [Radix UI](https://www.radix-ui.com/).
   - [Lucide React](https://lucide.dev/) Icons.
+* **Pustaka Pendukung**:
+  - [Recharts](https://recharts.org/) untuk visualisasi statistik.
+  - [Zod](https://zod.dev/) untuk validasi skema data.
+  - [jsPDF](https://github.com/parallax/jsPDF) & `jspdf-autotable` untuk generasi PDF.
+  - [DOMPurify](https://github.com/cure53/DOMPurify) & [sanitize-html](https://github.com/apostrophecms/sanitize-html) untuk sanitasi HTML.
+  - [heic2any](https://github.com/alexcorvi/heic2any) & [sharp](https://sharp.pixelplumbing.com/) untuk pemrosesan gambar.
 
 ---
 
@@ -62,65 +66,38 @@ Website ini dirancang secara modular, modern, dan responsif:
 
 ```bash
 desa-sukoharjo/
-├── app/                      # Next.js App Router (Halaman & Server Actions)
-│   ├── admin/                # Panel Admin & Login (/admin, /admin/dashboard)
-│   │   ├── dashboard/        # Halaman manajemen (berita, umkm, galeri, potensi)
-│   │   ├── login/            # Form login admin berbasis Supabase Auth
-│   │   └── actions.ts        # Server Actions untuk autentikasi & CRUD data
-│   ├── agenda/               # Halaman Agenda Desa (/agenda)
-│   ├── apbdes/               # Halaman Transparansi APBDES (/apbdes)
-│   ├── bansos/               # Halaman Informasi Bansos (/bansos)
-│   ├── berita/               # Halaman & Detail Berita (/berita, /berita/[id])
-│   ├── buku-tamu/            # Halaman Buku Tamu Digital (/buku-tamu)
-│   ├── galeri/               # Halaman Galeri Foto (/galeri)
-│   ├── layanan-surat/        # Halaman Layanan Surat Online (/layanan-surat)
-│   ├── lembaga/              # Halaman Profil Lembaga Desa (/lembaga)
-│   ├── pengaduan/            # Halaman Pengaduan Warga (/pengaduan)
-│   ├── potensi/              # Halaman Potensi Desa (/potensi)
-│   ├── ppid/                 # Halaman Informasi Publik PPID (/ppid)
-│   ├── produk-hukum/         # Halaman Perdes & Produk Hukum (/produk-hukum)
-│   ├── profil/               # Halaman Profil & Visi Misi Desa (/profil)
-│   ├── statistik/            # Halaman Statistik Kependudukan (/statistik)
-│   ├── umkm/                 # Halaman Katalog & Detail UMKM (/umkm, /umkm/[id])
-│   ├── globals.css           # Design system & variabel warna CSS
-│   ├── layout.tsx            # Root Layout
-│   └── page.tsx              # Halaman Beranda utama
-├── components/               # Komponen UI Reusable (Navbar, Footer, AdminSidebar, dll)
-├── lib/                      # Logika Aplikasi & Database (db.ts, auth.ts, upload.ts)
-├── utils/                    # Client Supabase (server.ts, client.ts, middleware.ts)
-├── public/                   # Aset Statis (Gambar, Logos, Icons)
-├── .env                      # Variabel Lingkungan Supabase
-├── package.json              # Dependencies & Skrip npm
-├── next.config.ts            # Konfigurasi Next.js
-└── tsconfig.json             # Konfigurasi TypeScript
+├── app/                        # Next.js App Router
+│   ├── (public)/               # Seluruh halaman publik website
+│   │   ├── page.tsx            # Beranda (/)
+│   │   ├── profil/             # Profil & sejarah desa
+│   │   ├── berita/             # Berita & detail (/berita, /berita/[id])
+│   │   ├── umkm/               # Database UMKM (/umkm, /umkm/[id])
+│   │   ├── potensi/            # Potensi desa
+│   │   ├── lembaga/            # Lembaga kemasyarakatan
+│   │   ├── agenda/             # Agenda kegiatan
+│   │   ├── apbdes/             # Transparansi APBDes
+│   │   ├── produk-hukum/       # Produk hukum & perdes
+│   │   ├── pengaduan/          # Pengaduan & lapor warga
+│   │   ├── buku-tamu/          # Buku tamu
+│   │   ├── statistik/          # Statistik kependudukan
+│   │   ├── galeri/             # Galeri foto
+│   │   ├── tentang/            # Tentang pengelola website
+│   │   ├── kebijakan-privasi/  # Kebijakan privasi
+│   │   ├── ketentuan-penggunaan/ # Ketentuan penggunaan
+│   │   └── layout.tsx          # Layout khusus halaman publik
+│   ├── api/                    # API Routes (mis. cron maintenance)
+│   ├── robots.ts               # robots.txt otomatis
+│   ├── sitemap.ts              # sitemap.xml otomatis
+│   ├── globals.css             # Design system & variabel warna CSS
+│   └── layout.tsx              # Root Layout
+├── components/                 # Komponen UI Reusable (Navbar, GaleriList, UmkmList, grafik statistik, dll.)
+├── lib/                        # Logika Aplikasi & Akses Data (db.ts, data.ts, upload.ts, pdf/, site.ts)
+├── utils/supabase/             # Client Supabase (server, client, middleware, static)
+├── public/                     # Aset Statis (Gambar, Logos, Icons)
+├── .env.local                  # Variabel Lingkungan Supabase
+├── next.config.ts              # Konfigurasi Next.js
+├── package.json                # Dependencies & Skrip npm
+└── tsconfig.json               # Konfigurasi TypeScript
 ```
 
----
-
----
-
-## ⚙️ Panduan Menjalankan Proyek Secara Lokal
-
-### Prerequisites
-Pastikan PC Anda telah terpasang **Node.js** (v20.9 atau yang lebih baru).
-
-### 1. Instal Dependensi
-```bash
-npm install
-```
-
-### 2. Jalankan Server Development
-```bash
-npm run dev
-```
-Buka peramban di [http://localhost:3000](http://localhost:3000).
-
-### 3. Build Production Check
-Untuk menguji proses kompilasi dan optimasi produksi:
-```bash
-npm run build
-npm run start
-```
-
----
 *Dibuat dengan dedikasi untuk kemajuan digitalisasi Desa Sukoharjo, Kecamatan Tirtomoyo, Kabupaten Wonogiri.*
