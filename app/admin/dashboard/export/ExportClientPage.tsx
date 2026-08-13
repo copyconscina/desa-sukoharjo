@@ -63,6 +63,29 @@ export default function ExportClientPage({ data }: Props) {
 
   const totalArchiveSelected = selectedGaleri.size + selectedUmkm.size + selectedHukum.size;
 
+  const galeriIds = useMemo(
+    () => data.galeriList.map((g) => g.id).filter((id): id is number => id != null),
+    [data]
+  );
+  const umkmIds = useMemo(
+    () => data.umkmList.map((u) => u.id).filter((id): id is number => id != null),
+    [data]
+  );
+  const hukumIds = useMemo(
+    () => data.produkHukumList.map((p) => p.id).filter((id): id is number => id != null),
+    [data]
+  );
+
+  const allGaleriSelected = galeriIds.length > 0 && galeriIds.every((id) => selectedGaleri.has(id));
+  const allUmkmSelected = umkmIds.length > 0 && umkmIds.every((id) => selectedUmkm.has(id));
+  const allHukumSelected = hukumIds.length > 0 && hukumIds.every((id) => selectedHukum.has(id));
+
+  function toggleSelectAllArchive(ids: number[], current: Set<number>, setter: (next: Set<number>) => void) {
+    setArchiveSuccess(null);
+    const allSelected = ids.length > 0 && ids.every((id) => current.has(id));
+    setter(allSelected ? new Set() : new Set(ids));
+  }
+
   const loadArchivedItems = useCallback(async () => {
     setIsLoadingArchive(true);
     try {
@@ -364,9 +387,24 @@ export default function ExportClientPage({ data }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Galeri */}
             <div className="border border-[color:var(--line)] rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--clay)] sticky top-0 bg-[color:var(--card)]">
-                Galeri ({data.galeriList.length})
-              </span>
+              <div className="flex items-center justify-between gap-2 sticky top-0 bg-[color:var(--card)]">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--clay)]">
+                  Galeri ({data.galeriList.length})
+                </span>
+                {data.galeriList.length > 0 && (
+                  <label className="flex items-center gap-1.5 text-[11px] font-semibold text-[color:var(--forest)] hover:underline cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={allGaleriSelected}
+                      onChange={() =>
+                        toggleSelectAllArchive(galeriIds, selectedGaleri, setSelectedGaleri)
+                      }
+                      className="accent-[color:var(--forest)]"
+                    />
+                    {allGaleriSelected ? "Batalkan" : "Pilih semua"}
+                  </label>
+                )}
+              </div>
               {data.galeriList.length === 0 && (
                 <span className="text-xs text-[color:var(--ink-soft)]">Tidak ada item.</span>
               )}
@@ -385,9 +423,22 @@ export default function ExportClientPage({ data }: Props) {
 
             {/* UMKM */}
             <div className="border border-[color:var(--line)] rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--clay)] sticky top-0 bg-[color:var(--card)]">
-                UMKM ({data.umkmList.length})
-              </span>
+              <div className="flex items-center justify-between gap-2 sticky top-0 bg-[color:var(--card)]">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--clay)]">
+                  UMKM ({data.umkmList.length})
+                </span>
+                {data.umkmList.length > 0 && (
+                  <label className="flex items-center gap-1.5 text-[11px] font-semibold text-[color:var(--forest)] hover:underline cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={allUmkmSelected}
+                      onChange={() => toggleSelectAllArchive(umkmIds, selectedUmkm, setSelectedUmkm)}
+                      className="accent-[color:var(--forest)]"
+                    />
+                    {allUmkmSelected ? "Batalkan" : "Pilih semua"}
+                  </label>
+                )}
+              </div>
               {data.umkmList.length === 0 && (
                 <span className="text-xs text-[color:var(--ink-soft)]">Tidak ada item.</span>
               )}
@@ -406,9 +457,22 @@ export default function ExportClientPage({ data }: Props) {
 
             {/* Produk Hukum */}
             <div className="border border-[color:var(--line)] rounded-xl p-3 flex flex-col gap-2 max-h-64 overflow-y-auto">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--clay)] sticky top-0 bg-[color:var(--card)]">
-                Produk Hukum ({data.produkHukumList.length})
-              </span>
+              <div className="flex items-center justify-between gap-2 sticky top-0 bg-[color:var(--card)]">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--clay)]">
+                  Produk Hukum ({data.produkHukumList.length})
+                </span>
+                {data.produkHukumList.length > 0 && (
+                  <label className="flex items-center gap-1.5 text-[11px] font-semibold text-[color:var(--forest)] hover:underline cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={allHukumSelected}
+                      onChange={() => toggleSelectAllArchive(hukumIds, selectedHukum, setSelectedHukum)}
+                      className="accent-[color:var(--forest)]"
+                    />
+                    {allHukumSelected ? "Batalkan" : "Pilih semua"}
+                  </label>
+                )}
+              </div>
               {data.produkHukumList.length === 0 && (
                 <span className="text-xs text-[color:var(--ink-soft)]">Tidak ada item.</span>
               )}

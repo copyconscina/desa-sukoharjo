@@ -1505,7 +1505,8 @@ export async function purgeExpiredArchives(): Promise<{ purged: number }> {
       .from(table)
       .select(`id, ${imageCol}${fileCol ? ", " + fileCol : ""}, archived_at`)
       .not("archived_at", "is", null)
-      .lt("archived_at", cutoff);
+      .lt("archived_at", cutoff)
+      .returns<Array<{ id: number } & Record<string, string | null>>>();
     if (error || !data || data.length === 0) return;
 
     // Kumpulkan semua path file yang akan dihapus dari storage

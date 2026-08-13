@@ -176,7 +176,7 @@ export function generateLaporanPdf(data: ExportData, selection: ExportSelection)
     }
     autoTable(doc, {
       head: [head],
-      body,
+      body: body.map((row) => row.map((cell) => cell ?? "-")),
       startY: cursorY,
       margin: { left: marginX, right: marginX, top: tableMarginTop, bottom: 20 },
       styles: {
