@@ -255,14 +255,14 @@ export function generateLaporanPdf(data: ExportData, selection: ExportSelection)
     subheading(`Pengaduan Warga  (${data.pengaduanList.length} laporan)`);
     table(
       ["No", "Nama", "Dusun", "Judul", "Tanggal", "Status"],
-      data.pengaduanList.map((p, i) => [i + 1, p.nama, p.dusun, p.judul, p.tanggal, p.status]),
+      data.pengaduanList.map((p, i) => [i + 1, p.nama, p.dusun, p.judul, p.tanggal || "-", p.status]),
       noCol
     );
 
     subheading(`Buku Tamu  (${data.bukuTamuList.length} entri)`);
     table(
       ["No", "Nama", "Asal", "Pesan", "Tanggal"],
-      data.bukuTamuList.map((b, i) => [i + 1, b.name, b.origin, b.message, b.date]),
+      data.bukuTamuList.map((b, i) => [i + 1, b.name, b.origin, b.message, b.date || "-"]),
       noCol
     );
   }
@@ -323,7 +323,7 @@ export function generateLaporanPdf(data: ExportData, selection: ExportSelection)
     sectionTitle(`${sectionNumber}. Berita & Pengumuman`, `${data.beritaList.length} berita`);
     table(
       ["No", "Tanggal", "Kategori", "Judul", "Ringkasan"],
-      data.beritaList.map((b, i) => [i + 1, b.date, b.tag, b.title, stripHtml(b.desc)]),
+      data.beritaList.map((b, i) => [i + 1, b.date || "-", b.tag, b.title, stripHtml(b.desc)]),
       { ...noCol, 3: { cellWidth: 32 }, 4: { cellWidth: 55 } }
     );
   }
