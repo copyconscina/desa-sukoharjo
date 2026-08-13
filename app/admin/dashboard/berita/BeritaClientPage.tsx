@@ -315,7 +315,6 @@ function RichEditor({ value, onChange, placeholder }: RichEditorProps) {
           color: "var(--ink)",
           background: "var(--parchment)",
           fontFamily: "var(--font-sans)",
-          whiteSpace: "pre-wrap",
           wordBreak: "break-word",
         }}
         className="rich-editor-body"
@@ -448,6 +447,20 @@ function RichEditor({ value, onChange, placeholder }: RichEditorProps) {
         .rich-editor-body a {
           color: #1a6dd9;
           text-decoration: underline;
+        }
+        .rich-editor-body ul {
+          list-style-type: disc;
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+        }
+        .rich-editor-body ol {
+          list-style-type: decimal;
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+        }
+        .rich-editor-body li {
+          display: list-item;
+          margin: 0.2em 0;
         }
       `}</style>
     </div>

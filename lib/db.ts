@@ -52,12 +52,14 @@ function readStore(): any {
 }
 
 function writeStore(data: any) {
+  // Update in-memory store secara sinkron (source of truth)
   globalThis.__DESA_STORE__ = data;
-  try {
-    fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2), "utf-8");
-  } catch (err) {
-    // Read-only filesystem safe fallback
-  }
+  // Tulis ke disk secara asinkron — tidak memblokir event loop
+  fs.writeFile(STORE_PATH, JSON.stringify(data, null, 2), "utf-8", (err) => {
+    if (err && (err as NodeJS.ErrnoException).code !== "EROFS") {
+      console.error("Error writing store.json:", err);
+    }
+  });
 }
 
 /**
@@ -154,7 +156,7 @@ export async function getUmkmList(): Promise<Umkm[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("umkm").select("*").order("id", { ascending: true });
+      const { data, error } = await supabase.from("umkm").select("*").order("id", { ascending: true }).limit(200);
       if (!error && data) {
         const sbList = data.map((u: any) => ({
           ...u,
@@ -172,7 +174,7 @@ export async function getUmkmList(): Promise<Umkm[]> {
       console.error("getBeritaList supabase exception:", e);
     }
   }
-  return localList.filter((u) => !deletedIds.includes(u.id));
+  return localList.filter((u) => !deletedIds.includes(u.id ?? 0));
 }
 
 export async function getUmkmCount(): Promise<number> {
@@ -193,13 +195,32 @@ export async function getUmkmCount(): Promise<number> {
   const store = readStore();
   const localList: Umkm[] = store.umkm || [];
   const deletedIds: number[] = store.deletedUmkm || [];
-  return localList.filter((u) => !deletedIds.includes(u.id)).length;
+  return localList.filter((u) => !deletedIds.includes(u.id ?? 0)).length;
 }
 
 export async function getUmkmById(id: number): Promise<Umkm | undefined> {
   if (isNaN(id)) return undefined;
-  const list = await getUmkmList();
-  return list.find((u) => u.id === id);
+  // Query langsung by ID — tidak perlu fetch semua UMKM
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data, error } = await supabase.from("umkm").select("*").eq("id", id).single();
+      if (!error && data) {
+        return {
+          ...data,
+          wa: data.wa || undefined,
+          phone: data.phone || undefined,
+          mapsUrl: data.maps_url || data.mapsUrl || undefined,
+          maps_url: data.maps_url || data.mapsUrl || undefined,
+        } as Umkm;
+      }
+    } catch (e) {
+      console.error("getUmkmById supabase exception:", e);
+    }
+  }
+  // Fallback: cari di local store
+  const store = readStore();
+  const localList: Umkm[] = store.umkm || [];
+  return localList.find((u) => u.id === id);
 }
 
 export async function saveUmkm(item: Omit<Umkm, "id"> & { id?: number }): Promise<Umkm> {
@@ -293,7 +314,7 @@ export async function getBeritaList(): Promise<Berita[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("berita").select("*").order("published_at", { ascending: false });
+      const { data, error } = await supabase.from("berita").select("*").order("published_at", { ascending: false }).limit(100);
       if (!error && data) {
         const sbList = data.map((b: any) => {
           let dateStr = "";
@@ -330,8 +351,40 @@ export async function getBeritaList(): Promise<Berita[]> {
 
 export async function getBeritaById(id: number): Promise<Berita | undefined> {
   if (isNaN(id)) return undefined;
-  const list = await getBeritaList();
-  return list.find((b) => b.id === id);
+  // Query langsung by ID — tidak perlu fetch semua berita
+  if (!isPlaceholderSupabase) {
+    try {
+      const { data: b, error } = await supabase.from("berita").select("*").eq("id", id).single();
+      if (!error && b) {
+        let dateStr = "";
+        try {
+          if (b.published_at) {
+            const d = new Date(b.published_at);
+            if (!isNaN(d.getTime())) {
+              dateStr = d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+            }
+          }
+        } catch (e) {}
+        if (!dateStr) dateStr = b.date || new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+        return {
+          id: b.id,
+          tag: b.tag ? b.tag.charAt(0).toUpperCase() + b.tag.slice(1) : "Umum",
+          cls: b.cls || "",
+          title: b.title || "",
+          desc: b.desc || "",
+          date: dateStr,
+          publishedAt: b.published_at || null,
+          images: b.images || null,
+        } as Berita;
+      }
+    } catch (e) {
+      console.error("getBeritaById supabase exception:", e);
+    }
+  }
+  // Fallback: cari di local store
+  const store = readStore();
+  const localList: Berita[] = store.berita || [];
+  return localList.find((b) => b.id === id);
 }
 
 export async function addBerita(item: Omit<Berita, "date"> & { date?: string }): Promise<Berita> {
@@ -368,19 +421,15 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
   const imageUrls = parseImagesList(item.images);
   if (imageUrls.length > 0) {
-    for (const imgUrl of imageUrls) {
-      const existingGaleri: GaleriItem[] = store.galeri || [];
-      const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
-      if (!alreadyInGaleri) {
-        await addGaleri({
-          label: item.title,
-          cat: item.tag || "Kegiatan Desa",
-          grad: "g1",
-          image: imgUrl,
-          desc: `Foto Dokumentasi Berita: ${item.title}`,
-        });
-      }
-    }
+    const galeriItemsToAdd = imageUrls.map((imgUrl) => ({
+      label: item.title,
+      cat: item.tag || "Kegiatan Desa",
+      grad: "g1",
+      image: imgUrl,
+      images: imgUrl,
+      desc: `Foto Dokumentasi Berita: ${item.title}`,
+    }));
+    await addGaleriMany(galeriItemsToAdd);
   }
 
   return newItem;
@@ -438,19 +487,15 @@ export async function updateBerita(id: number, item: Omit<Berita, "id" | "date">
   // Otomatis masukkan foto lampiran berita ke Galeri Desa
   const imageUrls = parseImagesList(item.images);
   if (imageUrls.length > 0) {
-    for (const imgUrl of imageUrls) {
-      const existingGaleri: GaleriItem[] = store.galeri || [];
-      const alreadyInGaleri = existingGaleri.some((g: GaleriItem) => g.image === imgUrl);
-      if (!alreadyInGaleri) {
-        await addGaleri({
-          label: item.title,
-          cat: item.tag || "Kegiatan Desa",
-          grad: "g1",
-          image: imgUrl,
-          desc: `Foto Dokumentasi Berita: ${item.title}`,
-        });
-      }
-    }
+    const galeriItemsToAdd = imageUrls.map((imgUrl) => ({
+      label: item.title,
+      cat: item.tag || "Kegiatan Desa",
+      grad: "g1",
+      image: imgUrl,
+      images: imgUrl,
+      desc: `Foto Dokumentasi Berita: ${item.title}`,
+    }));
+    await addGaleriMany(galeriItemsToAdd);
   }
 
   return updatedItem;
@@ -468,7 +513,7 @@ export async function getGaleriList(): Promise<GaleriItem[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("galeri").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("galeri").select("*").order("created_at", { ascending: false }).limit(100);
       if (!error && data) {
         const sbList = data.map((g: any) => ({
           ...g,
@@ -520,6 +565,59 @@ export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
   writeStore(store);
   await recordAdminActivity("Galeri", "create", `Menambahkan galeri: ${newItem.label}`, newItem.id);
   return newItem;
+}
+
+export async function addGaleriMany(items: GaleriItem[]): Promise<GaleriItem[]> {
+  if (!items || items.length === 0) return [];
+  const store = readStore();
+  const existingGaleri: GaleriItem[] = store.galeri || [];
+  
+  // Filter yang belum ada di galeri
+  const newItemsToProcess = items.filter(
+    (item) => !existingGaleri.some((g: GaleriItem) => g.image === (item.images ? item.images.split(",")[0].trim() : item.image))
+  );
+  if (newItemsToProcess.length === 0) return [];
+
+  let currentId = existingGaleri.length > 0 ? Math.max(...existingGaleri.map((g) => g.id || 0)) : 0;
+  const processedItems: GaleriItem[] = [];
+  const sbPayloads: any[] = [];
+
+  for (const item of newItemsToProcess) {
+    currentId += 1;
+    const primaryImage = item.images ? item.images.split(",")[0].trim() : item.image;
+    const newItem: GaleriItem = {
+      ...item,
+      id: currentId,
+      image: primaryImage,
+      images: item.images || item.image || undefined,
+    };
+    processedItems.push(newItem);
+    sbPayloads.push({
+      label: item.label,
+      cat: item.cat,
+      grad: item.grad || "",
+      image: primaryImage || null,
+      images: item.images || item.image || null,
+      desc: item.desc || null,
+    });
+  }
+
+  if (!isPlaceholderSupabase && sbPayloads.length > 0) {
+    try {
+      const { data, error } = await supabaseServer.from("galeri").insert(sbPayloads).select();
+      if (!error && data) {
+        data.forEach((d: any, idx: number) => {
+          if (processedItems[idx]) processedItems[idx].id = d.id;
+        });
+      }
+    } catch (e) {
+      console.error("Gagal bulk insert galeri ke Supabase:", e);
+    }
+  }
+
+  store.galeri = [...processedItems.reverse(), ...existingGaleri];
+  writeStore(store);
+  return processedItems;
 }
 
 export async function updateGaleri(id: number, item: Omit<GaleriItem, "id">): Promise<GaleriItem> {
@@ -623,7 +721,7 @@ export async function getLembagaList(): Promise<Lembaga[]> {
       }
     } catch (e) {}
   }
-  return localList.filter((l) => !deletedIds.includes(l.id));
+  return localList.filter((l) => !deletedIds.includes(l.id ?? 0));
 }
 
 export async function saveLembaga(item: Omit<Lembaga, "id"> & { id?: number }): Promise<Lembaga> {
@@ -718,7 +816,7 @@ export async function getAgendaList(): Promise<Agenda[]> {
       }
     } catch (e) {}
   }
-  return localList.filter((a) => !deletedIds.includes(a.id));
+  return localList.filter((a) => !deletedIds.includes(a.id ?? 0));
 }
 
 export async function saveAgenda(item: Omit<Agenda, "id"> & { id?: number }): Promise<Agenda> {
@@ -779,13 +877,13 @@ export async function getBukuTamuList(): Promise<BukuTamu[]> {
 
   if (!isPlaceholderSupabase) {
     try {
-      const { data, error } = await supabase.from("buku_tamu").select("*").order("id", { ascending: false });
+      const { data, error } = await supabase.from("buku_tamu").select("*").order("id", { ascending: false }).limit(200);
       if (!error && data) {
         return data as BukuTamu[];
       }
     } catch (e) {}
   }
-  return localList.filter((b) => !deletedIds.includes(b.id));
+  return localList.filter((b) => !deletedIds.includes(b.id ?? 0));
 }
 
 export async function addBukuTamu(item: Omit<BukuTamu, "id">): Promise<BukuTamu> {
@@ -803,7 +901,8 @@ export async function addBukuTamu(item: Omit<BukuTamu, "id">): Promise<BukuTamu>
     newItem.id = list.length > 0 ? Math.max(...list.map((b) => b.id || 0)) + 1 : 1;
   }
 
-  store.buku_tamu = [newItem, ...list];
+  // Pruning: simpan max 200 entri terbaru di local store agar heap tidak tumbuh tak terbatas
+  store.buku_tamu = [newItem, ...list].slice(0, 200);
   writeStore(store);
 
   return newItem;
@@ -832,13 +931,13 @@ export async function getPengaduanList(): Promise<Pengaduan[]> {
     try {
       // Halaman publik dirender di server. Gunakan service role agar daftar
       // laporan tetap tampil tanpa membuka akses SELECT langsung ke anon.
-      const { data, error } = await supabaseServer.from("pengaduan").select("*").order("id", { ascending: false });
+      const { data, error } = await supabaseServer.from("pengaduan").select("*").order("id", { ascending: false }).limit(200);
       if (!error && data) {
         return data as Pengaduan[];
       }
     } catch (e) {}
   }
-  return localList.filter((p) => !deletedIds.includes(p.id));
+  return localList.filter((p) => !deletedIds.includes(p.id ?? 0));
 }
 
 export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tanggapan">): Promise<Pengaduan> {
@@ -879,7 +978,8 @@ export async function addPengaduan(item: Omit<Pengaduan, "id" | "status" | "tang
     newItem.id = list.length > 0 ? Math.max(...list.map((p) => p.id || 0)) + 1 : 1;
   }
 
-  store.pengaduan = [newItem, ...list];
+  // Pruning: simpan max 300 entri terbaru di local store agar heap tidak tumbuh tak terbatas
+  store.pengaduan = [newItem, ...list].slice(0, 300);
   writeStore(store);
 
   return newItem;
@@ -950,7 +1050,7 @@ export async function getApbdesBidangList(): Promise<ApbdesBidang[]> {
       }
     } catch (e) {}
   }
-  return localList.filter((b) => !deletedIds.includes(b.id));
+  return localList.filter((b) => !deletedIds.includes(b.id ?? 0));
 }
 
 export async function saveApbdesBidang(item: Omit<ApbdesBidang, "id"> & { id?: number }): Promise<ApbdesBidang> {
@@ -1017,7 +1117,7 @@ export async function getProdukHukumList(): Promise<ProdukHukum[]> {
       }
     } catch (e) {}
   }
-  return localList.filter((p) => !deletedIds.includes(p.id));
+  return localList.filter((p) => !deletedIds.includes(p.id ?? 0));
 }
 
 export async function saveProdukHukum(item: Omit<ProdukHukum, "id"> & { id?: number }): Promise<ProdukHukum> {
@@ -1071,44 +1171,46 @@ export async function deleteProdukHukum(id: number): Promise<boolean> {
 }
 
 // ==================== STATISTIK KEPENDUDUKAN ====================
+const DEFAULT_STATISTIK: StatistikPenduduk = {
+  totalPenduduk: 4915,
+  totalKk: 1753,
+  lakiLaki: 2532,
+  perempuan: 2383,
+  dusunList: [
+    { nama: "Dusun Blaraksari", rt: 2, rw: 1, jiwa: 168 },
+    { nama: "Dusun Sukoharjo", rt: 4, rw: 1, jiwa: 351 },
+    { nama: "Dusun Tulakan", rt: 2, rw: 1, jiwa: 410 },
+    { nama: "Dusun Jati", rt: 2, rw: 1, jiwa: 210 },
+    { nama: "Dusun Pule", rt: 2, rw: 1, jiwa: 364 },
+    { nama: "Dusun Dadapan", rt: 6, rw: 1, jiwa: 901 },
+    { nama: "Dusun Bonagung", rt: 2, rw: 1, jiwa: 279 },
+    { nama: "Dusun Dalan Gede", rt: 2, rw: 1, jiwa: 358 },
+    { nama: "Dusun Sendangsari", rt: 2, rw: 1, jiwa: 420 },
+    { nama: "Dusun Ngroto", rt: 4, rw: 1, jiwa: 739 },
+    { nama: "Dusun Ngandong", rt: 4, rw: 1, jiwa: 717 },
+  ],
+  pendidikanList: [
+    { name: "Tidak / Belum Sekolah", count: 575 },
+    { name: "SD / Sederajat", count: 351 },
+    { name: "Tamat SD / Sederajat", count: 2248 },
+    { name: "SLTP / Sederajat", count: 956 },
+    { name: "SLTA / SMK / Sederajat", count: 679 },
+    { name: "Diploma / Sarjana (D3/S1/S2)", count: 106 },
+  ],
+  pekerjaanList: [
+    { name: "Pelajar / Mahasiswa", count: 248, pct: 25.5 },
+    { name: "Petani / Pekebun", count: 206, pct: 21.2 },
+    { name: "Wiraswasta / UMKM", count: 187, pct: 19.2 },
+    { name: "Karyawan Swasta", count: 62, pct: 6.4 },
+    { name: "Lainnya", count: 57, pct: 5.9 },
+    { name: "PNS", count: 27, pct: 2.8 },
+    { name: "Belum / Tidak Bekerja", count: 89, pct: 9.2 },
+  ],
+};
+
 export async function getStatistikPenduduk(): Promise<StatistikPenduduk> {
   const store = readStore();
-  const defaultStatistik: StatistikPenduduk = {
-    totalPenduduk: 4915,
-    totalKk: 1753,
-    lakiLaki: 2532,
-    perempuan: 2383,
-    dusunList: [
-      { nama: "Dusun Blaraksari", rt: 2, rw: 1, jiwa: 168 },
-      { nama: "Dusun Sukoharjo", rt: 4, rw: 1, jiwa: 351 },
-      { nama: "Dusun Tulakan", rt: 2, rw: 1, jiwa: 410 },
-      { nama: "Dusun Jati", rt: 2, rw: 1, jiwa: 210 },
-      { nama: "Dusun Pule", rt: 2, rw: 1, jiwa: 364 },
-      { nama: "Dusun Dadapan", rt: 6, rw: 1, jiwa: 901 },
-      { nama: "Dusun Bonagung", rt: 2, rw: 1, jiwa: 279 },
-      { nama: "Dusun Dalan Gede", rt: 2, rw: 1, jiwa: 358 },
-      { nama: "Dusun Sendangsari", rt: 2, rw: 1, jiwa: 420 },
-      { nama: "Dusun Ngroto", rt: 4, rw: 1, jiwa: 739 },
-      { nama: "Dusun Ngandong", rt: 4, rw: 1, jiwa: 717 },
-    ],
-    pendidikanList: [
-      { name: "Tidak / Belum Sekolah", count: 575 },
-      { name: "SD / Sederajat", count: 351 },
-      { name: "Tamat SD / Sederajat", count: 2248 },
-      { name: "SLTP / Sederajat", count: 956 },
-      { name: "SLTA / SMK / Sederajat", count: 679 },
-      { name: "Diploma / Sarjana (D3/S1/S2)", count: 106 },
-    ],
-    pekerjaanList: [
-      { name: "Pelajar / Mahasiswa", count: 248, pct: 25.5 },
-      { name: "Petani / Pekebun", count: 206, pct: 21.2 },
-      { name: "Wiraswasta / UMKM", count: 187, pct: 19.2 },
-      { name: "Karyawan Swasta", count: 62, pct: 6.4 },
-      { name: "Lainnya", count: 57, pct: 5.9 },
-      { name: "PNS", count: 27, pct: 2.8 },
-      { name: "Belum / Tidak Bekerja", count: 89, pct: 9.2 },
-    ],
-  };
+  const defaultStatistik = DEFAULT_STATISTIK;
 
   if (!isPlaceholderSupabase) {
     try {

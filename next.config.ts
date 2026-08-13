@@ -21,10 +21,15 @@ const contentSecurityPolicy = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  serverExternalPackages: ["jsdom", "isomorphic-dompurify"],
+  serverExternalPackages: ["jsdom", "dompurify", "isomorphic-dompurify"],
   experimental: {
     serverActions: {
       bodySizeLimit: "15mb",
+    },
+  },
+  turbopack: {
+    resolveAlias: {
+      dompurify: "./node_modules/dompurify/dist/purify.cjs.js",
     },
   },
   images: {

@@ -40,15 +40,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function UmkmDetailPage({ params }: Props) {
   const { id } = await params;
-  const u = await getUmkmById(parseInt(id));
-
-  if (!u) {
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) {
     notFound();
   }
+
   const umkmList = await getUmkmList();
-  const currentIndex = umkmList.findIndex((item) => item.id === u.id);
+  const currentIndex = umkmList.findIndex((item) => item.id === numId);
+  if (currentIndex === -1) {
+    notFound();
+  }
+  const u = umkmList[currentIndex];
   const previousUmkm = currentIndex > 0 ? umkmList[currentIndex - 1] : undefined;
-  const nextUmkm = currentIndex >= 0 && currentIndex < umkmList.length - 1 ? umkmList[currentIndex + 1] : undefined;
+  const nextUmkm = currentIndex < umkmList.length - 1 ? umkmList[currentIndex + 1] : undefined;
 
   const icTag = (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="currentColor" width="18" height="18">
