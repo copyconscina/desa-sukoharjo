@@ -218,7 +218,7 @@ const recentActivity: ActivityItem[] = [
             Panduan Pengelolaan Website
           </h3>
           <Link
-            href="https://drive.google.com/file/d/196QTBXJpFBaAO32JJKTWfm_BBQpRhGop/view?usp=sharing"
+            href="https://drive.google.com/drive/u/3/folders/1qZZnWI9_8loSGpmddkGaTWzm02jruPX9"
             target="_blank"
             className="group flex items-center gap-4 p-4 rounded-xl border border-[color:var(--line)] bg-[color:var(--forest)]/5 hover:bg-[color:var(--forest)]/10 hover:border-[color:var(--forest)] transition-all duration-200 no-underline mt-2"
           >
@@ -232,7 +232,7 @@ const recentActivity: ActivityItem[] = [
                 </div>
             <div className="flex flex-col gap-0.5 flex-1">
               <span className="text-sm font-semibold text-[color:var(--ink)]">
-                Buku Panduan Lengkap Admin
+                Folder Panduan Admin Website Desa Sukoharjo
               </span>
               <span className="text-xs text-[color:var(--ink-soft)]">
                 Panduan langkah demi langkah mengelola seluruh fitur website
