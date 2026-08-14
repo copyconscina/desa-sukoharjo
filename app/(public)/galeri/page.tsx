@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getGaleriList } from "@/lib/db";
+import { getGaleriWithBeritaList } from "@/lib/db";
 import GaleriList from "@/components/GaleriList";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function GaleriPage() {
-  const galeriData = await getGaleriList();
+  const galeriData = await getGaleriWithBeritaList();
 
   return (
     <div className="font-sans">

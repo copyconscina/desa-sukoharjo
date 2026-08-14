@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { STAT } from "@/lib/data";
-import { getUmkmList, getBeritaList, getGaleriList, getPotensiList, getStatistikPenduduk } from "@/lib/db";
+import { getUmkmList, getBeritaList, getGaleriWithBeritaList, getPotensiList, getStatistikPenduduk } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ export default async function Home() {
   const [umkmData, beritaData, galeriData, potensiData, statistik] = await Promise.all([
     getUmkmList(),
     getBeritaList(),
-    getGaleriList(),
+    getGaleriWithBeritaList(),
     getPotensiList(),
     getStatistikPenduduk(),
   ]);

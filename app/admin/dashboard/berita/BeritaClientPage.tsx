@@ -84,22 +84,26 @@ function RichEditor({ value, onChange, placeholder }: RichEditorProps) {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
   const savedRangeRef = useRef<Range | null>(null);
-  const isInitialized = useRef(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   // Set initial HTML only once
   useEffect(() => {
-    if (editorRef.current && !isInitialized.current) {
+    if (editorRef.current) {
       editorRef.current.innerHTML = value || "";
-      isInitialized.current = true;
     }
-  }, [value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // When value is reset externally (e.g. form reset), clear content
+  // Sinkronkan nilai eksternal (mis. saat form edit dibuka) tanpa mengganggu
+  // posisi kursor ketika pengguna sedang mengetik di dalam editor.
   useEffect(() => {
-    if (!value && editorRef.current && isInitialized.current) {
-      editorRef.current.innerHTML = "";
+    if (editorRef.current && !isFocused) {
+      const current = editorRef.current.innerHTML;
+      if (current !== value) {
+        editorRef.current.innerHTML = value || "";
+      }
     }
-  }, [value]);
+  }, [value, isFocused]);
 
   const exec = useCallback((command: string, val?: string) => {
     editorRef.current?.focus();
@@ -305,6 +309,8 @@ function RichEditor({ value, onChange, placeholder }: RichEditorProps) {
         contentEditable
         suppressContentEditableWarning
         onInput={handleInput}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         data-placeholder={placeholder}
         style={{
           minHeight: "160px",
@@ -699,7 +705,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Form Add / Edit News */}
-        <div className="lg:col-span-5" ref={formRef}>
+        <div className="lg:col-span-7" ref={formRef}>
           <Card className="border border-[color:var(--line)] p-6 bg-[color:var(--card)] shadow-sm">
             <h2 className="text-lg font-heading mb-4 text-[color:var(--forest-deep)]">
               {editingId ? "Ubah Berita / Pengumuman" : "Tambah Berita Baru"}
@@ -931,7 +937,7 @@ export default function BeritaClientPage({ initialNews }: Props) {
         </div>
 
         {/* News List */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-5">
           <Card className="border border-[color:var(--line)] p-6 bg-[color:var(--card)] shadow-sm">
             <h2 className="text-lg font-heading mb-4 text-[color:var(--forest-deep)]">
               Daftar Berita Aktif ({news.length})

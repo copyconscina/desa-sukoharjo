@@ -418,20 +418,6 @@ export async function addBerita(item: Omit<Berita, "date"> & { date?: string }):
   writeStore(store);
   await recordAdminActivity("Berita", "create", `Menambahkan berita: ${newItem.title}`, newItem.id);
 
-  // Otomatis masukkan foto lampiran berita ke Galeri Desa
-  const imageUrls = parseImagesList(item.images);
-  if (imageUrls.length > 0) {
-    const galeriItemsToAdd = imageUrls.map((imgUrl) => ({
-      label: item.title,
-      cat: item.tag || "Kegiatan Desa",
-      grad: "g1",
-      image: imgUrl,
-      images: imgUrl,
-      desc: `Foto Dokumentasi Berita: ${item.title}`,
-    }));
-    await addGaleriMany(galeriItemsToAdd);
-  }
-
   return newItem;
 }
 
@@ -484,20 +470,6 @@ export async function updateBerita(id: number, item: Omit<Berita, "id" | "date">
   writeStore(store);
   await recordAdminActivity("Berita", "update", `Memperbarui berita: ${updatedItem.title}`, id);
 
-  // Otomatis masukkan foto lampiran berita ke Galeri Desa
-  const imageUrls = parseImagesList(item.images);
-  if (imageUrls.length > 0) {
-    const galeriItemsToAdd = imageUrls.map((imgUrl) => ({
-      label: item.title,
-      cat: item.tag || "Kegiatan Desa",
-      grad: "g1",
-      image: imgUrl,
-      images: imgUrl,
-      desc: `Foto Dokumentasi Berita: ${item.title}`,
-    }));
-    await addGaleriMany(galeriItemsToAdd);
-  }
-
   return updatedItem;
 }
 
@@ -534,6 +506,55 @@ export async function getGaleriList(): Promise<GaleriItem[]> {
     }));
 }
 
+/**
+ * Daftar galeri untuk halaman publik: menggabungkan galeri kurasi dari tabel
+ * `galeri` dengan foto lampiran berita dari tabel `berita` (tanpa menyimpan
+ * duplikat apa pun). Foto berita hanya tersimpan SATU KALI di database —
+ * di kolom `berita.images` — lalu ditampilkan ulang di galeri saat render.
+ *
+ * Item berita dibuat sebagai `GaleriItem` sintetis dengan id negatif agar
+ * tidak bentrok dengan id galeri asli. URL yang sudah dipakai galeri kurasi
+ * atau berita lain akan dilewati agar tidak tampil ganda.
+ */
+export async function getGaleriWithBeritaList(): Promise<GaleriItem[]> {
+  const [galeriList, beritaList] = await Promise.all([getGaleriList(), getBeritaList()]);
+
+  // URL yang sudah dipakai galeri kurasi → foto berita tidak perlu ditambahkan lagi.
+  const usedUrls = new Set<string>();
+  for (const g of galeriList) {
+    for (const url of parseImagesList(g.images || g.image)) {
+      usedUrls.add(url);
+    }
+  }
+
+  const beritaItems: GaleriItem[] = [];
+  for (const berita of beritaList) {
+    const urls = parseImagesList(berita.images);
+    const seenInBerita = new Set<string>();
+    const uniqueUrls = urls.filter((url) => {
+      if (usedUrls.has(url) || seenInBerita.has(url)) return false;
+      usedUrls.add(url);
+      seenInBerita.add(url);
+      return true;
+    });
+
+    uniqueUrls.forEach((url, i) => {
+      beritaItems.push({
+        id: -(Math.abs(berita.id || 0) * 10000 + i + 1),
+        label: berita.title,
+        cat: berita.tag || "Berita",
+        grad: "g1",
+        image: url,
+        images: url,
+        desc: `Foto Dokumentasi Berita: ${berita.title}`,
+      });
+    });
+  }
+
+  // Berita terbaru tampil di awal, diikuti galeri kurasi.
+  return [...beritaItems, ...galeriList];
+}
+
 export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
   const store = readStore();
   const list: GaleriItem[] = store.galeri || [];
@@ -565,59 +586,6 @@ export async function addGaleri(item: GaleriItem): Promise<GaleriItem> {
   writeStore(store);
   await recordAdminActivity("Galeri", "create", `Menambahkan galeri: ${newItem.label}`, newItem.id);
   return newItem;
-}
-
-export async function addGaleriMany(items: GaleriItem[]): Promise<GaleriItem[]> {
-  if (!items || items.length === 0) return [];
-  const store = readStore();
-  const existingGaleri: GaleriItem[] = store.galeri || [];
-  
-  // Filter yang belum ada di galeri
-  const newItemsToProcess = items.filter(
-    (item) => !existingGaleri.some((g: GaleriItem) => g.image === (item.images ? item.images.split(",")[0].trim() : item.image))
-  );
-  if (newItemsToProcess.length === 0) return [];
-
-  let currentId = existingGaleri.length > 0 ? Math.max(...existingGaleri.map((g) => g.id || 0)) : 0;
-  const processedItems: GaleriItem[] = [];
-  const sbPayloads: any[] = [];
-
-  for (const item of newItemsToProcess) {
-    currentId += 1;
-    const primaryImage = item.images ? item.images.split(",")[0].trim() : item.image;
-    const newItem: GaleriItem = {
-      ...item,
-      id: currentId,
-      image: primaryImage,
-      images: item.images || item.image || undefined,
-    };
-    processedItems.push(newItem);
-    sbPayloads.push({
-      label: item.label,
-      cat: item.cat,
-      grad: item.grad || "",
-      image: primaryImage || null,
-      images: item.images || item.image || null,
-      desc: item.desc || null,
-    });
-  }
-
-  if (!isPlaceholderSupabase && sbPayloads.length > 0) {
-    try {
-      const { data, error } = await supabaseServer.from("galeri").insert(sbPayloads).select();
-      if (!error && data) {
-        data.forEach((d: any, idx: number) => {
-          if (processedItems[idx]) processedItems[idx].id = d.id;
-        });
-      }
-    } catch (e) {
-      console.error("Gagal bulk insert galeri ke Supabase:", e);
-    }
-  }
-
-  store.galeri = [...processedItems.reverse(), ...existingGaleri];
-  writeStore(store);
-  return processedItems;
 }
 
 export async function updateGaleri(id: number, item: Omit<GaleriItem, "id">): Promise<GaleriItem> {

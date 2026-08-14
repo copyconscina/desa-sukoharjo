@@ -24,9 +24,10 @@ function extractStoragePath(url: string): string | null {
 
 /**
  * Tabel & kolom yang berpotensi menyimpan URL file dari bucket
- * sukoharjo-assets. Berita dan Galeri sengaja saling terhubung (foto berita
- * otomatis disalin sebagai entri Galeri), sehingga sebuah URL gambar bisa
- * dipakai oleh lebih dari satu baris/tabel sekaligus.
+ * sukoharjo-assets. Foto berita kini ditampilkan ulang di halaman galeri
+ * publik tanpa disalin ke tabel galeri (gambar hanya disimpan sekali di
+ * kolom `berita.images`), namun sebuah URL gambar tetap bisa dipakai oleh
+ * lebih dari satu baris/tabel sekaligus.
  */
 const REFERENCE_SOURCES: { table: string; columns: string[] }[] = [
   { table: "berita", columns: ["images"] },
